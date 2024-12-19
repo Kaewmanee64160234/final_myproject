@@ -6,14 +6,14 @@ plugins {
 }
 
 android {
-     buildFeatures {
-        compose = true
-    }
+    //  buildFeatures {
+    //     compose = true
+    // }
 
-    composeOptions {
-        // https://developer.android.com/jetpack/androidx/releases/compose-kotlin
-        kotlinCompilerExtensionVersion = "1.4.8"
-    }
+    // composeOptions {
+    //     // https://developer.android.com/jetpack/androidx/releases/compose-kotlin
+    //     kotlinCompilerExtensionVersion = "1.4.8"
+    // }
 
     namespace = "com.example.identity_scan"
     compileSdk = flutter.compileSdkVersion
@@ -47,43 +47,43 @@ android {
         }
     }
 
-     dependencies {
-        // Use the Compose BOM (Bill of Materials) to manage version compatibility
-        def composeBom = platform("androidx.compose:compose-bom:2024.10.01")  // Make sure this version is compatible with your Kotlin version
-        implementation(composeBom)
-        androidTestImplementation(composeBom)
+    //  dependencies {
+    //     // Use the Compose BOM (Bill of Materials) to manage version compatibility
+    //     def composeBom = platform("androidx.compose:compose-bom:2024.10.01")  // Make sure this version is compatible with your Kotlin version
+    //     implementation(composeBom)
+    //     androidTestImplementation(composeBom)
 
-        // Add Jetpack Compose libraries
-        implementation("androidx.compose.material3:material3")
-        implementation("androidx.compose.foundation:foundation")
-        implementation("androidx.compose.ui:ui")
-        implementation("androidx.compose.material:material") // Optional, choose if using Material Design 2
+    //     // Add Jetpack Compose libraries
+    //     implementation("androidx.compose.material3:material3")
+    //     implementation("androidx.compose.foundation:foundation")
+    //     implementation("androidx.compose.ui:ui")
+    //     implementation("androidx.compose.material:material") // Optional, choose if using Material Design 2
 
-        // Android Studio Preview support for Compose
-        implementation("androidx.compose.ui:ui-tooling-preview")
-        debugImplementation("androidx.compose.ui:ui-tooling")
+    //     // Android Studio Preview support for Compose
+    //     implementation("androidx.compose.ui:ui-tooling-preview")
+    //     debugImplementation("androidx.compose.ui:ui-tooling")
 
-        // UI Tests
-        androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-        debugImplementation("androidx.compose.ui:ui-test-manifest")
+    //     // UI Tests
+    //     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    //     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
-        // Optional libraries for Compose
-        implementation("androidx.compose.material:material-icons-core")
-        implementation("androidx.compose.material:material-icons-extended")
-        implementation("androidx.compose.material3.adaptive:adaptive")
+    //     // Optional libraries for Compose
+    //     implementation("androidx.compose.material:material-icons-core")
+    //     implementation("androidx.compose.material:material-icons-extended")
+    //     implementation("androidx.compose.material3.adaptive:adaptive")
 
-        // Optional - Activity Compose Integration
-        implementation("androidx.activity:activity-compose:1.9.2")
+    //     // Optional - Activity Compose Integration
+    //     implementation("androidx.activity:activity-compose:1.9.2")
 
-        // Optional - ViewModel Compose Integration
-        implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5")
+    //     // Optional - ViewModel Compose Integration
+    //     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5")
 
-        // Optional - LiveData Integration
-        implementation("androidx.compose.runtime:runtime-livedata")
+    //     // Optional - LiveData Integration
+    //     implementation("androidx.compose.runtime:runtime-livedata")
 
-        // Optional - RxJava Integration
-        implementation("androidx.compose.runtime:runtime-rxjava2")
-    }
+    //     // Optional - RxJava Integration
+    //     implementation("androidx.compose.runtime:runtime-rxjava2")
+    // }
 
 }
 
