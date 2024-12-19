@@ -9,8 +9,7 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  static const platform =
-      MethodChannel('native_function');
+  static const platform = MethodChannel('native_function');
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,7 +18,7 @@ class _HomeViewState extends State<HomeView> {
         children: [
           ElevatedButton(
               onPressed: (() {
-                getNativeMessage();
+                openCamera();
               }),
               child: Text("Call Print"))
         ],
@@ -30,6 +29,15 @@ class _HomeViewState extends State<HomeView> {
   static Future<String> getNativeMessage() async {
     try {
       final String message = await platform.invokeMethod('getNativeMessage');
+      return message;
+    } catch (e) {
+      return "Failed to get native message: ${e.toString()}";
+    }
+  }
+
+  static Future<String> openCamera() async {
+    try {
+      final String message = await platform.invokeMethod('goToCamera');
       return message;
     } catch (e) {
       return "Failed to get native message: ${e.toString()}";
