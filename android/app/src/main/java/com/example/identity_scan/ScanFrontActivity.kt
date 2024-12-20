@@ -1,5 +1,6 @@
 package com.example.identity_scan
 
+import android.Manifest
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.content.Intent
@@ -8,6 +9,9 @@ import android.os.Build
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.camera.core.AspectRatio
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,14 +44,17 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+
 
 
 class ScanFrontActivity : AppCompatActivity() {
@@ -71,14 +78,15 @@ class ScanFrontActivity : AppCompatActivity() {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        Text(
-                            text = "สแกนหน้าบัตร",
-                            color = Color.White,
-                            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold) // Bold font and font size 20sp
-                        )
+//                        Text(
+//                            text = "สแกนหน้าบัตร",
+//                            color = Color.White,
+//                            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold) // Bold font and font size 20sp
+//                        )
                     }
 
-                    CameraPreview(modifier = Modifier.weight(1f))
+//                    CameraPreview(modifier = Modifier.weight(1f))
+                    CameraWithOverlay()
 
 //                    CameraPreviewWithRoundedOverlay(modifier = Modifier.weight(1f))
                     // Button in the bottom half
@@ -87,7 +95,7 @@ class ScanFrontActivity : AppCompatActivity() {
                             .fillMaxWidth()
                             .height(80.dp)
                             .padding(16.dp),
-                        contentAlignment = androidx.compose.ui.Alignment.Center
+                        contentAlignment = Alignment.Center
                     ) {
                         Button(onClick = { finish() }) {
                             Text("Exit")
@@ -117,17 +125,17 @@ class ScanFrontActivity : AppCompatActivity() {
                     val cameraProvider = cameraProviderFuture.get()
 
                     // Set up the preview use case with a specific aspect ratio
-                    val preview = androidx.camera.core.Preview.Builder()
-                        .setTargetAspectRatio(androidx.camera.core.AspectRatio.RATIO_4_3) // Set 4:3 aspect ratio
+                    val preview = Preview.Builder()
+                        .setTargetAspectRatio(AspectRatio.RATIO_4_3) // Set 4:3 aspect ratio
                         .build()
 
                     // Optionally configure ImageCapture for capturing photos
-                    val imageCapture = androidx.camera.core.ImageCapture.Builder()
-                        .setTargetAspectRatio(androidx.camera.core.AspectRatio.RATIO_4_3) // Match preview's aspect ratio
+                    val imageCapture = ImageCapture.Builder()
+                        .setTargetAspectRatio(AspectRatio.RATIO_4_3) // Match preview's aspect ratio
                         .build()
 
                     // Choose the back camera as the default
-                    val cameraSelector = androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA
+                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
                     // Bind use cases to the lifecycle
                     cameraProvider.bindToLifecycle(
@@ -148,6 +156,45 @@ class ScanFrontActivity : AppCompatActivity() {
                 .aspectRatio(4f / 3f) // Maintain 4:3 aspect ratio for the composable
         )
     }
+    @Composable
+    fun CameraWithOverlay() {
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Camera Preview filling the whole screen
+            CameraPreview(modifier = Modifier.fillMaxSize())
+
+            // Overlay Text stacked on top of the Camera Preview
+            Text(
+                text = "สแกนหน้าบัตร",
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.Center)
+//                    .padding(top = 16.dp)
+            )
+
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val rectWidth = size.width * 0.8f // Set rectangle width as 80% of screen width
+                val rectHeight = size.height * 0.25f // Set rectangle height as 25% of screen height
+                val rectLeft = (size.width - rectWidth) / 2 // Center the rectangle horizontally
+                val rectTop = (size.height - rectHeight) / 2 // Center the rectangle vertically
+
+                val cornerRadius = 16.dp.toPx() // Convert corner radius to pixels (adjust as needed)
+
+                drawRoundRect(
+                    color = Color.White,
+                    topLeft = Offset(rectLeft, rectTop),
+                    size = Size(rectWidth, rectHeight),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius),
+                    style = Stroke(width = 4f) // Optional border width for the rectangle
+                )
+            }
+
+
+        }
+    }
+
+
 
     @Composable
     fun CameraPreviewWithRoundedOverlay(modifier: Modifier = Modifier) {
@@ -162,8 +209,8 @@ class ScanFrontActivity : AppCompatActivity() {
 
                     cameraProviderFuture.addListener({
                         val cameraProvider = cameraProviderFuture.get()
-                        val preview = androidx.camera.core.Preview.Builder().build()
-                        val cameraSelector = androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA
+                        val preview = Preview.Builder().build()
+                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
                         preview.setSurfaceProvider(previewView.surfaceProvider)
                         cameraProvider.bindToLifecycle(context as ComponentActivity, cameraSelector, preview)
@@ -196,7 +243,7 @@ class ScanFrontActivity : AppCompatActivity() {
                         color = Color.Transparent,
                         topLeft = Offset(cardLeft, cardTop),
                         size = Size(cardWidth, cardHeight),
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius),
+                        cornerRadius = CornerRadius(cornerRadius, cornerRadius),
                         blendMode = BlendMode.Clear // Clear to create a cutout effect
                     )
                 }
@@ -220,22 +267,22 @@ class ScanFrontActivity : AppCompatActivity() {
 
 
     private fun checkPermissions() {
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.CAMERA), 0)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 0)
         }
     }
 
 
     private fun checkAndRequestCameraPermission() {
         if (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+                checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
             } else {
                 TODO("VERSION.SDK_INT < M")
             }
         ) {
             Log.d("NativeDemo", "Permission not granted. Requesting permission.")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(arrayOf(android.Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
+                requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
             }
         } else {
             Log.d("NativeDemo", "Permission already granted. Proceeding with photo capture.")
