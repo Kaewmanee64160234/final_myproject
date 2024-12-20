@@ -35,6 +35,7 @@ import androidx.camera.core.Preview
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -44,6 +45,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 
 
 class ScanFrontActivity : AppCompatActivity() {
@@ -63,7 +67,17 @@ class ScanFrontActivity : AppCompatActivity() {
                   color = Color.Black // Explicitly set the background color to black
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    // Camera Preview in the top half
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "สแกนหน้าบัตร",
+                            color = Color.White,
+                            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold) // Bold font and font size 20sp
+                        )
+                    }
+
                     CameraPreview(modifier = Modifier.weight(1f))
 
 //                    CameraPreviewWithRoundedOverlay(modifier = Modifier.weight(1f))
