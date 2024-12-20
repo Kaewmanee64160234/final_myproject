@@ -32,8 +32,18 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import androidx.camera.view.PreviewView
 import androidx.camera.core.Preview
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.platform.LocalContext
+
 
 class ScanFrontActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
@@ -52,7 +62,9 @@ class ScanFrontActivity : AppCompatActivity() {
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     // Camera Preview in the top half
-                    CameraPreview(modifier = Modifier.weight(1f))
+//                    CameraPreview(modifier = Modifier.weight(1f))
+
+                    CameraPreviewWithRoundedOverlay(modifier = Modifier.weight(1f))
                     // Button in the bottom half
                     Box(
                         modifier = Modifier
@@ -98,6 +110,76 @@ class ScanFrontActivity : AppCompatActivity() {
             modifier = modifier.fillMaxWidth()
         )
     }
+
+    @Composable
+    fun CameraPreviewWithRoundedOverlay(modifier: Modifier = Modifier) {
+        val context = LocalContext.current
+
+        Box(modifier = modifier) {
+            // Camera preview
+            AndroidView(
+                factory = { ctx ->
+                    val previewView = PreviewView(ctx)
+                    val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+
+                    cameraProviderFuture.addListener({
+                        val cameraProvider = cameraProviderFuture.get()
+                        val preview = androidx.camera.core.Preview.Builder().build()
+                        val cameraSelector = androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA
+
+                        preview.setSurfaceProvider(previewView.surfaceProvider)
+                        cameraProvider.bindToLifecycle(context as ComponentActivity, cameraSelector, preview)
+                    }, ContextCompat.getMainExecutor(ctx))
+
+                    previewView
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+
+            // Overlay guide
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = Color.Black.copy(alpha = 0.6f)) // Semi-transparent background
+            ) {
+                // Rounded rectangle ID card guide cutout
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val cardWidth = size.width * 0.8f
+                    val cardHeight = size.height * 0.25f
+                    val cardLeft = (size.width - cardWidth) / 2
+                    val cardTop = (size.height - cardHeight) / 2
+                    val cornerRadius = 16.dp.toPx() // Radius for rounded corners
+
+                    drawRect(
+                        color = Color.Black.copy(alpha = 0.6f),
+                        size = size
+                    )
+                    drawRoundRect(
+                        color = Color.Transparent,
+                        topLeft = Offset(cardLeft, cardTop),
+                        size = Size(cardWidth, cardHeight),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius),
+                        blendMode = BlendMode.Clear // Clear to create a cutout effect
+                    )
+                }
+
+                // Text or instruction overlay
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Align your ID card within the box",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                }
+            }
+        }
+    }
+
 
     private fun checkPermissions() {
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
