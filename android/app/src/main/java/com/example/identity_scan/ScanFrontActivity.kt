@@ -61,6 +61,7 @@ class ScanFrontActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
     private val CAMERA_REQUEST_CODE = 2001
     private val CHANNEL = "camera"
+    private var guideText = "กรุณาวางบัตรในกรอบ"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -78,11 +79,13 @@ class ScanFrontActivity : AppCompatActivity() {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
                     ) {
-//                        Text(
-//                            text = "สแกนหน้าบัตร",
-//                            color = Color.White,
-//                            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold) // Bold font and font size 20sp
-//                        )
+                        Text( modifier = Modifier
+                            .height(80.dp)
+                            .padding(16.dp),
+                            text = "สแกนหน้าบัตร",
+                            color = Color.White,
+                            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        )
                     }
 
 //                    CameraPreview(modifier = Modifier.weight(1f))
@@ -164,7 +167,7 @@ class ScanFrontActivity : AppCompatActivity() {
 
             // Overlay Text stacked on top of the Camera Preview
             Text(
-                text = "สแกนหน้าบัตร",
+                text = guideText,
                 color = Color.White,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
