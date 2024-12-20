@@ -35,6 +35,7 @@ import androidx.camera.core.Preview
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Alignment
@@ -58,13 +59,14 @@ class ScanFrontActivity : AppCompatActivity() {
         setContent {
             Surface(
                 modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
+//                color = MaterialTheme.colorScheme.background
+                  color = Color.Black // Explicitly set the background color to black
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     // Camera Preview in the top half
-//                    CameraPreview(modifier = Modifier.weight(1f))
+                    CameraPreview(modifier = Modifier.weight(1f))
 
-                    CameraPreviewWithRoundedOverlay(modifier = Modifier.weight(1f))
+//                    CameraPreviewWithRoundedOverlay(modifier = Modifier.weight(1f))
                     // Button in the bottom half
                     Box(
                         modifier = Modifier
@@ -87,9 +89,10 @@ class ScanFrontActivity : AppCompatActivity() {
         cameraExecutor.shutdown()
     }
 
+
     @Composable
-    fun CameraPreview(modifier: Modifier) {
-        val context = this
+    fun CameraPreview(modifier: Modifier = Modifier) {
+        val context = LocalContext.current
 
         AndroidView(
             factory = { ctx ->
@@ -98,16 +101,37 @@ class ScanFrontActivity : AppCompatActivity() {
 
                 cameraProviderFuture.addListener({
                     val cameraProvider = cameraProviderFuture.get()
-                    val preview = androidx.camera.core.Preview.Builder().build()
+
+                    // Set up the preview use case with a specific aspect ratio
+                    val preview = androidx.camera.core.Preview.Builder()
+                        .setTargetAspectRatio(androidx.camera.core.AspectRatio.RATIO_4_3) // Set 4:3 aspect ratio
+                        .build()
+
+                    // Optionally configure ImageCapture for capturing photos
+                    val imageCapture = androidx.camera.core.ImageCapture.Builder()
+                        .setTargetAspectRatio(androidx.camera.core.AspectRatio.RATIO_4_3) // Match preview's aspect ratio
+                        .build()
+
+                    // Choose the back camera as the default
                     val cameraSelector = androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA
 
+                    // Bind use cases to the lifecycle
+                    cameraProvider.bindToLifecycle(
+                        context as ComponentActivity,
+                        cameraSelector,
+                        preview,
+                        imageCapture
+                    )
+
+                    // Set the surface provider for the preview
                     preview.setSurfaceProvider(previewView.surfaceProvider)
-                    cameraProvider.bindToLifecycle(context, cameraSelector, preview)
                 }, ContextCompat.getMainExecutor(ctx))
 
                 previewView
             },
-            modifier = modifier.fillMaxWidth()
+            modifier = modifier
+                .fillMaxWidth()
+                .aspectRatio(4f / 3f) // Maintain 4:3 aspect ratio for the composable
         )
     }
 
@@ -170,7 +194,7 @@ class ScanFrontActivity : AppCompatActivity() {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Align your ID card within the box",
+                        text = "กรุณาวางบัตรในกรอบ",
                         color = Color.White,
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(bottom = 16.dp)
