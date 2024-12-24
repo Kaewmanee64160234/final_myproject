@@ -120,13 +120,7 @@ class ScanFrontActivity : AppCompatActivity() {
                     CameraWithOverlay(modifier = Modifier.weight(1f), guideText = cameraViewModel.guideText)
 
 
-                    //                        cameraViewModel.updateGuideText("กรุณาถือนิ่งๆ")
-//                    Box(
-//                    ) {
-//                        Button(onClick = { finish() }) {
-//                            Text("Exit")
-//                        }
-//                    }
+
 
                     Column(
                         verticalArrangement = Arrangement.Center,
@@ -184,11 +178,16 @@ class ScanFrontActivity : AppCompatActivity() {
                     val backgroundExecutor = Executors.newSingleThreadExecutor()
 
                     // Set an analyzer for the imageAnalysis use case
-                    imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(ctx)) { imageProxy ->
+                    imageAnalysis.setAnalyzer(backgroundExecutor) { imageProxy ->
 //                        Log.d("ImageAnalysis", "Image Proxy received: Width: ${imageProxy.width}, Height: ${imageProxy.height}")
 
                         // Process the imageProxy here
-                         processImageProxy(imageProxy)
+//                         processImageProxy(imageProxy)
+
+                        if(!isProcessing){
+                            processImageProxy(imageProxy)
+                        }
+
                         imageProxy.close()
                     }
 
@@ -283,9 +282,13 @@ class ScanFrontActivity : AppCompatActivity() {
 //                            val resultTextView: TextView = findViewById(R.id.resultText)
                             if (maxIndex == 0) {
                                 Log.d("TAG", "พบ maxIndex: $maxIndex")
+                                cameraViewModel.updateGuideText("พบ")
+
+
                             } else {
                                 Log.d("TAG", "ไม่พบ maxIndex: $maxIndex")
                                 // resultTextView.text = "ไม่พบ" // Card not found
+                                cameraViewModel.updateGuideText("ไม่พบ")
                                 isFound = false
                             }
 
