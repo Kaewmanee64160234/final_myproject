@@ -76,11 +76,6 @@ class RectPositionViewModel : ViewModel() {
 
     fun updateRectPosition(left: Float, top: Float, right: Float, bottom: Float) {
         _rectPosition.value = Rect(left.toInt(), top.toInt(), right.toInt(), bottom.toInt())
-
-        println("Left and top")
-        println(left)
-        println(top)
-
     }
 }
 
@@ -240,39 +235,6 @@ class ScanFrontActivity : AppCompatActivity() {
         )
     }
 
-    fun cropImageProxyToYuv(imageProxy: ImageProxy, left: Float, top: Float, right: Float, bottom: Float): ByteArray? {
-        // ดึงข้อมูลจาก YUV Image
-        val yuvImage = imageProxy.planes[0].buffer
-        val width = imageProxy.width
-        val height = imageProxy.height
-
-        // คำนวณพิกัดที่ต้องการตัดภาพ
-        val cropRect = Rect(
-            (left * width).toInt(),
-            (top * height).toInt(),
-            (right * width).toInt(),
-            (bottom * height).toInt()
-        )
-
-        // ตรวจสอบขนาดของข้อมูล YUV
-        val yuvSize = yuvImage.remaining()
-        val croppedSize = cropRect.width() * cropRect.height()
-
-        if (yuvSize <= 0 || croppedSize <= 0) {
-            return null
-        }
-
-        // สร้าง buffer ใหม่ที่มีขนาดพอเหมาะกับข้อมูลที่ตัด
-        val croppedYuv = ByteArray(croppedSize)
-
-        // คัดลอกข้อมูล YUV ที่ตัดแล้วจาก YUV Image มา
-        yuvImage.position(cropRect.top * width + cropRect.left)
-        yuvImage.get(croppedYuv)
-
-        return croppedYuv
-    }
-
-
     private fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
         val byteArrayOutputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
@@ -309,6 +271,7 @@ class ScanFrontActivity : AppCompatActivity() {
     // อะไรไม่รู้
     @SuppressLint("UnsafeOptInUsageError")
     private fun processImageProxy(imageProxy: ImageProxy) {
+        // Crop Image to square before processing further
         isProcessing = true
         try {
             // Get the current time
@@ -320,31 +283,34 @@ class ScanFrontActivity : AppCompatActivity() {
 
                 val image = imageProxy.image
                 if (image != null) {
-                    val bitmap = yuvToRgb(image) // Convert YUV to Bitmap
+                    // Convert YUV to Bitmap
+                    val bitmap = yuvToRgb(image)  
                     if (bitmap != null) {
-                        val byteArray = bitmapToByteArray(bitmap)
-                        val outputBuffer = processImage(byteArray)
+                        // Crop the Bitmap to a square (center-crop)
+                        val croppedBitmap = cropToCreditCardAspect(bitmap, imageProxy)
 
-                        if (outputBuffer != null) {
-                            val outputArray = outputBuffer.floatArray
-                            val maxIndex = outputArray.indices.maxByOrNull { outputArray[it] } ?: -1
+                        if (croppedBitmap != null) {
+                            // Process the cropped Bitmap
+                            val byteArray = bitmapToByteArray(croppedBitmap)
+                            val outputBuffer = processImage(byteArray)
 
-                            // Check for the condition "พบบัตร" (Found the card)
-//                            val resultTextView: TextView = findViewById(R.id.resultText)
-                            if (maxIndex == 0) {
-//                                Log.d("TAG", "พบ maxIndex: $maxIndex")
-                                cameraViewModel.updateGuideText("พบ")
+                            if (outputBuffer != null) {
+                                val outputArray = outputBuffer.floatArray
+                                println(outputArray)
+                                val maxIndex = outputArray.indices.maxByOrNull { outputArray[it] } ?: -1
 
-
+                                // Check for the condition "พบบัตร" (Found the card)
+                                if (maxIndex == 0) {
+                                    cameraViewModel.updateGuideText("พบบัตร")
+                                } else {
+                                    cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
+                                    isFound = false
+                                }
                             } else {
-//                                Log.d("TAG", "ไม่พบ maxIndex: $maxIndex")
-                                // resultTextView.text = "ไม่พบ" // Card not found
-                                cameraViewModel.updateGuideText("ไม่พบ")
-                                isFound = false
+                                println("Error: Process Fail")
                             }
-
                         } else {
-                            println("Error: Process Fail")
+                            println("Error: Cropped Bitmap is null.")
                         }
                     } else {
                         println("Error: Bitmap is null.")
@@ -359,6 +325,50 @@ class ScanFrontActivity : AppCompatActivity() {
             isProcessing = false
             imageProxy.close() // Close the image to allow the next frame to be processed
         }
+    }
+
+    // Function to crop the image to a square (center-crop)
+    private fun cropToSquare(bitmap: Bitmap): Bitmap? {
+        val width = bitmap.width
+        val height = bitmap.height
+
+        // Calculate the size of the square crop (take the smaller dimension)
+        val cropSize = Math.min(width, height)
+
+        // Calculate the top-left coordinates for the crop
+        val left = (width - cropSize) / 2
+        val top = (height - cropSize) / 2
+
+        // Crop the Bitmap to the square
+        return Bitmap.createBitmap(bitmap, left, top, cropSize, cropSize)
+    }
+
+    private fun cropToCreditCardAspect(bitmap: Bitmap, imageProxy: ImageProxy): Bitmap? {
+        val creditCardAspectRatio = 3.37f / 2.125f // Aspect ratio 3.37:2.125
+
+        val width = imageProxy.width
+        val height = imageProxy.height
+
+        // Calculate the width and height of the rectangle (bounding box)
+        val rectWidth = width * 0.7f // Set width to 70% of image width
+        val rectHeight = rectWidth / creditCardAspectRatio // Calculate height based on aspect ratio
+
+        // Center the rectangle in the image
+        val rectLeft = (width - rectWidth) / 2
+        val rectTop = (height - rectHeight) / 2
+
+        // Calculate the crop area
+        val rectRight = rectLeft + rectWidth
+        val rectBottom = rectTop + rectHeight
+
+        // Crop the Bitmap according to the calculated rectangle area
+        return Bitmap.createBitmap(
+            bitmap,
+            rectLeft.toInt(),
+            rectTop.toInt(),
+            rectWidth.toInt(),
+            rectHeight.toInt()
+        )
     }
 
 
