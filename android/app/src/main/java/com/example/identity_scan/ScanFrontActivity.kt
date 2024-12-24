@@ -60,12 +60,35 @@ import android.graphics.ImageFormat
 import android.graphics.YuvImage
 import android.graphics.Rect
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.lifecycle.LiveData
 import java.io.ByteArrayOutputStream
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.nio.ByteBuffer
 import org.tensorflow.lite.Interpreter
 import java.nio.ByteOrder
 import org.tensorflow.lite.DataType
+import androidx.lifecycle.MutableLiveData
+
+
+class RectPositionViewModel : ViewModel() {
+    private val _rectLeft = MutableLiveData<Float>()
+    private val _rectTop = MutableLiveData<Float>()
+    private val _rectRight = MutableLiveData<Float>()
+    private val _rectBottom = MutableLiveData<Float>()
+
+    val rectLeft: LiveData<Float> get() = _rectLeft
+    val rectTop: LiveData<Float> get() = _rectTop
+    val rectRight: LiveData<Float> get() = _rectRight
+    val rectBottom: LiveData<Float> get() = _rectBottom
+
+    // ฟังก์ชันสำหรับอัปเดตค่าตำแหน่ง
+    fun updateRectPosition(left: Float, top: Float, right: Float, bottom: Float) {
+        _rectLeft.value = left
+        _rectTop.value = top
+        _rectRight.value = right
+        _rectBottom.value = bottom
+    }
+}
 
 
 class CameraViewModel : ViewModel() {
@@ -85,6 +108,9 @@ class ScanFrontActivity : AppCompatActivity() {
     private val CHANNEL = "camera"
     private var guideText = "กรุณาวางบัตรในกรอบ"
     private val cameraViewModel: CameraViewModel by viewModels()
+    private val rectPositionViewModel: RectPositionViewModel by viewModels()
+
+
     private lateinit var model: ModelFront
     private var isProcessing = false;
     private var lastProcessedTime: Long = 0
@@ -376,13 +402,11 @@ class ScanFrontActivity : AppCompatActivity() {
             // Camera Preview filling the whole screen
             CameraPreview(modifier = Modifier.fillMaxSize())
 
-
          // สำหรับจัดตำแหน่ง Item
 //                modifier = Modifier
 //                    .align(Alignment.TopCenter)
 //                    .padding(top = 16.dp)
 //
-            // Overlay Text stacked on top of the Camera Preview
             Text(
                 text = guideText,
                 color = Color.White,
@@ -415,6 +439,8 @@ class ScanFrontActivity : AppCompatActivity() {
                     cornerRadius = CornerRadius(cornerRadius, cornerRadius),
                     style = Stroke(width = 4f) // กำหนดความหนาของเส้นขอบ
                 )
+
+                rectPositionViewModel.updateRectPosition(rectLeft, rectTop, rectWidth, rectHeight)
             }
 
 
