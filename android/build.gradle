@@ -1,11 +1,34 @@
+// buildscript {
+//     dependencies {
+//         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22'
+//     }
+// }
+// allprojects {
+//     repositories {
+//         google()
+//         mavenCentral()
+//     }
+   
+// }
+
+buildscript {
+    repositories {
+        google()  // Google's Maven repository
+        mavenCentral()  // Maven Central repository
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:8.1.1" // Adjust the version as per your requirements
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22" // Kotlin Gradle plugin
+    }
+}
 
 allprojects {
     repositories {
         google()
         mavenCentral()
     }
-   
 }
+
 
 rootProject.buildDir = "../build"
 subprojects {
