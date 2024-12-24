@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -13,6 +15,7 @@ import androidx.activity.viewModels
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageProxy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,6 +62,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
+import com.example.identity_scan.ml.ModelFront
+import androidx.camera.core.ImageAnalysis
 
 
 class CameraViewModel : ViewModel() {
@@ -78,10 +83,10 @@ class ScanFrontActivity : AppCompatActivity() {
     private val CHANNEL = "camera"
     private var guideText = "กรุณาวางบัตรในกรอบ"
     private val cameraViewModel: CameraViewModel by viewModels()
+    private lateinit var model: ModelFront
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         cameraExecutor = Executors.newSingleThreadExecutor()
         checkPermissions()
         checkAndRequestCameraPermission()
@@ -163,6 +168,22 @@ class ScanFrontActivity : AppCompatActivity() {
                         .setTargetAspectRatio(AspectRatio.RATIO_4_3) // Set 4:3 aspect ratio
                         .build()
 
+
+                    // Set up the image analysis use case to receive ImageProxy
+                    val imageAnalysis = ImageAnalysis.Builder()
+                        .setTargetAspectRatio(AspectRatio.RATIO_4_3)
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_BLOCK_PRODUCER) // Prevent buffer overflow
+                        .build()
+
+                    val backgroundExecutor = Executors.newSingleThreadExecutor()
+
+
+                    // Set an analyzer for the imageAnalysis use case
+                    imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(ctx)) { imageProxy ->
+                
+                    }
+
+
                     // Optionally configure ImageCapture for capturing photos
                     val imageCapture = ImageCapture.Builder()
                         .setTargetAspectRatio(AspectRatio.RATIO_4_3) // Match preview's aspect ratio
@@ -222,7 +243,7 @@ class ScanFrontActivity : AppCompatActivity() {
                 val cornerRadius = 16.dp.toPx() // Convert corner radius to pixels (adjust as needed)
 
                 drawRoundRect(
-                    color = Color.White,
+                    color = Color.Gray,
                     topLeft = Offset(rectLeft, rectTop),
                     size = Size(rectWidth, rectHeight),
                     cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius),
@@ -329,5 +350,7 @@ class ScanFrontActivity : AppCompatActivity() {
             // capturePhoto()
         }
     }
+
+
 
 }

@@ -8,7 +8,8 @@ plugins {
 android {
      buildFeatures {
         compose = true
-    }
+         mlModelBinding true
+     }
 
     composeOptions {
         // https://developer.android.com/jetpack/androidx/releases/compose-kotlin
