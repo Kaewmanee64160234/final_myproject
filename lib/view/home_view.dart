@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:identity_scan/view/image_view.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -48,10 +50,22 @@ class _HomeViewState extends State<HomeView> {
       final byteArray = call.arguments as Uint8List;
 
       // Update the image data in the state
+      var imageData = null;
       setState(() {
-        var imageData = byteArray;
+        imageData = byteArray;
         print(imageData);
+
+        // if (imageData != null) {
+        //   Navigator.push(
+        //     context,
+        //     MaterialPageRoute(
+        //       builder: (context) =>
+        //           ImageView(imageBytes: imageData), // Pass the byte array
+        //     ),
+        //   );
+        //}
       });
+      Get.to(ImageView(imageBytes: imageData));
     }
   }
 

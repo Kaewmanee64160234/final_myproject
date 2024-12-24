@@ -223,7 +223,7 @@ class ScanFrontActivity : AppCompatActivity() {
     @Composable
     fun CameraPreview(modifier: Modifier = Modifier) {
         val context = LocalContext.current
-
+        var shutterTime = 0
         AndroidView(
             factory = { ctx ->
                 val previewView = PreviewView(ctx)
@@ -252,9 +252,13 @@ class ScanFrontActivity : AppCompatActivity() {
                             if(!isShutter){
                                 processImageProxy(imageProxy)
                             }else{
-                                println("Shutter Trigger")
-                                sendImageToFlutter(imageProxy)
-                                finish()
+//                                println("Shutter Trigger")
+                                if(shutterTime <=3){
+                                    sendImageToFlutter(imageProxy)
+                                    shutterTime = 1
+                                    finish()
+
+                                }
                             }
                         }
 
