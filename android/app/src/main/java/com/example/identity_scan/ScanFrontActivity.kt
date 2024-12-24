@@ -71,22 +71,16 @@ import androidx.lifecycle.MutableLiveData
 
 
 class RectPositionViewModel : ViewModel() {
-    private val _rectLeft = MutableLiveData<Float>()
-    private val _rectTop = MutableLiveData<Float>()
-    private val _rectRight = MutableLiveData<Float>()
-    private val _rectBottom = MutableLiveData<Float>()
+    private val _rectPosition = MutableLiveData<Rect>()
+    val rectPosition: LiveData<Rect> = _rectPosition
 
-    val rectLeft: LiveData<Float> get() = _rectLeft
-    val rectTop: LiveData<Float> get() = _rectTop
-    val rectRight: LiveData<Float> get() = _rectRight
-    val rectBottom: LiveData<Float> get() = _rectBottom
-
-    // ฟังก์ชันสำหรับอัปเดตค่าตำแหน่ง
     fun updateRectPosition(left: Float, top: Float, right: Float, bottom: Float) {
-        _rectLeft.value = left
-        _rectTop.value = top
-        _rectRight.value = right
-        _rectBottom.value = bottom
+        _rectPosition.value = Rect(left.toInt(), top.toInt(), right.toInt(), bottom.toInt())
+
+        println("Left and top")
+        println(left)
+        println(top)
+
     }
 }
 
@@ -326,7 +320,6 @@ class ScanFrontActivity : AppCompatActivity() {
 
                 val image = imageProxy.image
                 if (image != null) {
-                    println("Hello")
                     val bitmap = yuvToRgb(image) // Convert YUV to Bitmap
                     if (bitmap != null) {
                         val byteArray = bitmapToByteArray(bitmap)
@@ -339,12 +332,12 @@ class ScanFrontActivity : AppCompatActivity() {
                             // Check for the condition "พบบัตร" (Found the card)
 //                            val resultTextView: TextView = findViewById(R.id.resultText)
                             if (maxIndex == 0) {
-                                Log.d("TAG", "พบ maxIndex: $maxIndex")
+//                                Log.d("TAG", "พบ maxIndex: $maxIndex")
                                 cameraViewModel.updateGuideText("พบ")
 
 
                             } else {
-                                Log.d("TAG", "ไม่พบ maxIndex: $maxIndex")
+//                                Log.d("TAG", "ไม่พบ maxIndex: $maxIndex")
                                 // resultTextView.text = "ไม่พบ" // Card not found
                                 cameraViewModel.updateGuideText("ไม่พบ")
                                 isFound = false
@@ -463,6 +456,11 @@ class ScanFrontActivity : AppCompatActivity() {
 
                 val cornerRadius = 16.dp.toPx() // กำหนดขนาดมุมโค้ง
 
+                // คำนวณค่าของ right และ bottom
+                val rectRight = rectLeft + rectWidth
+                val rectBottom = rectTop + rectHeight
+
+
                 // วาดกรอบด้วยมุมโค้ง
                 drawRoundRect(
                     color = Color.Gray,
@@ -472,7 +470,7 @@ class ScanFrontActivity : AppCompatActivity() {
                     style = Stroke(width = 4f) // กำหนดความหนาของเส้นขอบ
                 )
 
-                rectPositionViewModel.updateRectPosition(rectLeft, rectTop, rectWidth, rectHeight)
+                rectPositionViewModel.updateRectPosition(rectLeft, rectTop, rectRight, rectBottom)
             }
 
 
