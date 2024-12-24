@@ -62,6 +62,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.identity_scan.ml.ModelFront
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.io.ByteArrayOutputStream
@@ -70,7 +72,14 @@ import java.nio.ByteOrder
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.io.File
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.LifecycleOwner
 
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.dart.DartExecutor
 
 class RectPositionViewModel : ViewModel() {
     private val _rectPosition = MutableLiveData<Rect>()
@@ -100,6 +109,7 @@ class ScanFrontActivity : AppCompatActivity() {
     private var guideText = "กรุณาวางบัตรในกรอบ"
     private val cameraViewModel: CameraViewModel by viewModels()
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
+    private var isShutter =  false;
     val imageCapture = ImageCapture.Builder()
         .setTargetAspectRatio(AspectRatio.RATIO_4_3)
         .build()
@@ -108,6 +118,11 @@ class ScanFrontActivity : AppCompatActivity() {
     private var isProcessing = false;
     private var lastProcessedTime: Long = 0
     private var isFound = false;
+    private lateinit var flutterEngine: FlutterEngine
+
+
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -115,6 +130,25 @@ class ScanFrontActivity : AppCompatActivity() {
         checkPermissions()
         checkAndRequestCameraPermission()
         model = ModelFront.newInstance(this)
+
+
+        // Initialize FlutterEngine manually
+        flutterEngine = FlutterEngine(this)
+        flutterEngine.dartExecutor.executeDartEntrypoint(
+            DartExecutor.DartEntrypoint.createDefault()
+        )
+
+        // Set up the MethodChannel
+        MethodChannel(flutterEngine.dartExecutor, CHANNEL).setMethodCallHandler { call, result ->
+            if (call.method == "captureImage") {
+                isShutter = true
+                result.success("Image Captured Successfully")
+            } else {
+                result.notImplemented()
+            }
+        }
+
+
 
         setContent {
             Surface(
@@ -141,9 +175,8 @@ class ScanFrontActivity : AppCompatActivity() {
 
 
 
-                    Column(
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Row(
+
                     ){
                         Box(
                         ) {
@@ -164,6 +197,13 @@ class ScanFrontActivity : AppCompatActivity() {
                                 Text("Capture")
                             }
                         }
+
+                        Box(
+                        ) {
+                            Button(onClick = { isShutter = !isShutter}) {
+                                Text("Toggle Camera")
+                            }
+                        }
                     }
 
 
@@ -171,6 +211,11 @@ class ScanFrontActivity : AppCompatActivity() {
             }
         }
     }
+
+
+
+    // MethodChannel Setup
+
 
     override fun onDestroy() {
         super.onDestroy()
@@ -205,13 +250,13 @@ class ScanFrontActivity : AppCompatActivity() {
 
                     // Set an analyzer for the imageAnalysis use case
                     imageAnalysis.setAnalyzer(backgroundExecutor) { imageProxy ->
-//                        Log.d("ImageAnalysis", "Image Proxy received: Width: ${imageProxy.width}, Height: ${imageProxy.height}")
-
-                        // Process the imageProxy here
-//                         processImageProxy(imageProxy)
-
                         if(!isProcessing){
-                            processImageProxy(imageProxy)
+                            // ถ้าไม่มีการร้องขอการถ่ายภาพ
+                            if(!isShutter){
+                                processImageProxy(imageProxy)
+                            }else{
+                                println("Shutter Trigger")
+                            }
                         }
 
                         imageProxy.close()
