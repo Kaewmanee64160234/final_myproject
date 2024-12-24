@@ -9,6 +9,7 @@ import android.os.Build
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -43,6 +44,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
@@ -54,14 +58,27 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
 
 
+class CameraViewModel : ViewModel() {
+    // State to hold the guide text
+    var guideText by mutableStateOf("Initial guide text")
+        private set
+
+    // Function to update the guide text
+    fun updateGuideText(newText: String) {
+        guideText = newText
+    }
+}
 
 class ScanFrontActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
     private val CAMERA_REQUEST_CODE = 2001
     private val CHANNEL = "camera"
     private var guideText = "กรุณาวางบัตรในกรอบ"
+    private val cameraViewModel: CameraViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -88,14 +105,36 @@ class ScanFrontActivity : AppCompatActivity() {
                         )
                     }
 
-                    CameraWithOverlay(modifier = Modifier.weight(1f))
+                    CameraWithOverlay(modifier = Modifier.weight(1f), guideText = cameraViewModel.guideText)
 
-                    Box(
-                    ) {
-                        Button(onClick = { finish() }) {
-                            Text("Exit")
+
+                    //                        cameraViewModel.updateGuideText("กรุณาถือนิ่งๆ")
+//                    Box(
+//                    ) {
+//                        Button(onClick = { finish() }) {
+//                            Text("Exit")
+//                        }
+//                    }
+
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ){
+                        Box(
+                        ) {
+                            Button(onClick = { finish() }) {
+                                Text("Exit")
+                            }
+                        }
+                        Box(
+                        ) {
+                            Button(onClick = { cameraViewModel.updateGuideText("กรุณาถือนิ่งๆ") }) {
+                                Text("UpdateText")
+                            }
                         }
                     }
+
+
                 }
             }
         }
@@ -152,7 +191,7 @@ class ScanFrontActivity : AppCompatActivity() {
         )
     }
     @Composable
-    fun CameraWithOverlay(modifier: Modifier = Modifier) {
+    fun CameraWithOverlay(modifier: Modifier = Modifier, guideText: String) {
         Box(modifier = modifier) {
             // Camera Preview filling the whole screen
             CameraPreview(modifier = Modifier.fillMaxSize())

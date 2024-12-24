@@ -102,4 +102,7 @@ class AnimaActivity : AppCompatActivity() {
                 .clickable { onCheckedChange(!checked) }
         )
     }
+
+
+
 }
