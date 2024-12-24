@@ -157,6 +157,12 @@ class ScanFrontActivity : AppCompatActivity() {
             // Camera Preview filling the whole screen
             CameraPreview(modifier = Modifier.fillMaxSize())
 
+
+         // สำหรับจัดตำแหน่ง Item
+//                modifier = Modifier
+//                    .align(Alignment.TopCenter)
+//                    .padding(top = 16.dp)
+//
             // Overlay Text stacked on top of the Camera Preview
             Text(
                 text = guideText,

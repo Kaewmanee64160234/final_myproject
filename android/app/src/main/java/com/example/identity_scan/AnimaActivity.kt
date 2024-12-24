@@ -12,18 +12,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
@@ -58,21 +56,29 @@ class AnimaActivity : AppCompatActivity() {
 
                         // AnimatedVisibility
 
-                        Box(modifier = Modifier.requiredSize(48.dp).fillMaxWidth()) {
+                        Box(modifier = Modifier
+                            .requiredHeight(48.dp)
+                            .fillMaxWidth()) {
                             this@Column.AnimatedVisibility(
                                 visible = isVisible,
-                                enter = slideInHorizontally(animationSpec = tween(durationMillis = 300), initialOffsetX =  {-it})
+                                enter = slideInHorizontally(animationSpec = tween(durationMillis = 100), initialOffsetX = { -it })
                             ) {
-                                
-                                Icon(
-                                    imageVector = Icons.Default.Warning,
-                                    contentDescription = "Favorite",
-                                    modifier = Modifier
-                                        .size(48.dp)  // ขนาดของไอคอน
-                                        .align(Alignment.Center)  // จัดกลางใน Box
-                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = "กรุณาถือนิ่งๆ")
+                                    Spacer(modifier = Modifier.width(13.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.Warning,
+                                        contentDescription = "Favorite",
+                                        modifier = Modifier.size(30.dp)
+                                    )
+                                }
                             }
                         }
+
 
 
                         Button(onClick = { isVisible = !isVisible }) {  // Toggle visibility on second button click
