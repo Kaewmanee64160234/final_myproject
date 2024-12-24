@@ -295,7 +295,13 @@ class ScanFrontActivity : AppCompatActivity() {
                     val bitmap = yuvToRgb(image)  
                     if (bitmap != null) {
                         // Crop the Bitmap to a square (center-crop)
-                        val croppedBitmap = cropToCreditCardAspect(bitmap, imageProxy)
+//                        val croppedBitmap = cropToCreditCardAspect(bitmap, imageProxy)
+                        // แก้ฟังก์ชัน Crop ที่นี่
+
+                        val rotatedBitmap = rotateBitmap(bitmap, 90f)
+
+                        // Now, crop the image based on the credit card aspect ratio
+                        val croppedBitmap = cropToCreditCardAspectRatio(rotatedBitmap)
 
                         if (croppedBitmap != null) {
                             // Process the cropped Bitmap
@@ -503,7 +509,7 @@ class ScanFrontActivity : AppCompatActivity() {
                     val rotatedBitmap = rotateBitmap(bitmap, 90f)
 
                     // Now, crop the image based on the credit card aspect ratio
-                    val croppedBitmap = cropToCreditCardAspect(rotatedBitmap, savedUri)
+                    val croppedBitmap = cropToCreditCardAspectRatio(rotatedBitmap)
 
                     // Optionally, save or display the croppedBitmap
                     saveCroppedImage(croppedBitmap)
@@ -538,7 +544,7 @@ class ScanFrontActivity : AppCompatActivity() {
     }
 
 
-    private fun cropToCreditCardAspect(bitmap: Bitmap, imageUri: Uri): Bitmap? {
+    private fun cropToCreditCardAspectRatio(bitmap: Bitmap): Bitmap? {
         val creditCardAspectRatio = 3.37f / 2.125f // Aspect ratio 3.37:2.125
 
         // Get the bitmap's width and height
