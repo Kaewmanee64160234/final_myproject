@@ -59,6 +59,7 @@ import java.util.concurrent.Executors
 import android.graphics.ImageFormat
 import android.graphics.YuvImage
 import android.graphics.Rect
+import androidx.compose.ui.geometry.CornerRadius
 import java.io.ByteArrayOutputStream
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.nio.ByteBuffer
@@ -390,21 +391,29 @@ class ScanFrontActivity : AppCompatActivity() {
             )
 
             Canvas(modifier = Modifier.fillMaxSize()) {
-                val rectWidth = size.width * 0.8f // Set rectangle width as 80% of screen width
-                val rectHeight = size.height * 0.25f // Set rectangle height as 25% of screen height
-                val rectLeft = (size.width - rectWidth) / 2 // Center the rectangle horizontally
-                val rectTop = (size.height - rectHeight) / 2 // Center the rectangle vertically
+                // ขนาดบัตรเครดิตในอัตราส่วน
+                val creditCardAspectRatio = 3.37f / 2.125f // อัตราส่วน 3.37:2.125
 
-                val cornerRadius = 16.dp.toPx() // Convert corner radius to pixels (adjust as needed)
+                // ใช้ขนาดของหน้าจอในการคำนวณขนาดกรอบ
+                val rectWidth = size.width * 0.7f // ขนาดความกว้างของกรอบเป็น 70% ของความกว้างหน้าจอ
+                val rectHeight = rectWidth / creditCardAspectRatio // คำนวณความสูงจากอัตราส่วนของบัตรเครดิต
 
+                // ทำให้กรอบอยู่ตรงกลาง
+                val rectLeft = (size.width - rectWidth) / 2
+                val rectTop = (size.height - rectHeight) / 2
+
+                val cornerRadius = 16.dp.toPx() // กำหนดขนาดมุมโค้ง
+
+                // วาดกรอบด้วยมุมโค้ง
                 drawRoundRect(
                     color = Color.Gray,
                     topLeft = Offset(rectLeft, rectTop),
                     size = Size(rectWidth, rectHeight),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius),
-                    style = Stroke(width = 4f) // Optional border width for the rectangle
+                    cornerRadius = CornerRadius(cornerRadius, cornerRadius),
+                    style = Stroke(width = 4f) // กำหนดความหนาของเส้นขอบ
                 )
             }
+
 
 
         }
