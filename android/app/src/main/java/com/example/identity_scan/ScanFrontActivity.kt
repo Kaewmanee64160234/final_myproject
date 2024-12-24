@@ -88,17 +88,9 @@ class ScanFrontActivity : AppCompatActivity() {
                         )
                     }
 
-//                    CameraPreview(modifier = Modifier.weight(1f))
-                    CameraWithOverlay()
+                    CameraWithOverlay(modifier = Modifier.weight(1f))
 
-//                    CameraPreviewWithRoundedOverlay(modifier = Modifier.weight(1f))
-                    // Button in the bottom half
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(80.dp)
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
                     ) {
                         Button(onClick = { finish() }) {
                             Text("Exit")
@@ -160,8 +152,8 @@ class ScanFrontActivity : AppCompatActivity() {
         )
     }
     @Composable
-    fun CameraWithOverlay() {
-        Box(modifier = Modifier.fillMaxSize()) {
+    fun CameraWithOverlay(modifier: Modifier = Modifier) {
+        Box(modifier = modifier) {
             // Camera Preview filling the whole screen
             CameraPreview(modifier = Modifier.fillMaxSize())
 
