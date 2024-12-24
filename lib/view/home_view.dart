@@ -20,7 +20,12 @@ class _HomeViewState extends State<HomeView> {
               onPressed: (() {
                 openCamera();
               }),
-              child: Text("Call Print"))
+              child: Text("OpenCamera")),
+          ElevatedButton(
+              onPressed: (() {
+                openAnimationScreen();
+              }),
+              child: Text("Animation"))
         ],
       ),
     );
@@ -38,6 +43,15 @@ class _HomeViewState extends State<HomeView> {
   static Future<String> openCamera() async {
     try {
       final String message = await platform.invokeMethod('goToCamera');
+      return message;
+    } catch (e) {
+      return "Failed to get native message: ${e.toString()}";
+    }
+  }
+
+  static Future<String> openAnimationScreen() async {
+    try {
+      final String message = await platform.invokeMethod('openAnimationView');
       return message;
     } catch (e) {
       return "Failed to get native message: ${e.toString()}";

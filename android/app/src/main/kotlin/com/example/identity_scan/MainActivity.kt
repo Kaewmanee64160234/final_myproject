@@ -19,6 +19,8 @@ class MainActivity : FlutterActivity() {
                     println(message)
                 } "goToCamera" -> {
                     openCameraPage()
+                } "openAnimationView" -> {
+                    openAnimationView()
                 }
                 else -> {
                     result.notImplemented()
@@ -34,6 +36,10 @@ class MainActivity : FlutterActivity() {
     private fun openCameraPage() {
         val intent = Intent(this@MainActivity, ScanFrontActivity::class.java)
         startActivity(intent)
+    }
 
+    private fun openAnimationView() {
+        val intent = Intent(this@MainActivity, AnimaActivity::class.java)
+        startActivity(intent)
     }
 }
