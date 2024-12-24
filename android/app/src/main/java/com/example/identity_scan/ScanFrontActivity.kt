@@ -5,7 +5,11 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
+import android.graphics.Rect
+import android.graphics.YuvImage
 import android.media.Image
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -17,6 +21,7 @@ import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -40,6 +45,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -52,22 +58,18 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.identity_scan.ml.ModelFront
+import org.tensorflow.lite.DataType
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
+import java.io.ByteArrayOutputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import android.graphics.ImageFormat
-import android.graphics.YuvImage
-import android.graphics.Rect
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.lifecycle.LiveData
-import java.io.ByteArrayOutputStream
-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
-import java.nio.ByteBuffer
-import org.tensorflow.lite.Interpreter
-import java.nio.ByteOrder
-import org.tensorflow.lite.DataType
-import androidx.lifecycle.MutableLiveData
+import java.io.File
 
 
 class RectPositionViewModel : ViewModel() {
@@ -98,7 +100,9 @@ class ScanFrontActivity : AppCompatActivity() {
     private var guideText = "กรุณาวางบัตรในกรอบ"
     private val cameraViewModel: CameraViewModel by viewModels()
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
-
+    val imageCapture = ImageCapture.Builder()
+        .setTargetAspectRatio(AspectRatio.RATIO_4_3)
+        .build()
 
     private lateinit var model: ModelFront
     private var isProcessing = false;
@@ -151,6 +155,13 @@ class ScanFrontActivity : AppCompatActivity() {
                         ) {
                             Button(onClick = { cameraViewModel.updateGuideText("กรุณาถือนิ่งๆ") }) {
                                 Text("UpdateText")
+                            }
+                        }
+
+                        Box(
+                        ) {
+                            Button(onClick = { captureImage(imageCapture) }) {
+                                Text("Capture")
                             }
                         }
                     }
@@ -206,10 +217,7 @@ class ScanFrontActivity : AppCompatActivity() {
                         imageProxy.close()
                     }
 
-                    // Optionally configure ImageCapture for capturing photos
-                    val imageCapture = ImageCapture.Builder()
-                        .setTargetAspectRatio(AspectRatio.RATIO_4_3) // Match preview's aspect ratio
-                        .build()
+
 
                     // Choose the back camera as the default
                     val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -430,6 +438,149 @@ class ScanFrontActivity : AppCompatActivity() {
             return null // Return null if an error occurs
         }
     }
+
+
+//    private fun captureImage(imageCapture: ImageCapture) {
+//        // Define the output file
+//        val photoFile = File(
+//            externalMediaDirs.firstOrNull(),
+//            "IMG_${System.currentTimeMillis()}.jpg"
+//        )
+//
+//        // Set up output options to save the image
+//        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+//
+//        // Take the picture
+//        imageCapture.takePicture(
+//            outputOptions,
+//            ContextCompat.getMainExecutor(this),
+//            object : ImageCapture.OnImageSavedCallback {
+//                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+//                    // Get the saved URI of the captured image
+//                    val savedUri = outputFileResults.savedUri ?: Uri.fromFile(photoFile)
+//
+//                    // Optionally, read the image bytes (if needed for further processing)
+//                    val byteArray = photoFile.readBytes()
+//                    val byteList = byteArray.toList()
+//                    println("Captured Image Byte Data: $byteList")
+//
+//                }
+//
+//                override fun onError(exception: ImageCaptureException) {
+//                    // Handle any errors that occur during image capture
+//                }
+//            }
+//        )
+//    }
+
+
+    private fun captureImage(imageCapture: ImageCapture) {
+        // Define the output file
+        val photoFile = File(
+            externalMediaDirs.firstOrNull(),
+            "IMG_${System.currentTimeMillis()}.jpg"
+        )
+
+        // Set up output options to save the image
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+        // Take the picture
+        imageCapture.takePicture(
+            outputOptions,
+            ContextCompat.getMainExecutor(this),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    // Get the saved URI of the captured image
+                    val savedUri = outputFileResults.savedUri ?: Uri.fromFile(photoFile)
+
+                    // Optionally, read the image bytes (if needed for further processing)
+                    val byteArray = photoFile.readBytes()
+
+                    // Convert the byte array to a Bitmap
+                    val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+
+                    // Rotate the Bitmap if necessary (example: rotating by 90 degrees)
+                    val rotatedBitmap = rotateBitmap(bitmap, 90f)
+
+                    // Now, crop the image based on the credit card aspect ratio
+                    val croppedBitmap = cropToCreditCardAspect(rotatedBitmap, savedUri)
+
+                    // Optionally, save or display the croppedBitmap
+                    saveCroppedImage(croppedBitmap)
+
+                    println("Captured and cropped image saved.")
+                }
+
+                override fun onError(exception: ImageCaptureException) {
+                    // Handle any errors that occur during image capture
+                    exception.printStackTrace()
+                }
+            }
+        )
+    }
+
+
+    private fun rotateBitmap(bitmap: Bitmap, rotationDegrees: Float): Bitmap {
+        val matrix = android.graphics.Matrix()
+        matrix.postRotate(rotationDegrees) // Rotate the bitmap by the given angle
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    }
+
+    private fun getRotationDegrees(imageProxy: ImageProxy): Int {
+        // Get the rotation degree from the imageProxy
+        return when (imageProxy.imageInfo.rotationDegrees) {
+            0 -> 0
+            90 -> 90
+            180 -> 180
+            270 -> 270
+            else -> 0
+        }
+    }
+
+
+    private fun cropToCreditCardAspect(bitmap: Bitmap, imageUri: Uri): Bitmap? {
+        val creditCardAspectRatio = 3.37f / 2.125f // Aspect ratio 3.37:2.125
+
+        // Get the bitmap's width and height
+        val width = bitmap.width
+        val height = bitmap.height
+
+        // Calculate the width and height of the rectangle (bounding box)
+        val rectWidth = width * 0.7f // Set width to 70% of image width
+        val rectHeight = rectWidth / creditCardAspectRatio // Calculate height based on aspect ratio
+
+        // Center the rectangle in the image
+        val rectLeft = (width - rectWidth) / 2
+        val rectTop = (height - rectHeight) / 2
+
+        // Calculate the crop area
+        val rectRight = rectLeft + rectWidth
+        val rectBottom = rectTop + rectHeight
+
+        // Crop the Bitmap according to the calculated rectangle area
+        return Bitmap.createBitmap(
+            bitmap,
+            rectLeft.toInt(),
+            rectTop.toInt(),
+            rectWidth.toInt(),
+            rectHeight.toInt()
+        )
+    }
+
+    private fun saveCroppedImage(croppedBitmap: Bitmap?) {
+        // Save the cropped image to a file or display it as needed
+        croppedBitmap?.let {
+            val croppedFile = File(externalMediaDirs.firstOrNull(), "Cropped_${System.currentTimeMillis()}.jpg")
+            val outputStream = croppedFile.outputStream()
+
+            // Compress the bitmap and save it to the file
+            it.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+            outputStream.close()
+
+            println("Cropped image saved to: ${croppedFile.absolutePath}")
+        }
+    }
+
 
     @Composable
     fun CameraWithOverlay(modifier: Modifier = Modifier, guideText: String) {
