@@ -10,6 +10,17 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   static const platform = MethodChannel('native_function');
+
+  static const cameraMethod = MethodChannel('camera');
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Listen for method calls from Android
+    cameraMethod.setMethodCallHandler(_onMethodCall);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,6 +40,19 @@ class _HomeViewState extends State<HomeView> {
         ],
       ),
     );
+  }
+
+  Future<void> _onMethodCall(MethodCall call) async {
+    if (call.method == "sendCapturedImage") {
+      // Extract the byte data from the method call arguments
+      final byteArray = call.arguments as Uint8List;
+
+      // Update the image data in the state
+      setState(() {
+        var imageData = byteArray;
+        print(imageData);
+      });
+    }
   }
 
   static Future<String> getNativeMessage() async {

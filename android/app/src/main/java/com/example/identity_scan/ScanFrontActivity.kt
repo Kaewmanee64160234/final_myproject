@@ -105,7 +105,6 @@ class CameraViewModel : ViewModel() {
 class ScanFrontActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
     private val CAMERA_REQUEST_CODE = 2001
-    private val CHANNEL = "camera"
     private var guideText = "กรุณาวางบัตรในกรอบ"
     private val cameraViewModel: CameraViewModel by viewModels()
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
@@ -119,9 +118,9 @@ class ScanFrontActivity : AppCompatActivity() {
     private var lastProcessedTime: Long = 0
     private var isFound = false;
     private lateinit var flutterEngine: FlutterEngine
+    private lateinit var methodChannel: MethodChannel
 
-
-
+    private val CHANNEL = "camera"
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -131,12 +130,12 @@ class ScanFrontActivity : AppCompatActivity() {
         checkAndRequestCameraPermission()
         model = ModelFront.newInstance(this)
 
-
         // Initialize FlutterEngine manually
         flutterEngine = FlutterEngine(this)
         flutterEngine.dartExecutor.executeDartEntrypoint(
             DartExecutor.DartEntrypoint.createDefault()
         )
+        methodChannel = MethodChannel(flutterEngine.dartExecutor, CHANNEL)
 
         // Set up the MethodChannel
         MethodChannel(flutterEngine.dartExecutor, CHANNEL).setMethodCallHandler { call, result ->
@@ -205,8 +204,6 @@ class ScanFrontActivity : AppCompatActivity() {
                             }
                         }
                     }
-
-
                 }
             }
         }
@@ -256,6 +253,8 @@ class ScanFrontActivity : AppCompatActivity() {
                                 processImageProxy(imageProxy)
                             }else{
                                 println("Shutter Trigger")
+                                sendImageToFlutter(imageProxy)
+                                finish()
                             }
                         }
 
@@ -287,6 +286,70 @@ class ScanFrontActivity : AppCompatActivity() {
                 .aspectRatio(4f / 3f) // Maintain 4:3 aspect ratio for the composable
         )
     }
+
+    private fun imageProxyToByteArray(imageProxy: ImageProxy): ByteArray {
+        // Obtain image buffer
+        val plane = imageProxy.planes[0]
+        val buffer = plane.buffer
+        val byteArray = ByteArray(buffer.remaining())
+
+        // Copy data from buffer to byte array
+        buffer.get(byteArray)
+
+        return byteArray
+    }
+//
+//    private fun sendImageToFlutter(imageProxy: ImageProxy) {
+//        // Convert ImageProxy to ByteArray
+//        val byteArray = imageProxyToByteArray(imageProxy)
+//
+//        // Send byte array to Flutter using MethodChannel
+//        methodChannel.invokeMethod("sendCapturedImage", byteArray, object : MethodChannel.Result {
+//            override fun success(result: Any?) {
+//                // Handle success callback
+//                println("Image sent successfully to Flutter")
+//            }
+//
+//            override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+//                // Handle error callback
+//                println("Failed to send image to Flutter: $errorMessage")
+//            }
+//
+//            override fun notImplemented() {
+//                // Handle method not implemented callback
+//                println("Method not implemented")
+//            }
+//        })
+//    }
+
+    private fun sendImageToFlutter(imageProxy: ImageProxy) {
+        // Convert ImageProxy to ByteArray
+        val byteArray = imageProxyToByteArray(imageProxy)
+
+        // Ensure MethodChannel call is done on the main thread
+        runOnUiThread {
+            // Send byte array to Flutter using MethodChannel
+            methodChannel.invokeMethod("sendCapturedImage", byteArray, object : MethodChannel.Result {
+                override fun success(result: Any?) {
+                    // Handle success callback
+                    println("Image sent successfully to Flutter")
+                }
+
+                override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+                    // Handle error callback
+                    println("Failed to send image to Flutter: $errorMessage")
+                }
+
+                override fun notImplemented() {
+                    // Handle method not implemented callback
+                    println("Method not implemented")
+                }
+            })
+        }
+//        finish()
+    }
+
+
 
     private fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
         val byteArrayOutputStream = ByteArrayOutputStream()
