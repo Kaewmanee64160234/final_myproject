@@ -246,6 +246,38 @@ class ScanFrontActivity : AppCompatActivity() {
         )
     }
 
+    fun cropImageProxyToYuv(imageProxy: ImageProxy, left: Float, top: Float, right: Float, bottom: Float): ByteArray? {
+        // ดึงข้อมูลจาก YUV Image
+        val yuvImage = imageProxy.planes[0].buffer
+        val width = imageProxy.width
+        val height = imageProxy.height
+
+        // คำนวณพิกัดที่ต้องการตัดภาพ
+        val cropRect = Rect(
+            (left * width).toInt(),
+            (top * height).toInt(),
+            (right * width).toInt(),
+            (bottom * height).toInt()
+        )
+
+        // ตรวจสอบขนาดของข้อมูล YUV
+        val yuvSize = yuvImage.remaining()
+        val croppedSize = cropRect.width() * cropRect.height()
+
+        if (yuvSize <= 0 || croppedSize <= 0) {
+            return null
+        }
+
+        // สร้าง buffer ใหม่ที่มีขนาดพอเหมาะกับข้อมูลที่ตัด
+        val croppedYuv = ByteArray(croppedSize)
+
+        // คัดลอกข้อมูล YUV ที่ตัดแล้วจาก YUV Image มา
+        yuvImage.position(cropRect.top * width + cropRect.left)
+        yuvImage.get(croppedYuv)
+
+        return croppedYuv
+    }
+
 
     private fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
         val byteArrayOutputStream = ByteArrayOutputStream()
