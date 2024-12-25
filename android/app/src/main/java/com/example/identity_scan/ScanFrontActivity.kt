@@ -27,6 +27,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,6 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
@@ -77,6 +79,7 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.LifecycleOwner
+import androidx.compose.ui.graphics.asImageBitmap
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.dart.DartExecutor
@@ -89,7 +92,6 @@ class RectPositionViewModel : ViewModel() {
         _rectPosition.value = Rect(left.toInt(), top.toInt(), right.toInt(), bottom.toInt())
     }
 }
-
 
 class CameraViewModel : ViewModel() {
     // Initial Guide Text
@@ -147,8 +149,6 @@ class ScanFrontActivity : AppCompatActivity() {
             }
         }
 
-
-
         setContent {
             Surface(
                 modifier = Modifier.fillMaxSize(),
@@ -170,9 +170,6 @@ class ScanFrontActivity : AppCompatActivity() {
                     }
 
                     CameraWithOverlay(modifier = Modifier.weight(1f), guideText = cameraViewModel.guideText)
-
-
-
 
                     Row(
 
@@ -203,16 +200,10 @@ class ScanFrontActivity : AppCompatActivity() {
         }
     }
 
-
-
-    // MethodChannel Setup
-
-
     override fun onDestroy() {
         super.onDestroy()
         cameraExecutor.shutdown()
     }
-
 
     @Composable
     fun CameraPreview(modifier: Modifier = Modifier) {
@@ -248,9 +239,14 @@ class ScanFrontActivity : AppCompatActivity() {
                             }else{
 //                                println("Shutter Trigger")
                                 if(shutterTime < 1 ){
-                                    sendImageToFlutter(imageProxy)
-                                    shutterTime = 1
-                                    finish()
+
+                                    val rgbData = yuvProxyToRgb(imageProxy)
+                                    val bitmap = byteArrayToBitmap(rgbData, imageProxy.width, imageProxy.height)
+//                                    ShowImageDialog(bitmap = bitmap)
+
+//                                    sendImageToFlutter(imageProxy)
+//                                    shutterTime = 1
+//                                    finish()
 
                                 }
                             }
@@ -285,6 +281,48 @@ class ScanFrontActivity : AppCompatActivity() {
         )
     }
 
+
+    // ฟังก์ชันแปลง RGB ByteArray เป็น Bitmap
+    fun byteArrayToBitmap(rgbData: ByteArray, width: Int, height: Int): Bitmap {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        var pixelIndex = 0
+
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                val r = rgbData[pixelIndex].toInt() and 0xFF
+                val g = rgbData[pixelIndex + 1].toInt() and 0xFF
+                val b = rgbData[pixelIndex + 2].toInt() and 0xFF
+
+                val color = (0xFF shl 24) or (r shl 16) or (g shl 8) or b
+                bitmap.setPixel(x, y, color)
+
+                pixelIndex += 3
+            }
+        }
+
+        return bitmap
+    }
+
+    // Composable เพื่อทดสอบแสดง Dialog
+    @Composable
+    fun TestShowImage(imageProxy: ImageProxy) {
+        val rgbData = yuvProxyToRgb(imageProxy)
+        val bitmap = byteArrayToBitmap(rgbData, imageProxy.width, imageProxy.height)
+        ShowImageDialog(bitmap = bitmap)
+    }
+
+    // ฟังก์ชันที่จะแสดงภาพใน Dialog หรือ Popup ใน Jetpack Compose
+    @Composable
+    fun ShowImageDialog(bitmap: Bitmap) {
+        Dialog(onDismissRequest = {}) {
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = "Captured Image",
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+
     private fun imageProxyToByteArray(imageProxy: ImageProxy): ByteArray {
         // Obtain image buffer
         val plane = imageProxy.planes[0]
@@ -296,29 +334,71 @@ class ScanFrontActivity : AppCompatActivity() {
 
         return byteArray
     }
-//
-//    private fun sendImageToFlutter(imageProxy: ImageProxy) {
-//        // Convert ImageProxy to ByteArray
-//        val byteArray = imageProxyToByteArray(imageProxy)
-//
-//        // Send byte array to Flutter using MethodChannel
-//        methodChannel.invokeMethod("sendCapturedImage", byteArray, object : MethodChannel.Result {
-//            override fun success(result: Any?) {
-//                // Handle success callback
-//                println("Image sent successfully to Flutter")
-//            }
-//
-//            override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
-//                // Handle error callback
-//                println("Failed to send image to Flutter: $errorMessage")
-//            }
-//
-//            override fun notImplemented() {
-//                // Handle method not implemented callback
-//                println("Method not implemented")
-//            }
-//        })
-//    }
+
+    fun yuvProxyToRgb(imageProxy: ImageProxy): ByteArray {
+        // Extract YUV planes from ImageProxy
+        val yPlane = imageProxy.planes[0].buffer
+        val uPlane = imageProxy.planes[1].buffer
+        val vPlane = imageProxy.planes[2].buffer
+
+        // Extract width and height from ImageProxy
+        val width = imageProxy.width
+        val height = imageProxy.height
+
+        // Allocate RGB byte array
+        val rgbData = ByteArray(width * height * 3)
+
+        // Get the Y, U, and V planes' bytes
+        val yData = ByteArray(yPlane.remaining())
+        yPlane.get(yData)
+
+        val uData = ByteArray(uPlane.remaining())
+        uPlane.get(uData)
+
+        val vData = ByteArray(vPlane.remaining())
+        vPlane.get(vData)
+
+        // The YUV420 format has the Y plane followed by the U and V planes.
+        val uvSize = uData.size
+
+        var uvIndex = 0
+        var rgbIndex = 0
+
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                val yIndex = y * width + x
+                val uIndex = uvIndex + (y / 2) * (width / 2) + (x / 2)
+                val vIndex = uIndex + uvSize / 4
+
+                // Get Y, U, V values
+                val Y = yData[yIndex].toInt() and 0xFF
+                val U = uData[uIndex].toInt() and 0xFF - 128
+                val V = vData[vIndex].toInt() and 0xFF - 128
+
+                // RGB conversion formula
+                var R = (Y + 1.402 * V).toInt()
+                var G = (Y - 0.344136 * U - 0.714136 * V).toInt()
+                var B = (Y + 1.772 * U).toInt()
+
+                // Clamping RGB values to be between 0 and 255
+                R = R.coerceIn(0, 255)
+                G = G.coerceIn(0, 255)
+                B = B.coerceIn(0, 255)
+
+                // Set the RGB values in the output byte array
+                rgbData[rgbIndex] = R.toByte()
+                rgbData[rgbIndex + 1] = G.toByte()
+                rgbData[rgbIndex + 2] = B.toByte()
+
+                rgbIndex += 3
+            }
+        }
+
+        return rgbData
+    }
+
+
+
 
     private fun sendImageToFlutter(imageProxy: ImageProxy) {
         // Convert ImageProxy to ByteArray
