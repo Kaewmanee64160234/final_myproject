@@ -534,42 +534,7 @@ class ScanFrontActivity : AppCompatActivity() {
             return null // Return null if an error occurs
         }
     }
-
-
-//    private fun captureImage(imageCapture: ImageCapture) {
-//        // Define the output file
-//        val photoFile = File(
-//            externalMediaDirs.firstOrNull(),
-//            "IMG_${System.currentTimeMillis()}.jpg"
-//        )
-//
-//        // Set up output options to save the image
-//        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-//
-//        // Take the picture
-//        imageCapture.takePicture(
-//            outputOptions,
-//            ContextCompat.getMainExecutor(this),
-//            object : ImageCapture.OnImageSavedCallback {
-//                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-//                    // Get the saved URI of the captured image
-//                    val savedUri = outputFileResults.savedUri ?: Uri.fromFile(photoFile)
-//
-//                    // Optionally, read the image bytes (if needed for further processing)
-//                    val byteArray = photoFile.readBytes()
-//                    val byteList = byteArray.toList()
-//                    println("Captured Image Byte Data: $byteList")
-//
-//                }
-//
-//                override fun onError(exception: ImageCaptureException) {
-//                    // Handle any errors that occur during image capture
-//                }
-//            }
-//        )
-//    }
-
-
+    
     private fun captureImage(imageCapture: ImageCapture) {
         // Define the output file
         val photoFile = File(
