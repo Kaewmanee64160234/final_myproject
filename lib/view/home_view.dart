@@ -42,11 +42,16 @@ class _HomeViewState extends State<HomeView> {
                 openAnimationScreen();
               }),
               child: Text("Animation")),
+          // ElevatedButton(
+          //     onPressed: (() {
+          //       openCaptureScreen();
+          //     }),
+          //     child: Text("ShowImage")),
           ElevatedButton(
               onPressed: (() {
-                Get.to(ImageView(imageBytes: imageDataList));
+                openCaptureScreen();
               }),
-              child: Text("ShowImage"))
+              child: Text("CaptureView"))
         ],
       ),
     );
@@ -107,6 +112,16 @@ class _HomeViewState extends State<HomeView> {
   static Future<String> openAnimationScreen() async {
     try {
       final String message = await platform.invokeMethod('openAnimationView');
+      return message;
+    } catch (e) {
+      return "Failed to get native message: ${e.toString()}";
+    }
+  }
+
+  static Future<String> openCaptureScreen() async {
+    try {
+      print("Opening");
+      final String message = await platform.invokeMethod('openCaptureView');
       return message;
     } catch (e) {
       return "Failed to get native message: ${e.toString()}";

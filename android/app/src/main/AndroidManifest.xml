@@ -54,12 +54,14 @@
             android:name=".ScanFrontActivity"
             android:exported="true"
             android:theme="@style/Theme.IdentityScan" />
-        
-         <activity
+        <activity
             android:name=".AnimaActivity"
             android:exported="true"
             android:theme="@style/Theme.IdentityScan" />
-
+         <activity
+            android:name=".CaptureActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IdentityScan" />
         <!--
  Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java
