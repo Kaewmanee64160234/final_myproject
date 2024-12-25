@@ -43,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -207,6 +208,10 @@ class ScanFrontActivity : AppCompatActivity() {
 
     @Composable
     fun CameraPreview(modifier: Modifier = Modifier) {
+
+        val showDialog = remember { mutableStateOf(false) } // ควบคุมการแสดง Dialog
+        var bitmapToShow: Bitmap? by remember { mutableStateOf(null) } // ใช้เก็บ bitmap ที่จะแสดง
+
         val context = LocalContext.current
         var shutterTime = 0
         AndroidView(
@@ -242,8 +247,17 @@ class ScanFrontActivity : AppCompatActivity() {
 
                                     val rgbData = yuvProxyToRgb(imageProxy)
                                     val bitmap = byteArrayToBitmap(rgbData, imageProxy.width, imageProxy.height)
-//                                    ShowImageDialog(bitmap = bitmap)
 
+                                    val rotatedBitmap = rotateBitmap(bitmap, 90f)
+
+                                    // Now, crop the image based on the credit card aspect ratio
+                                    val croppedBitmap = cropToCreditCardAspectRatio(rotatedBitmap)
+            
+//                                    ShowImageDialog(bitmap = bitmap)
+                                      // เก็บ Bitmap เพื่อนำไปแสดงใน Dialog
+                                    bitmapToShow = croppedBitmap
+                                    showDialog.value = true 
+                                
 //                                    sendImageToFlutter(imageProxy)
 //                                    shutterTime = 1
 //                                    finish()
@@ -279,6 +293,9 @@ class ScanFrontActivity : AppCompatActivity() {
                 .fillMaxWidth()
                 .aspectRatio(4f / 3f) // Maintain 4:3 aspect ratio for the composable
         )
+        if (showDialog.value && bitmapToShow != null) {
+            ShowImageDialog(bitmap = bitmapToShow!!)
+        }
     }
 
 
@@ -335,6 +352,8 @@ class ScanFrontActivity : AppCompatActivity() {
         return byteArray
     }
 
+
+
     fun yuvProxyToRgb(imageProxy: ImageProxy): ByteArray {
         // Extract YUV planes from ImageProxy
         val yPlane = imageProxy.planes[0].buffer
@@ -361,14 +380,13 @@ class ScanFrontActivity : AppCompatActivity() {
         // The YUV420 format has the Y plane followed by the U and V planes.
         val uvSize = uData.size
 
-        var uvIndex = 0
         var rgbIndex = 0
-
         for (y in 0 until height) {
             for (x in 0 until width) {
+                // Calculate Y, U, V indices for the current pixel
                 val yIndex = y * width + x
-                val uIndex = uvIndex + (y / 2) * (width / 2) + (x / 2)
-                val vIndex = uIndex + uvSize / 4
+                val uIndex = (y / 2) * (width / 2) + (x / 2) // U plane is downscaled by a factor of 2
+                val vIndex = uIndex // V plane is the same as U in YUV420
 
                 // Get Y, U, V values
                 val Y = yData[yIndex].toInt() and 0xFF
@@ -396,6 +414,7 @@ class ScanFrontActivity : AppCompatActivity() {
 
         return rgbData
     }
+
 
 
 
