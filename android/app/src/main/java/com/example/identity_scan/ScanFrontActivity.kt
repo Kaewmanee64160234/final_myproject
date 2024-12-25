@@ -92,8 +92,8 @@ class RectPositionViewModel : ViewModel() {
 
 
 class CameraViewModel : ViewModel() {
-    // State to hold the guide text
-    var guideText by mutableStateOf("Initial guide text")
+    // Initial Guide Text
+    var guideText by mutableStateOf("กรุณาวางบัตรในกรอบ")
         private set
 
     // Function to update the guide text
@@ -181,12 +181,6 @@ class ScanFrontActivity : AppCompatActivity() {
                         ) {
                             Button(onClick = { finish() }) {
                                 Text("Exit")
-                            }
-                        }
-                        Box(
-                        ) {
-                            Button(onClick = { cameraViewModel.updateGuideText("กรุณาถือนิ่งๆ") }) {
-                                Text("UpdateText")
                             }
                         }
 
