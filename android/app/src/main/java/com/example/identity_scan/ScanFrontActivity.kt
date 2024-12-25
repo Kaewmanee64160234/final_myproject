@@ -253,7 +253,7 @@ class ScanFrontActivity : AppCompatActivity() {
                                 processImageProxy(imageProxy)
                             }else{
 //                                println("Shutter Trigger")
-                                if(shutterTime <=3){
+                                if(shutterTime < 1 ){
                                     sendImageToFlutter(imageProxy)
                                     shutterTime = 1
                                     finish()
@@ -422,7 +422,7 @@ class ScanFrontActivity : AppCompatActivity() {
 
                             if (outputBuffer != null) {
                                 val outputArray = outputBuffer.floatArray
-                                println(outputArray)
+                                // println(outputArray)
                                 val maxIndex = outputArray.indices.maxByOrNull { outputArray[it] } ?: -1
 
                                 // Check for the condition "พบบัตร" (Found the card)

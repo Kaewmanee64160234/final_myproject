@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:identity_scan/view/image_view.dart';
 
 class HomeView extends StatefulWidget {
-  const HomeView({super.key});
+  HomeView({super.key});
 
   @override
   State<HomeView> createState() => _HomeViewState();
@@ -14,6 +14,9 @@ class _HomeViewState extends State<HomeView> {
   static const platform = MethodChannel('native_function');
 
   static const cameraMethod = MethodChannel('camera');
+  // late Uint8List imageDataList;
+
+  late Uint8List imageDataList = Uint8List(0); // Initialize with empty data
 
   @override
   void initState() {
@@ -38,7 +41,12 @@ class _HomeViewState extends State<HomeView> {
               onPressed: (() {
                 openAnimationScreen();
               }),
-              child: Text("Animation"))
+              child: Text("Animation")),
+          ElevatedButton(
+              onPressed: (() {
+                Get.to(ImageView(imageBytes: imageDataList));
+              }),
+              child: Text("ShowImage"))
         ],
       ),
     );
@@ -53,19 +61,28 @@ class _HomeViewState extends State<HomeView> {
       var imageData = null;
       setState(() {
         imageData = byteArray;
-        print(imageData);
-
-        // if (imageData != null) {
-        //   Navigator.push(
-        //     context,
-        //     MaterialPageRoute(
-        //       builder: (context) =>
-        //           ImageView(imageBytes: imageData), // Pass the byte array
-        //     ),
-        //   );
-        //}
       });
-      Get.to(ImageView(imageBytes: imageData));
+      print("ImageData = $imageData");
+      print("ImageData type = ${imageData.runtimeType}");
+
+      try {
+        if (imageData is! Uint8List) {
+          print("Changing State");
+          setState(() {
+            imageDataList = Uint8List.fromList(imageData);
+          });
+        } else {
+          setState(() {
+            // this.imageDataList = imageData  ; //convert imageData
+            imageDataList = Uint8List.fromList(imageData);
+          });
+          print("Convert Success");
+          print("ImageData type = ${this.imageDataList.runtimeType}");
+        }
+      } catch (e, stackTrace) {
+        print("Error during conversion: $e");
+        print("StackTrace: $stackTrace");
+      }
     }
   }
 

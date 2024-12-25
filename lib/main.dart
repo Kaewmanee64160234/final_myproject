@@ -3,11 +3,11 @@ import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:identity_scan/view/home_view.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(MainApp());
 }
 
 class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+  MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
