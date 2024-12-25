@@ -9,7 +9,6 @@ import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
 import android.media.Image
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -61,7 +60,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.identity_scan.ml.ModelFront
@@ -75,19 +73,11 @@ import java.nio.ByteOrder
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.io.File
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
-import androidx.lifecycle.ProcessLifecycleOwner
-import androidx.lifecycle.LifecycleOwner
 import androidx.compose.ui.graphics.asImageBitmap
-
-import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.dart.DartExecutor
 
 class RectPositionViewModel : ViewModel() {
     private val _rectPosition = MutableLiveData<Rect>()
-    val rectPosition: LiveData<Rect> = _rectPosition
 
     fun updateRectPosition(left: Float, top: Float, right: Float, bottom: Float) {
         _rectPosition.value = Rect(left.toInt(), top.toInt(), right.toInt(), bottom.toInt())
@@ -108,18 +98,17 @@ class CameraViewModel : ViewModel() {
 class ScanFrontActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
     private val CAMERA_REQUEST_CODE = 2001
-    private var guideText = "กรุณาวางบัตรในกรอบ"
     private val cameraViewModel: CameraViewModel by viewModels()
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
-    private var isShutter =  false;
-    val imageCapture = ImageCapture.Builder()
+    private var isShutter =  false
+    private val imageCapture = ImageCapture.Builder()
         .setTargetAspectRatio(AspectRatio.RATIO_4_3)
         .build()
 
     private lateinit var model: ModelFront
-    private var isProcessing = false;
+    private var isProcessing = false
     private var lastProcessedTime: Long = 0
-    private var isFound = false;
+    private var isFound = false
     private lateinit var flutterEngine: FlutterEngine
     private lateinit var methodChannel: MethodChannel
 
@@ -259,7 +248,7 @@ class ScanFrontActivity : AppCompatActivity() {
                                     showDialog.value = true 
                                 
 //                                    sendImageToFlutter(imageProxy)
-//                                    shutterTime = 1
+                                    shutterTime = 1
 //                                    finish()
 
                                 }
@@ -300,7 +289,7 @@ class ScanFrontActivity : AppCompatActivity() {
 
 
     // ฟังก์ชันแปลง RGB ByteArray เป็น Bitmap
-    fun byteArrayToBitmap(rgbData: ByteArray, width: Int, height: Int): Bitmap {
+    private fun byteArrayToBitmap(rgbData: ByteArray, width: Int, height: Int): Bitmap {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         var pixelIndex = 0
 
@@ -320,14 +309,6 @@ class ScanFrontActivity : AppCompatActivity() {
         return bitmap
     }
 
-    // Composable เพื่อทดสอบแสดง Dialog
-    @Composable
-    fun TestShowImage(imageProxy: ImageProxy) {
-        val rgbData = yuvProxyToRgb(imageProxy)
-        val bitmap = byteArrayToBitmap(rgbData, imageProxy.width, imageProxy.height)
-        ShowImageDialog(bitmap = bitmap)
-    }
-
     // ฟังก์ชันที่จะแสดงภาพใน Dialog หรือ Popup ใน Jetpack Compose
     @Composable
     fun ShowImageDialog(bitmap: Bitmap) {
@@ -340,21 +321,7 @@ class ScanFrontActivity : AppCompatActivity() {
         }
     }
 
-    private fun imageProxyToByteArray(imageProxy: ImageProxy): ByteArray {
-        // Obtain image buffer
-        val plane = imageProxy.planes[0]
-        val buffer = plane.buffer
-        val byteArray = ByteArray(buffer.remaining())
-
-        // Copy data from buffer to byte array
-        buffer.get(byteArray)
-
-        return byteArray
-    }
-
-
-
-    fun yuvProxyToRgb(imageProxy: ImageProxy): ByteArray {
+    private fun yuvProxyToRgb(imageProxy: ImageProxy): ByteArray {
         // Extract YUV planes from ImageProxy
         val yPlane = imageProxy.planes[0].buffer
         val uPlane = imageProxy.planes[1].buffer
@@ -376,9 +343,6 @@ class ScanFrontActivity : AppCompatActivity() {
 
         val vData = ByteArray(vPlane.remaining())
         vPlane.get(vData)
-
-        // The YUV420 format has the Y plane followed by the U and V planes.
-        val uvSize = uData.size
 
         var rgbIndex = 0
         for (y in 0 until height) {
@@ -415,46 +379,13 @@ class ScanFrontActivity : AppCompatActivity() {
         return rgbData
     }
 
-
-
-
-
-    private fun sendImageToFlutter(imageProxy: ImageProxy) {
-        // Convert ImageProxy to ByteArray
-        val byteArray = imageProxyToByteArray(imageProxy)
-
-        // Ensure MethodChannel call is done on the main thread
-        runOnUiThread {
-            // Send byte array to Flutter using MethodChannel
-            methodChannel.invokeMethod("sendCapturedImage", byteArray, object : MethodChannel.Result {
-                override fun success(result: Any?) {
-                    // Handle success callback
-                    println("Image sent successfully to Flutter")
-                }
-
-                override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
-                    // Handle error callback
-                    println("Failed to send image to Flutter: $errorMessage")
-                }
-
-                override fun notImplemented() {
-                    // Handle method not implemented callback
-                    println("Method not implemented")
-                }
-            })
-        }
-//        finish()
-    }
-
-
-
     private fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
         val byteArrayOutputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
         return byteArrayOutputStream.toByteArray()
     }
 
-    fun yuvToRgb(yuvImage: Image): Bitmap? {
+    private fun yuvToRgb(yuvImage: Image): Bitmap? {
         val width = yuvImage.width
         val height = yuvImage.height
         val yuvBytes = yuvImage.planes[0].buffer
@@ -546,53 +477,7 @@ class ScanFrontActivity : AppCompatActivity() {
         }
     }
 
-    // Function to crop the image to a square (center-crop)
-    private fun cropToSquare(bitmap: Bitmap): Bitmap? {
-        val width = bitmap.width
-        val height = bitmap.height
-
-        // Calculate the size of the square crop (take the smaller dimension)
-        val cropSize = Math.min(width, height)
-
-        // Calculate the top-left coordinates for the crop
-        val left = (width - cropSize) / 2
-        val top = (height - cropSize) / 2
-
-        // Crop the Bitmap to the square
-        return Bitmap.createBitmap(bitmap, left, top, cropSize, cropSize)
-    }
-
-    private fun cropToCreditCardAspect(bitmap: Bitmap, imageProxy: ImageProxy): Bitmap? {
-        val creditCardAspectRatio = 3.37f / 2.125f // Aspect ratio 3.37:2.125
-
-        val width = imageProxy.width
-        val height = imageProxy.height
-
-        // Calculate the width and height of the rectangle (bounding box)
-        val rectWidth = width * 0.7f // Set width to 70% of image width
-        val rectHeight = rectWidth / creditCardAspectRatio // Calculate height based on aspect ratio
-
-        // Center the rectangle in the image
-        val rectLeft = (width - rectWidth) / 2
-        val rectTop = (height - rectHeight) / 2
-
-        // Calculate the crop area
-        val rectRight = rectLeft + rectWidth
-        val rectBottom = rectTop + rectHeight
-
-        // Crop the Bitmap according to the calculated rectangle area
-        return Bitmap.createBitmap(
-            bitmap,
-            rectLeft.toInt(),
-            rectTop.toInt(),
-            rectWidth.toInt(),
-            rectHeight.toInt()
-        )
-    }
-
-
-
-    fun processImage(imageBytes: ByteArray): TensorBuffer? {
+    private fun processImage(imageBytes: ByteArray): TensorBuffer? {
         try {
             // Decode the raw image bytes to a Bitmap
             val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
@@ -701,8 +586,6 @@ class ScanFrontActivity : AppCompatActivity() {
             ContextCompat.getMainExecutor(this),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    // Get the saved URI of the captured image
-                    val savedUri = outputFileResults.savedUri ?: Uri.fromFile(photoFile)
 
                     // Optionally, read the image bytes (if needed for further processing)
                     val byteArray = photoFile.readBytes()
@@ -844,9 +727,6 @@ class ScanFrontActivity : AppCompatActivity() {
 
                 rectPositionViewModel.updateRectPosition(rectLeft, rectTop, rectRight, rectBottom)
             }
-
-
-
         }
     }
 
@@ -873,7 +753,4 @@ class ScanFrontActivity : AppCompatActivity() {
             // capturePhoto()
         }
     }
-
-
-
 }
