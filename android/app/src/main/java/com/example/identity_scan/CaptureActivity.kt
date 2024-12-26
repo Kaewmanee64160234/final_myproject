@@ -16,6 +16,14 @@ import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
 import android.graphics.Bitmap
 import android.util.Base64
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import java.io.ByteArrayOutputStream
 
 class CaptureActivity : AppCompatActivity() {
@@ -33,9 +41,11 @@ class CaptureActivity : AppCompatActivity() {
 fun CaptureScreen() {
     val screenshotState = rememberScreenshotState()
 
+    // State to hold the captured bitmap
+    var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
     ScreenshotBox(screenshotState = screenshotState) {
-        Scaffold(
-        ) { innerPadding ->
+        Scaffold { innerPadding ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -52,24 +62,33 @@ fun CaptureScreen() {
                         fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
+
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    // Display captured bitmap as an image
+                    capturedBitmap?.let {
+                        Image(
+                            bitmap = it.asImageBitmap(),
+                            contentDescription = "Captured Image",
+                            modifier = Modifier
+                                .size(300.dp) // Adjust size as needed
+                                .border(2.dp, Color.Gray)                     )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Button to capture the screenshot
                     Button(onClick = {
-                        screenshotState.capture();
+                        screenshotState.capture()
                         println("ScreenshotState")
                         println(screenshotState.bitmapState.value.toString())
 
-
-                        // ตรวจสอบ bitmapState.value ว่าไม่เป็น null
+                        // Store the captured bitmap
                         screenshotState.bitmapState.value?.let { bitmap ->
-                            println("Captured Bitmap: $bitmap")
-
-                            // แปลง Bitmap เป็น Base64 String
-                            val base64String = bitmapToBase64(bitmap)
-                            println(base64String)
+                            capturedBitmap = bitmap // Store the captured bitmap
                         } ?: run {
                             println("No screenshot captured")
                         }
-
                     }) {
                         Text(text = "Capture")
                     }
@@ -78,6 +97,8 @@ fun CaptureScreen() {
         }
     }
 }
+
+
 
 
 fun bitmapToBase64(bitmap: Bitmap): String {
