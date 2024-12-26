@@ -17,13 +17,21 @@ class _HomeViewState extends State<HomeView> {
   // late Uint8List imageDataList;
 
   late Uint8List imageDataList = Uint8List(0); // Initialize with empty data
+    String receivedData = "No data received yet";
 
   @override
   void initState() {
     super.initState();
 
-    // Listen for method calls from Android
-    cameraMethod.setMethodCallHandler(_onMethodCall);
+     platform.setMethodCallHandler((call) async {
+      if (call.method == "receiveDataFromKotlin") {
+        setState(() {
+          receivedData = call.arguments;
+        });
+        print("Received");
+        print(receivedData);
+      }
+    });
   }
 
   @override
@@ -57,40 +65,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  Future<void> _onMethodCall(MethodCall call) async {
-    if (call.method == "sendCapturedImage") {
-      // Extract the byte data from the method call arguments
-      final byteArray = call.arguments as Uint8List;
-
-      // Update the image data in the state
-      var imageData = null;
-      setState(() {
-        imageData = byteArray;
-      });
-      print("ImageData = $imageData");
-      print("ImageData type = ${imageData.runtimeType}");
-
-      try {
-        if (imageData is! Uint8List) {
-          print("Changing State");
-          setState(() {
-            imageDataList = Uint8List.fromList(imageData);
-          });
-        } else {
-          setState(() {
-            // this.imageDataList = imageData  ; //convert imageData
-            imageDataList = Uint8List.fromList(imageData);
-          });
-          print("Convert Success");
-          print("ImageData type = ${this.imageDataList.runtimeType}");
-        }
-      } catch (e, stackTrace) {
-        print("Error during conversion: $e");
-        print("StackTrace: $stackTrace");
-      }
-    }
-  }
-
+ 
   static Future<String> getNativeMessage() async {
     try {
       final String message = await platform.invokeMethod('getNativeMessage');
