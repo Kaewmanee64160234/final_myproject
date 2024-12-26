@@ -56,9 +56,9 @@ class CaptureActivity : AppCompatActivity() {
     }
 
 
-    private fun sendDataToFlutter() {
+    private fun sendDataToFlutter(message : String) {
         // Access the MethodChannel to send data to Flutter
-        MethodChannel(flutterEngine.dartExecutor, CHANNEL).invokeMethod("receiveDataFromKotlin", "Hello from Kotlin!")
+        MethodChannel(flutterEngine.dartExecutor, CHANNEL).invokeMethod("receiveDataFromKotlin", message)
     }
 
 
@@ -104,15 +104,17 @@ class CaptureActivity : AppCompatActivity() {
 
                         // Button to capture the screenshot
                         Button(onClick = {
-                            sendDataToFlutter()
 
                             screenshotState.capture()
                             println("ScreenshotState")
-                            println(screenshotState.bitmapState.value.toString())
+//                            println(screenshotState.bitmapState.value.toString())
 
                             // Store the captured bitmap
                             screenshotState.bitmapState.value?.let { bitmap ->
-                                capturedBitmap = bitmap // Store the captured bitmap
+                                capturedBitmap = bitmap
+                                var messageSent = bitmapToBase64(bitmap)
+                                sendDataToFlutter(messageSent)
+
                             } ?: run {
                                 println("No screenshot captured")
                             }

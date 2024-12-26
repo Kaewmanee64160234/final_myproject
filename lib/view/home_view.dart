@@ -29,7 +29,7 @@ class _HomeViewState extends State<HomeView> {
           receivedData = call.arguments;
         });
         print("Received");
-        print(receivedData);
+        print(receivedData.toString());
       }
     });
   }
