@@ -74,6 +74,8 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.io.File
 import androidx.compose.ui.graphics.asImageBitmap
+import com.smarttoolfactory.screenshot.ScreenshotBox
+import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 
 class RectPositionViewModel : ViewModel() {
@@ -197,12 +199,15 @@ class ScanFrontActivity : AppCompatActivity() {
 
     @Composable
     fun CameraPreview(modifier: Modifier = Modifier) {
+        val screenshotState = rememberScreenshotState()
 
         val showDialog = remember { mutableStateOf(false) } // ควบคุมการแสดง Dialog
         var bitmapToShow: Bitmap? by remember { mutableStateOf(null) } // ใช้เก็บ bitmap ที่จะแสดง
 
         val context = LocalContext.current
         var shutterTime = 0
+        ScreenshotBox(screenshotState = screenshotState) {
+
         AndroidView(
             factory = { ctx ->
                 val previewView = PreviewView(ctx)
@@ -282,8 +287,18 @@ class ScanFrontActivity : AppCompatActivity() {
                 .fillMaxWidth()
                 .aspectRatio(4f / 3f) // Maintain 4:3 aspect ratio for the composable
         )
-        if (showDialog.value && bitmapToShow != null) {
-            ShowImageDialog(bitmap = bitmapToShow!!)
+            if (showDialog.value && bitmapToShow != null) {
+                ShowImageDialog(bitmap = bitmapToShow!!)
+            }
+        }
+
+        Box(
+        ) {
+            Button(onClick = { screenshotState.capture() }) {
+                println("State")
+                println(screenshotState.imageBitmap.toString())
+                Text("Capture")
+            }
         }
     }
 
