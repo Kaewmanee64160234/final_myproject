@@ -12,7 +12,6 @@ import android.media.Image
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -74,9 +73,11 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.io.File
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
+
 
 class RectPositionViewModel : ViewModel() {
     private val _rectPosition = MutableLiveData<Rect>()
@@ -196,104 +197,80 @@ class ScanFrontActivity : AppCompatActivity() {
         super.onDestroy()
         cameraExecutor.shutdown()
     }
-
     @Composable
     fun CameraPreview(modifier: Modifier = Modifier) {
         val screenshotState = rememberScreenshotState()
-
-        val showDialog = remember { mutableStateOf(false) } // ควบคุมการแสดง Dialog
-        var bitmapToShow: Bitmap? by remember { mutableStateOf(null) } // ใช้เก็บ bitmap ที่จะแสดง
-
+        val showDialog = remember { mutableStateOf(false) }
+        var bitmapToShow: Bitmap? by remember { mutableStateOf(null) }
+    
         val context = LocalContext.current
+        val lifecycleOwner = LocalLifecycleOwner.current
         var shutterTime = 0
+        var isProcessing by remember { mutableStateOf(false) }
+        var isShutter by remember { mutableStateOf(false) }
+    
         ScreenshotBox(screenshotState = screenshotState) {
-
-        AndroidView(
-            factory = { ctx ->
-                val previewView = PreviewView(ctx)
-                val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-
-                cameraProviderFuture.addListener({
-                    val cameraProvider = cameraProviderFuture.get()
-
-                    // Set up the preview use case with a specific aspect ratio
-                    val preview = Preview.Builder()
-                        .setTargetAspectRatio(AspectRatio.RATIO_4_3) // Set 4:3 aspect ratio
-                        .build()
-
-                    // Set up the image analysis use case to receive ImageProxy
-                    val imageAnalysis = ImageAnalysis.Builder()
-                        .setTargetAspectRatio(AspectRatio.RATIO_4_3)
-                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_BLOCK_PRODUCER) // Prevent buffer overflow
-                        .build()
-
-                    val backgroundExecutor = Executors.newSingleThreadExecutor()
-
-                    // Set an analyzer for the imageAnalysis use case
-                    imageAnalysis.setAnalyzer(backgroundExecutor) { imageProxy ->
-                        if(!isProcessing){
-                            // ถ้าไม่มีการร้องขอการถ่ายภาพ
-                            if(!isShutter){
-                                processImageProxy(imageProxy)
-                            }else{
-//                                println("Shutter Trigger")
-                                if(shutterTime < 1 ){
-
+            AndroidView(
+                factory = { ctx ->
+                    val previewView = PreviewView(ctx)
+                    val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+    
+                    cameraProviderFuture.addListener({
+                        val cameraProvider = cameraProviderFuture.get()
+    
+                        val preview = Preview.Builder()
+                            .setTargetAspectRatio(AspectRatio.RATIO_4_3)
+                            .build()
+    
+                        val imageAnalysis = ImageAnalysis.Builder()
+                            .setTargetAspectRatio(AspectRatio.RATIO_4_3)
+                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST) // ใช้เฉพาะภาพล่าสุด
+                            .build()
+    
+                        imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
+                            if (!isProcessing) {
+                                isProcessing = true
+    
+                                if (isShutter && shutterTime < 1) {
                                     val rgbData = yuvProxyToRgb(imageProxy)
                                     val bitmap = byteArrayToBitmap(rgbData, imageProxy.width, imageProxy.height)
-
                                     val rotatedBitmap = rotateBitmap(bitmap, 90f)
-
-                                    // Now, crop the image based on the credit card aspect ratio
                                     val croppedBitmap = cropToCreditCardAspectRatio(rotatedBitmap)
-            
-//                                    ShowImageDialog(bitmap = bitmap)
-                                      // เก็บ Bitmap เพื่อนำไปแสดงใน Dialog
+    
                                     bitmapToShow = croppedBitmap
-                                    showDialog.value = true 
-                                
-//                                    sendImageToFlutter(imageProxy)
+                                    showDialog.value = true
                                     shutterTime = 1
-//                                    finish()
-
                                 }
+    
+                                isProcessing = false
                             }
+                            imageProxy.close()
                         }
-
-                        imageProxy.close()
-                    }
-
-
-
-                    // Choose the back camera as the default
-                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-                    // Bind use cases to the lifecycle
-                    cameraProvider.bindToLifecycle(
-                        context as ComponentActivity,
-                        cameraSelector,
-                        preview,
-                        imageAnalysis,  // Bind image analysis to the camera lifecycle
-                        imageCapture
-                    )
-
-                    // Set the surface provider for the preview
-                    preview.setSurfaceProvider(previewView.surfaceProvider)
-                }, ContextCompat.getMainExecutor(ctx))
-
-                previewView
-            },
-            modifier = modifier
-                .fillMaxWidth()
-                .aspectRatio(4f / 3f) // Maintain 4:3 aspect ratio for the composable
-        )
+    
+                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    
+                        cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            cameraSelector,
+                            preview,
+                            imageAnalysis
+                        )
+                        preview.setSurfaceProvider(previewView.surfaceProvider)
+                    }, ContextCompat.getMainExecutor(ctx))
+    
+                    previewView
+                },
+                modifier = modifier
+                    .fillMaxWidth()
+                    .aspectRatio(4f / 3f)
+            )
+    
             if (showDialog.value && bitmapToShow != null) {
                 ShowImageDialog(bitmap = bitmapToShow!!)
             }
         }
-
-        Box(
-        ) {
+    
+        Box {
             Button(onClick = { screenshotState.capture() }) {
                 println("State")
                 println(screenshotState.imageBitmap.toString())
@@ -301,7 +278,7 @@ class ScanFrontActivity : AppCompatActivity() {
             }
         }
     }
-
+    
 
     // ฟังก์ชันแปลง RGB ByteArray เป็น Bitmap
     private fun byteArrayToBitmap(rgbData: ByteArray, width: Int, height: Int): Bitmap {
