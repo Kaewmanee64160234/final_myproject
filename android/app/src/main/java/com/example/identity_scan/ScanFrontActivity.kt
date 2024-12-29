@@ -205,9 +205,6 @@ class ScanFrontActivity : AppCompatActivity() {
 
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
-        var shutterTime = 0
-        var isProcessing by remember { mutableStateOf(false) }
-        var isShutter by remember { mutableStateOf(false) }
 
         ScreenshotBox(screenshotState = screenshotState) {
             AndroidView(
