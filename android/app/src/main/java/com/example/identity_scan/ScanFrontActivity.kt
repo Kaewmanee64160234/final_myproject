@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageFormat
+import android.graphics.Matrix
 import android.graphics.Rect
 import android.graphics.YuvImage
 import android.media.Image
@@ -22,6 +23,8 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
@@ -211,7 +214,9 @@ class ScanFrontActivity : AppCompatActivity() {
 
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
+//        val screenSize = if (rotation == 0) Size(720, 1280) else Size(1280, 720)
 
+        val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(ResolutionStrategy( android.util.Size(720, 1280), ResolutionStrategy.FALLBACK_RULE_NONE)).build()
         ScreenshotBox(screenshotState = screenshotState) {
             AndroidView(
                 factory = { ctx ->
@@ -228,15 +233,25 @@ class ScanFrontActivity : AppCompatActivity() {
                         val imageAnalysis = ImageAnalysis.Builder()
                             .setTargetAspectRatio(AspectRatio.RATIO_4_3)
                             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+//                            .setResolutionSelector(resolutionSelector)
+                            //                            .setTargetResolution(android.util.Size(960,1280))
                             .build()
-
 
                         imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
                             if (isShutter) {
                                 println("Converting to Bitmap")
-                                bitmapToShow = imageProxy.toBitmap() // Convert to Bitmap
+                                bitmapToShow = imageProxy.toBitmap()
+
+                                val matrix = Matrix()
+                                matrix.postRotate(90f)
+                                bitmapToShow = Bitmap.createBitmap(bitmapToShow!!, 0, 0, bitmapToShow!!.width, bitmapToShow!!.height, matrix, true)
+
                                 showDialog = true
                                 isShutter = false
+//
+//                                val imageWidth = imageProxy.width
+//                                val imageHeight = imageProxy.height
+//                                println("Image Resolution: $imageWidth x $imageHeight")
                             }
                             processImageProxy(imageProxy) // Process the image
 
@@ -268,7 +283,7 @@ class ScanFrontActivity : AppCompatActivity() {
                 isShutter = true // Trigger image capture when the button is clicked
             },
             modifier = Modifier
-                
+
                 .padding(16.dp)
         ) {
             Text("Capture Image")
