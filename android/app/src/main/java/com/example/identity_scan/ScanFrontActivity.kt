@@ -103,7 +103,6 @@ class ScanFrontActivity : AppCompatActivity() {
     private val CAMERA_REQUEST_CODE = 2001
     private val cameraViewModel: CameraViewModel by viewModels()
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
-    private var isShutter =  false
     private val imageCapture = ImageCapture.Builder()
         .setTargetAspectRatio(AspectRatio.RATIO_4_3)
         .build()
@@ -114,6 +113,7 @@ class ScanFrontActivity : AppCompatActivity() {
     private var isFound = false
     private lateinit var flutterEngine: FlutterEngine
     private lateinit var methodChannel: MethodChannel
+    var showDialog = false
 
     private val CHANNEL = "camera"
 
@@ -135,7 +135,7 @@ class ScanFrontActivity : AppCompatActivity() {
         // Set up the MethodChannel
         MethodChannel(flutterEngine.dartExecutor, CHANNEL).setMethodCallHandler { call, result ->
             if (call.method == "captureImage") {
-                isShutter = true
+//                isShutter = true
                 result.success("Image Captured Successfully")
             } else {
                 result.notImplemented()
@@ -183,7 +183,11 @@ class ScanFrontActivity : AppCompatActivity() {
 
                         Box(
                         ) {
-                            Button(onClick = { isShutter = !isShutter}) {
+                            Button(onClick = {
+//                                isShutter = !isShutter
+//                                println("Update IsShutter")
+//                                println(isShutter)
+                            }) {
                                 Text("Toggle Camera")
                             }
                         }
@@ -197,11 +201,13 @@ class ScanFrontActivity : AppCompatActivity() {
         super.onDestroy()
         cameraExecutor.shutdown()
     }
+
     @Composable
     fun CameraPreview(modifier: Modifier = Modifier) {
         val screenshotState = rememberScreenshotState()
-        val showDialog = remember { mutableStateOf(false) }
-        var bitmapToShow: Bitmap? by remember { mutableStateOf(null) }
+        var bitmapToShow by remember { mutableStateOf<Bitmap?>(null) }
+        var isShutter by remember { mutableStateOf(false) }
+        var showDialog by remember { mutableStateOf(false) }
 
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
@@ -221,11 +227,21 @@ class ScanFrontActivity : AppCompatActivity() {
 
                         val imageAnalysis = ImageAnalysis.Builder()
                             .setTargetAspectRatio(AspectRatio.RATIO_4_3)
-                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST) // ใช้เฉพาะภาพล่าสุด
+                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                             .build()
 
+
                         imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
-                          processImageProxy(imageProxy)
+                            if (isShutter) {
+                                println("Converting to Bitmap")
+                                bitmapToShow = imageProxy.toBitmap() // Convert to Bitmap
+                                showDialog = true
+                                isShutter = false
+                            }
+                            processImageProxy(imageProxy) // Process the image
+
+                            // Ensure to close the imageProxy after processing
+                            imageProxy.close()
                         }
 
                         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -245,111 +261,42 @@ class ScanFrontActivity : AppCompatActivity() {
                     .fillMaxWidth()
                     .aspectRatio(4f / 3f)
             )
-
-            if (showDialog.value && bitmapToShow != null) {
-                ShowImageDialog(bitmap = bitmapToShow!!)
-            }
         }
 
-        Box {
-            Button(onClick = { screenshotState.capture() }) {
-                println("State")
-                println(screenshotState.imageBitmap.toString())
-                Text("Capture")
+        Button(
+            onClick = {
+                isShutter = true // Trigger image capture when the button is clicked
+            },
+            modifier = Modifier
+                
+                .padding(16.dp)
+        ) {
+            Text("Capture Image")
+        }
+
+        // Show Dialog
+        if (showDialog && bitmapToShow != null) {
+            ShowImageDialog(bitmap = bitmapToShow!!) {
+                showDialog = false // Close dialog on dismissal
             }
         }
     }
 
-
-    // ฟังก์ชันแปลง RGB ByteArray เป็น Bitmap
-    private fun byteArrayToBitmap(rgbData: ByteArray, width: Int, height: Int): Bitmap {
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        var pixelIndex = 0
-
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                val r = rgbData[pixelIndex].toInt() and 0xFF
-                val g = rgbData[pixelIndex + 1].toInt() and 0xFF
-                val b = rgbData[pixelIndex + 2].toInt() and 0xFF
-
-                val color = (0xFF shl 24) or (r shl 16) or (g shl 8) or b
-                bitmap.setPixel(x, y, color)
-
-                pixelIndex += 3
-            }
-        }
-
-        return bitmap
-    }
-
-    // ฟังก์ชันที่จะแสดงภาพใน Dialog หรือ Popup ใน Jetpack Compose
     @Composable
-    fun ShowImageDialog(bitmap: Bitmap) {
-        Dialog(onDismissRequest = {}) {
-            Image(
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = "Captured Image",
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-    }
-
-    private fun yuvProxyToRgb(imageProxy: ImageProxy): ByteArray {
-        // Extract YUV planes from ImageProxy
-        val yPlane = imageProxy.planes[0].buffer
-        val uPlane = imageProxy.planes[1].buffer
-        val vPlane = imageProxy.planes[2].buffer
-
-        // Extract width and height from ImageProxy
-        val width = imageProxy.width
-        val height = imageProxy.height
-
-        // Allocate RGB byte array
-        val rgbData = ByteArray(width * height * 3)
-
-        // Get the Y, U, and V planes' bytes
-        val yData = ByteArray(yPlane.remaining())
-        yPlane.get(yData)
-
-        val uData = ByteArray(uPlane.remaining())
-        uPlane.get(uData)
-
-        val vData = ByteArray(vPlane.remaining())
-        vPlane.get(vData)
-
-        var rgbIndex = 0
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                // Calculate Y, U, V indices for the current pixel
-                val yIndex = y * width + x
-                val uIndex = (y / 2) * (width / 2) + (x / 2) // U plane is downscaled by a factor of 2
-                val vIndex = uIndex // V plane is the same as U in YUV420
-
-                // Get Y, U, V values
-                val Y = yData[yIndex].toInt() and 0xFF
-                val U = uData[uIndex].toInt() and 0xFF - 128
-                val V = vData[vIndex].toInt() and 0xFF - 128
-
-                // RGB conversion formula
-                var R = (Y + 1.402 * V).toInt()
-                var G = (Y - 0.344136 * U - 0.714136 * V).toInt()
-                var B = (Y + 1.772 * U).toInt()
-
-                // Clamping RGB values to be between 0 and 255
-                R = R.coerceIn(0, 255)
-                G = G.coerceIn(0, 255)
-                B = B.coerceIn(0, 255)
-
-                // Set the RGB values in the output byte array
-                rgbData[rgbIndex] = R.toByte()
-                rgbData[rgbIndex + 1] = G.toByte()
-                rgbData[rgbIndex + 2] = B.toByte()
-
-                rgbIndex += 3
+    fun ShowImageDialog(bitmap: Bitmap, onDismiss: () -> Unit) {
+        Dialog(onDismissRequest = onDismiss) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "Captured Image",
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
-
-        return rgbData
     }
 
     private fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
