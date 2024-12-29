@@ -201,15 +201,13 @@ class ScanFrontActivity : AppCompatActivity() {
     fun CameraPreview(modifier: Modifier = Modifier) {
         val screenshotState = rememberScreenshotState()
         val showDialog = remember { mutableStateOf(false) }
-        var bitmapToShow: Bitmap? by remember { mutableStateOf(null) }
-    
+
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
         var shutterTime = 0
         var isProcessing by remember { mutableStateOf(false) }
         var isShutter by remember { mutableStateOf(false) }
     
-        ScreenshotBox(screenshotState = screenshotState) {
             AndroidView(
                 factory = { ctx ->
                     val previewView = PreviewView(ctx)
@@ -237,7 +235,7 @@ class ScanFrontActivity : AppCompatActivity() {
                                     val rotatedBitmap = rotateBitmap(bitmap, 90f)
                                     val croppedBitmap = cropToCreditCardAspectRatio(rotatedBitmap)
     
-                                    bitmapToShow = croppedBitmap
+
                                     showDialog.value = true
                                     shutterTime = 1
                                 }
@@ -264,18 +262,10 @@ class ScanFrontActivity : AppCompatActivity() {
                     .fillMaxWidth()
                     .aspectRatio(4f / 3f)
             )
-    
-            if (showDialog.value && bitmapToShow != null) {
-                ShowImageDialog(bitmap = bitmapToShow!!)
-            }
-        }
-    
+        
         Box {
             Button(onClick = {
-                screenshotState.capture()
-                screenshotState.capture()
-                println("ScreenshotState")
-                println(screenshotState.bitmapState.value.toString())
+
             }) {
 
                 Text("Capture Library")
