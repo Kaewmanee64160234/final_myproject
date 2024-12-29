@@ -271,10 +271,14 @@ class ScanFrontActivity : AppCompatActivity() {
         }
     
         Box {
-            Button(onClick = { screenshotState.capture() }) {
-                println("State")
-                println(screenshotState.imageBitmap.toString())
-                Text("Capture")
+            Button(onClick = {
+                screenshotState.capture()
+                screenshotState.capture()
+                println("ScreenshotState")
+                println(screenshotState.bitmapState.value.toString())
+            }) {
+
+                Text("Capture Library")
             }
         }
     }
