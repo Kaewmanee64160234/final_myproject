@@ -105,7 +105,7 @@ class ScanFrontActivity : AppCompatActivity() {
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
     private var isShutter =  false
     private val imageCapture = ImageCapture.Builder()
-        .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+        .setTargetAspectRatio(AspectRatio.RATIO_4_3)
         .build()
 
     private lateinit var model: ModelFront
@@ -146,7 +146,7 @@ class ScanFrontActivity : AppCompatActivity() {
             Surface(
                 modifier = Modifier.fillMaxSize(),
 //                color = MaterialTheme.colorScheme.background
-                  color = Color.Black // Explicitly set the background color to black
+                color = Color.Black // Explicitly set the background color to black
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     Row(
@@ -201,6 +201,7 @@ class ScanFrontActivity : AppCompatActivity() {
     fun CameraPreview(modifier: Modifier = Modifier) {
         val screenshotState = rememberScreenshotState()
         val showDialog = remember { mutableStateOf(false) }
+        var bitmapToShow: Bitmap? by remember { mutableStateOf(null) }
 
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
@@ -208,6 +209,7 @@ class ScanFrontActivity : AppCompatActivity() {
         var isProcessing by remember { mutableStateOf(false) }
         var isShutter by remember { mutableStateOf(false) }
 
+        ScreenshotBox(screenshotState = screenshotState) {
             AndroidView(
                 factory = { ctx ->
                     val previewView = PreviewView(ctx)
@@ -222,27 +224,11 @@ class ScanFrontActivity : AppCompatActivity() {
 
                         val imageAnalysis = ImageAnalysis.Builder()
                             .setTargetAspectRatio(AspectRatio.RATIO_4_3)
-                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST) // ใช้เฉพาะภาพล่าสุด
                             .build()
 
                         imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
-                            if (!isProcessing) {
-                                isProcessing = true
-
-                                if (isShutter && shutterTime < 1) {
-                                    val rgbData = yuvProxyToRgb(imageProxy)
-                                    val bitmap = byteArrayToBitmap(rgbData, imageProxy.width, imageProxy.height)
-                                    val rotatedBitmap = rotateBitmap(bitmap, 90f)
-                                    val croppedBitmap = cropToCreditCardAspectRatio(rotatedBitmap)
-
-
-                                    showDialog.value = true
-                                    shutterTime = 1
-                                }
-
-                                isProcessing = false
-                            }
-                            imageProxy.close()
+                          processImageProxy(imageProxy)
                         }
 
                         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -251,8 +237,7 @@ class ScanFrontActivity : AppCompatActivity() {
                             lifecycleOwner,
                             cameraSelector,
                             preview,
-                            imageAnalysis,
-                            imageCapture
+                            imageAnalysis
                         )
                         preview.setSurfaceProvider(previewView.surfaceProvider)
                     }, ContextCompat.getMainExecutor(ctx))
@@ -264,12 +249,16 @@ class ScanFrontActivity : AppCompatActivity() {
                     .aspectRatio(4f / 3f)
             )
 
+            if (showDialog.value && bitmapToShow != null) {
+                ShowImageDialog(bitmap = bitmapToShow!!)
+            }
+        }
+
         Box {
-            Button(onClick = {
-
-            }) {
-
-                Text("Capture Library")
+            Button(onClick = { screenshotState.capture() }) {
+                println("State")
+                println(screenshotState.imageBitmap.toString())
+                Text("Capture")
             }
         }
     }
@@ -415,7 +404,7 @@ class ScanFrontActivity : AppCompatActivity() {
                 val image = imageProxy.image
                 if (image != null) {
                     // Convert YUV to Bitmap
-                    val bitmap = yuvToRgb(image)  
+                    val bitmap = yuvToRgb(image)
                     if (bitmap != null) {
                         // Crop the Bitmap to a square (center-crop)
 //                        val croppedBitmap = cropToCreditCardAspect(bitmap, imageProxy)
@@ -523,15 +512,24 @@ class ScanFrontActivity : AppCompatActivity() {
     }
 
     private fun captureImage(imageCapture: ImageCapture) {
-        // Take the picture without saving it to a file
+        // Define the output file
+        val photoFile = File(
+            externalMediaDirs.firstOrNull(),
+            "IMG_${System.currentTimeMillis()}.jpg"
+        )
+
+        // Set up output options to save the image
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+        // Take the picture
         imageCapture.takePicture(
+            outputOptions,
             ContextCompat.getMainExecutor(this),
-            object : ImageCapture.OnImageCapturedCallback() {
-                override fun onCaptureSuccess(image: ImageProxy) {
-                    // Read the image bytes from ImageProxy
-                    val buffer = image.planes[0].buffer
-                    val byteArray = ByteArray(buffer.remaining())
-                    buffer.get(byteArray)
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+
+                    // Optionally, read the image bytes (if needed for further processing)
+                    val byteArray = photoFile.readBytes()
 
                     // Convert the byte array to a Bitmap
                     val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
@@ -542,23 +540,19 @@ class ScanFrontActivity : AppCompatActivity() {
                     // Now, crop the image based on the credit card aspect ratio
                     val croppedBitmap = cropToCreditCardAspectRatio(rotatedBitmap)
 
-                    // Store the croppedBitmap in a variable (example variable to hold it)
-                    val imageToStore: Bitmap? = croppedBitmap
+                    // Optionally, save or display the croppedBitmap
+                    saveCroppedImage(croppedBitmap)
 
-                    // Optionally, you can handle the stored bitmap (e.g., display it in an ImageView)
-                    println("Captured and cropped image stored.")
-
-                    // Close the image proxy after processing
-                    image.close()
+                    println("Captured and cropped image saved.")
                 }
 
                 override fun onError(exception: ImageCaptureException) {
                     // Handle any errors that occur during image capture
                     exception.printStackTrace()
                 }
-            })
+            }
+        )
     }
-
 
 
     private fun rotateBitmap(bitmap: Bitmap, rotationDegrees: Float): Bitmap {
@@ -629,7 +623,7 @@ class ScanFrontActivity : AppCompatActivity() {
             // Camera Preview filling the whole screen
             CameraPreview(modifier = Modifier.fillMaxSize())
 
-         // สำหรับจัดตำแหน่ง Item
+            // สำหรับจัดตำแหน่ง Item
 //                modifier = Modifier
 //                    .align(Alignment.TopCenter)
 //                    .padding(top = 16.dp)
