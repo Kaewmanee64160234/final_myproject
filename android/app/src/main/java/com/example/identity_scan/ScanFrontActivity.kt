@@ -107,7 +107,7 @@ class ScanFrontActivity : AppCompatActivity() {
     private val cameraViewModel: CameraViewModel by viewModels()
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
     private val imageCapture = ImageCapture.Builder()
-        .setTargetAspectRatio(AspectRatio.RATIO_4_3)
+        .setTargetAspectRatio(AspectRatio.RATIO_16_9)
         .build()
 
     private lateinit var model: ModelFront
@@ -230,11 +230,24 @@ class ScanFrontActivity : AppCompatActivity() {
                             .setTargetAspectRatio(AspectRatio.RATIO_4_3)
                             .build()
 
+                        // For High end device
+                        // android.util.Size(1080, 1440),
+                        // Mid-Low End
+                        // android.util.Size(720, 960),
+                        //
+
+                        val resolutionSelector1 = ResolutionSelector.Builder()
+                            .setResolutionStrategy(
+                                ResolutionStrategy(
+                                    android.util.Size(1080, 1440), // ความละเอียดที่ต้องการ
+                                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER // fallback หากไม่รองรับ
+                                )
+                            )
+                            .build()
+
                         val imageAnalysis = ImageAnalysis.Builder()
-                            .setTargetAspectRatio(AspectRatio.RATIO_4_3)
                             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-//                            .setResolutionSelector(resolutionSelector)
-                            //                            .setTargetResolution(android.util.Size(960,1280))
+                            .setResolutionSelector(resolutionSelector1)
                             .build()
 
                         imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
