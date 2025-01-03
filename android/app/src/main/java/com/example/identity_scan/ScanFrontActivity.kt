@@ -80,6 +80,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
+import android.util.Base64
 
 
 class RectPositionViewModel : ViewModel() {
@@ -255,10 +256,13 @@ class ScanFrontActivity : AppCompatActivity() {
                                 println("Converting to Bitmap")
                                 bitmapToShow = imageProxy.toBitmap()
 
+                                var base64Img = bitmapToBase64(imageProxy.toBitmap())
+                                println("Base64Img")
+                                println(base64Img)
+
                                 val matrix = Matrix()
                                 matrix.postRotate(90f)
                                 bitmapToShow = Bitmap.createBitmap(bitmapToShow!!, 0, 0, bitmapToShow!!.width, bitmapToShow!!.height, matrix, true)
-
                                 showDialog = true
                                 isShutter = false
 //
@@ -293,7 +297,8 @@ class ScanFrontActivity : AppCompatActivity() {
 
         Button(
             onClick = {
-                isShutter = true // Trigger image capture when the button is clicked
+                //ถ่ายรูปที่นี่
+                isShutter = true
             },
             modifier = Modifier
 
@@ -308,6 +313,13 @@ class ScanFrontActivity : AppCompatActivity() {
                 showDialog = false // Close dialog on dismissal
             }
         }
+    }
+
+    fun bitmapToBase64(bitmap: Bitmap): String {
+        val outputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+        val byteArray = outputStream.toByteArray()
+        return Base64.encodeToString(byteArray, Base64.DEFAULT)
     }
 
     @Composable
