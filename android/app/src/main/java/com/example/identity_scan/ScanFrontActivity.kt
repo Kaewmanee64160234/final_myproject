@@ -212,6 +212,7 @@ class ScanFrontActivity : AppCompatActivity() {
         var bitmapToShow by remember { mutableStateOf<Bitmap?>(null) }
         var isShutter by remember { mutableStateOf(false) }
         var showDialog by remember { mutableStateOf(false) }
+        var base64Image2 by remember { mutableStateOf("No Value") }
 
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
@@ -257,9 +258,9 @@ class ScanFrontActivity : AppCompatActivity() {
                                 bitmapToShow = imageProxy.toBitmap()
 
                                 var base64Img = bitmapToBase64(imageProxy.toBitmap())
-                                println("Base64Img")
-                                println(base64Img)
-
+//                                println("Base64Img")
+//                                println(base64Img)
+                                base64Image2 = base64Img
                                 val matrix = Matrix()
                                 matrix.postRotate(90f)
                                 bitmapToShow = Bitmap.createBitmap(bitmapToShow!!, 0, 0, bitmapToShow!!.width, bitmapToShow!!.height, matrix, true)
@@ -305,6 +306,18 @@ class ScanFrontActivity : AppCompatActivity() {
                 .padding(16.dp)
         ) {
             Text("Capture Image")
+        }
+
+
+        Button(
+            onClick = {
+                println(base64Image2)
+            },
+            modifier = Modifier
+
+                .padding(60.dp)
+        ) {
+            Text("Print Base64")
         }
 
         // Show Dialog
