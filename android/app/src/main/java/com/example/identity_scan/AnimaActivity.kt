@@ -1,6 +1,7 @@
 package com.example.identity_scan
 
 // Animation
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -81,7 +82,14 @@ class AnimaActivity : AppCompatActivity() {
 
 
 
-                        Button(onClick = { isVisible = !isVisible }) {  // Toggle visibility on second button click
+                        Button(onClick = {
+                            isVisible = !isVisible
+                            val resultIntent = Intent()
+                            resultIntent.putExtra("key", "ค่าที่ส่งกลับ") // ส่งข้อมูลกลับไป
+                            setResult(RESULT_OK, resultIntent)
+                            finish()
+
+                        }) {  // Toggle visibility on second button click
                             Text("Toggle")
                         }
                     }

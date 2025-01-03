@@ -42,11 +42,22 @@ class MainActivity : FlutterActivity() {
 
     private fun openAnimationView() {
         val intent = Intent(this@MainActivity, AnimaActivity::class.java)
-        startActivity(intent)
+        startActivityForResult(intent, 1)
+//        startActivity(intent)
     }
 
     private fun openCaptureView() {
         val intent = Intent(this@MainActivity, CaptureActivity::class.java)
         startActivity(intent)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 1 && resultCode == RESULT_OK) {
+            // ได้รับผลลัพธ์จาก AnimaActivity
+            val result = data?.getStringExtra("key") // รับค่าที่ส่งกลับจาก AnimaActivity
+            // ใช้ผลลัพธ์ที่ได้ที่นี่
+            println(result)
+        }
     }
 }
