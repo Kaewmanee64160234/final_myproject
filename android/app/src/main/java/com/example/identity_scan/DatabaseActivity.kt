@@ -101,6 +101,10 @@ class DatabaseActivity : AppCompatActivity() {
             val selectQuery = "SELECT * FROM images"
             val cursor = db.rawQuery(selectQuery, null)
 
+            val dbPath = db.path // This gives the absolute path of the database file
+            println("DatabasePath Database Path: $dbPath")
+
+
             if (cursor != null && cursor.moveToFirst()) {
                 do {
                     val idColumnIndex = cursor.getColumnIndex("id")
@@ -142,4 +146,5 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
 
     }
+    
 }

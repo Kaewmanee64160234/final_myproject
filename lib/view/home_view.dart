@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:identity_scan/view/db_view.dart';
 import 'package:identity_scan/view/image_view.dart';
 
 class HomeView extends StatefulWidget {
@@ -64,7 +65,12 @@ class _HomeViewState extends State<HomeView> {
               onPressed: (() {
                 openDbScreen();
               }),
-              child: Text("DatabaseView"))
+              child: Text("DatabaseView")),
+              ElevatedButton(
+              onPressed: (() {
+                Get.to(DbView());
+              }),
+              child: Text("Flutter DbView"))
         ],
       ),
     );
