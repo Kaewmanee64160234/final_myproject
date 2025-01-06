@@ -25,16 +25,16 @@ class _DbViewState extends State<DbView> {
       children: [
         ElevatedButton(
             onPressed: (() async {
-              ImageData image = await dbHelper.selectData();
-              setState(() {
-                base64Image = image.imageData;
-              });
+              // ImageData image = await dbHelper.selectData();
+              // setState(() {
+              //   base64Image = image.imageData;
+              // });
               try {
-                print(base64Image);
-                String cleanedBase64 = base64Image.replaceAll(RegExp(r'\s'), ''); // Remove all whitespaces
+                // print(base64Image);
+                // String cleanedBase64 = base64Image.replaceAll(RegExp(r'\s'), ''); // Remove all whitespaces
 
-                var imgMemory = base64Decode(cleanedBase64);
-                Get.to(ImageView(imageBytes: imgMemory));
+                // var imgMemory = base64Decode(cleanedBase64);
+                Get.to(ImageView(imagePath: '/data/user/0/com.example.identity_scan/app_Images/image.jpg',));
               } catch (e) {
                 print("Error decoding Base64 string: $e");
                 setState(() {

@@ -1,6 +1,8 @@
 package com.example.identity_scan
 
 import android.Manifest
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -81,6 +83,8 @@ import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 import android.util.Base64
+import java.io.FileOutputStream
+import java.io.OutputStream
 
 
 class RectPositionViewModel : ViewModel() {
@@ -255,12 +259,8 @@ class ScanFrontActivity : AppCompatActivity() {
                              if (isShutter) {
                                  println("Converting to Bitmap")
                                  bitmapToShow = imageProxy.toBitmap()
-//                                 var base64Img = bitmapToBase64(imageProxy.toBitmap())
-//                                 base64Image2 = base64Img
-
 
                                  // Update รูปภาพ ที่นี่
-//                                 updateImageData(base64Image2)
                                  val matrix = Matrix()
 //                                 matrix.postRotate(90f)
 //                                 bitmapToShow = Bitmap.createBitmap(bitmapToShow!!, 0, 0, bitmapToShow!!.width, bitmapToShow!!.height, matrix, true)
@@ -278,35 +278,27 @@ class ScanFrontActivity : AppCompatActivity() {
                                  )
 
                                  // Convert the rotated Bitmap to Base64
-                                 var base64Image = bitmapToBase64(bitmapToShow!!)
-                                 updateImageData(base64Image)
+//                                 var base64Image = bitmapToBase64(bitmapToShow!!)
+
+                                 bitmapToJpg(bitmapToShow!!,context,"image.jpg")
+
+                                 // Update Basse64 sqlite databae
+//                                 updateImageData(base64Image)
 
                                  showDialog = true
                                  isShutter = false
 
-                                val imageWidth = imageProxy.width
-                                val imageHeight = imageProxy.height
-                                println("Image Resolution: $imageWidth x $imageHeight")
-                            }
-                             processImageProxy(imageProxy)
+//                                val imageWidth = imageProxy.width
+//                                val imageHeight = imageProxy.height
+//                                println("Image Resolution: $imageWidth x $imageHeight")
+                             }else{
+                                 processImageProxy(imageProxy)
+                             }
 
                              //Ensure to close the imageProxy after processing
                              imageProxy.close()
                          }
 
-//                        imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
-//                            try {
-//                                // Process the image using your method
-//                                processImageProxy(imageProxy)
-//                            } catch (e: Exception) {
-//                                // Log any exception that occurs during image analysis
-//                                Log.e("ImageAnalysis", "Error analyzing image: ${e.message}", e)
-//                            } finally {
-//                                // Ensure the ImageProxy is always closed to avoid memory leaks
-//                                imageProxy.close()
-//                            }
-//                        }
-//
                         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
                         cameraProvider.bindToLifecycle(
@@ -341,7 +333,6 @@ class ScanFrontActivity : AppCompatActivity() {
 
         Button(
             onClick = {
-//                println(base64Image2)
                 val resultIntent = Intent()
                 resultIntent.putExtra("key", base64Image2)
                 setResult(RESULT_OK, resultIntent)
@@ -362,12 +353,38 @@ class ScanFrontActivity : AppCompatActivity() {
         }
     }
 
+    fun bitmapToJpg(bitmapImg: Bitmap, context: Context, fileName: String): File {
+        // Wrap the context to work with app-specific directories
+        val wrapper = ContextWrapper(context)
+
+        // Get the app's private directory for storing images
+        var fileDir = wrapper.getDir("Images", Context.MODE_PRIVATE)
+        println("Image Directory")
+        println(fileDir)
+        // Create a file in the directory with the given name
+        val file = File(fileDir, fileName)
+
+        try {
+            // Create an output stream to write the bitmap data to the file
+            val stream: OutputStream = FileOutputStream(file)
+            bitmapImg.compress(Bitmap.CompressFormat.JPEG, 25, stream) // Compress to JPEG with quality 25%
+            stream.flush()
+            stream.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        return file
+    }
+
+
     fun bitmapToBase64(bitmap: Bitmap): String {
         val outputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
         val byteArray = outputStream.toByteArray()
         return Base64.encodeToString(byteArray, Base64.DEFAULT)
     }
+
 
     @Composable
     fun ShowImageDialog(bitmap: Bitmap, onDismiss: () -> Unit) {
