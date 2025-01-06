@@ -7,9 +7,10 @@ class DatabaseHelper {
   Future<Database> get database async {
     if (_database != null) return _database!;
 
-    // Get the path to the app's internal directory (the same as in Kotlin)
-    final directory = await getApplicationDocumentsDirectory();
+    // final directory = await getApplicationDocumentsDirectory();
     // final dbPath = '${directory.path}/databases/identity_scan_db'; 
+
+    // Database Path ที่ตรงกับ Kotlin Side
     final dbPath = '/data/user/0/com.example.identity_scan/databases/identity_scan_db';
 
     _database = await openDatabase(

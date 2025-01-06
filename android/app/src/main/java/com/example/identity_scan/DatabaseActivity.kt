@@ -37,6 +37,16 @@ class DatabaseActivity : AppCompatActivity() {
         """.trimIndent()
 
             db.execSQL(createTableQuery)
+
+
+            // Insert row only if it doesn't exist
+            val insertQuery = """
+            INSERT OR IGNORE INTO images (id, image_data)
+            VALUES (1, 'initial_image_data')
+        """.trimIndent()
+            
+            db.execSQL(insertQuery)
+
         } catch (e: Exception) {
             e.printStackTrace()
             // คุณสามารถใช้ Log.e หรือ Log.d เพื่อลงข้อมูลใน log แทน
@@ -83,6 +93,8 @@ class DatabaseActivity : AppCompatActivity() {
         }
     }
 
+
+
     private fun insertMockData() {
         try {
             val db = dbHelper.writableDatabase
@@ -92,6 +104,28 @@ class DatabaseActivity : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
             Log.e("DatabaseError", "Error while inserting data: ${e.message}")
+        }
+    }
+
+    private fun updateImageData(newImageData: String) {
+        try {
+            val db = dbHelper.writableDatabase
+            // SQL query to update image_data where id = 1
+            val updateQuery = """
+            UPDATE images
+            SET image_data = ?
+            WHERE id = 1
+        """.trimIndent()
+
+            // Execute the update query with the new image data
+            val statement = db.compileStatement(updateQuery)
+            statement.bindString(1, newImageData)  // Bind the parameter
+            statement.executeUpdateDelete()  // Execute the update query
+
+            println("Database Image data updated successfully.")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println("DatabaseError Error while updating data: ${e.message}")
         }
     }
 
@@ -146,5 +180,5 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
 
     }
-    
+
 }
