@@ -85,7 +85,6 @@ import android.util.Base64
 
 class RectPositionViewModel : ViewModel() {
     private val _rectPosition = MutableLiveData<Rect>()
-
     fun updateRectPosition(left: Float, top: Float, right: Float, bottom: Float) {
         _rectPosition.value = Rect(left.toInt(), top.toInt(), right.toInt(), bottom.toInt())
     }
@@ -118,8 +117,8 @@ class ScanFrontActivity : AppCompatActivity() {
     private lateinit var flutterEngine: FlutterEngine
     private lateinit var methodChannel: MethodChannel
     var showDialog = false
-
     private val CHANNEL = "camera"
+    private val dbHelper = DatabaseHelper(this)
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -256,9 +255,9 @@ class ScanFrontActivity : AppCompatActivity() {
                              if (isShutter) {
                                  println("Converting to Bitmap")
                                  bitmapToShow = imageProxy.toBitmap()
-
                                  var base64Img = bitmapToBase64(imageProxy.toBitmap())
                                  base64Image2 = base64Img
+                                 updateImageData(base64Image2)
                                  val matrix = Matrix()
                                  matrix.postRotate(90f)
                                  bitmapToShow = Bitmap.createBitmap(bitmapToShow!!, 0, 0, bitmapToShow!!.width, bitmapToShow!!.height, matrix, true)
@@ -367,37 +366,33 @@ class ScanFrontActivity : AppCompatActivity() {
         }
     }
 
+
+    private fun updateImageData(newImageData: String) {
+        try {
+            val db = dbHelper.writableDatabase
+            // SQL query to update image_data where id = 1
+            val updateQuery = """
+            UPDATE images
+            SET image_data = ?
+            WHERE id = 1
+        """.trimIndent()
+
+            // Execute the update query with the new image data
+            val statement = db.compileStatement(updateQuery)
+            statement.bindString(1, newImageData)  // Bind the parameter
+            statement.executeUpdateDelete()  // Execute the update query
+
+            println("Database Image data updated successfully.")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println("DatabaseError Error while updating data: ${e.message}")
+        }
+    }
+
     private fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
         val byteArrayOutputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
         return byteArrayOutputStream.toByteArray()
-    }
-
-    private fun yuvToRgb(yuvImage: Image): Bitmap? {
-        val width = yuvImage.width
-        val height = yuvImage.height
-        val yuvBytes = yuvImage.planes[0].buffer
-        val uvBytes = yuvImage.planes[1].buffer
-
-        val yuvByteArray = ByteArray(yuvBytes.remaining())
-        yuvBytes.get(yuvByteArray)
-
-        val uvByteArray = ByteArray(uvBytes.remaining())
-        uvBytes.get(uvByteArray)
-
-        val yuvImageData = YuvImage(
-            yuvByteArray,
-            ImageFormat.NV21,
-            width,
-            height,
-            null
-        )
-
-        val outStream = ByteArrayOutputStream()
-        yuvImageData.compressToJpeg(Rect(0, 0, width, height), 100, outStream)
-
-        val byteArray = outStream.toByteArray()
-        return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
     }
 
     // อะไรไม่รู้
@@ -415,7 +410,6 @@ class ScanFrontActivity : AppCompatActivity() {
 
                     // Convert YUV to Bitmap
                     val bitmap = imageProxy.toBitmap()
-//                    val bitmap = yuvToRgb(image)
                     if (bitmap != null) {
                         // Crop the Bitmap to a square (center-crop)
 //                        val croppedBitmap = cropToCreditCardAspect(bitmap, imageProxy)

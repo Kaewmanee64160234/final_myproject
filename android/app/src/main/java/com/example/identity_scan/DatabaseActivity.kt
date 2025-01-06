@@ -44,7 +44,7 @@ class DatabaseActivity : AppCompatActivity() {
             INSERT OR IGNORE INTO images (id, image_data)
             VALUES (1, 'initial_image_data')
         """.trimIndent()
-            
+
             db.execSQL(insertQuery)
 
         } catch (e: Exception) {
@@ -86,6 +86,15 @@ class DatabaseActivity : AppCompatActivity() {
                             modifier = Modifier.align(Alignment.BottomCenter) // Place this button at the bottom center
                         ) {
                             Text("Select Data")
+                        }
+
+                        Button(
+                            onClick = {
+                                updateImageData("Updated Data")
+                            },
+                            modifier = Modifier.align(Alignment.Center)
+                        ) {
+                            Text("Update Data")
                         }
 
                     }
