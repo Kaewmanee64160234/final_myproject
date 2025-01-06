@@ -23,6 +23,8 @@ class MainActivity : FlutterActivity() {
                     openAnimationView()
                 } "openCaptureView" -> {
                     openCaptureView()
+                } "openDbView" -> {
+                    openDbView()
                 }
                 else -> {
                     result.notImplemented()
@@ -48,6 +50,11 @@ class MainActivity : FlutterActivity() {
 
     private fun openCaptureView() {
         val intent = Intent(this@MainActivity, CaptureActivity::class.java)
+        startActivity(intent)
+    }
+
+    private fun openDbView() {
+        val intent = Intent(this@MainActivity, DatabaseActivity::class.java)
         startActivity(intent)
     }
 

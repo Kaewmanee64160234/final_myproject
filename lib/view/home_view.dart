@@ -17,13 +17,13 @@ class _HomeViewState extends State<HomeView> {
   // late Uint8List imageDataList;
 
   late Uint8List imageDataList = Uint8List(0); // Initialize with empty data
-    String receivedData = "No data received yet";
+  String receivedData = "No data received yet";
 
   @override
   void initState() {
     super.initState();
 
-     platform.setMethodCallHandler((call) async {
+    platform.setMethodCallHandler((call) async {
       if (call.method == "receiveDataFromKotlin") {
         setState(() {
           receivedData = call.arguments;
@@ -59,13 +59,17 @@ class _HomeViewState extends State<HomeView> {
               onPressed: (() {
                 openCaptureScreen();
               }),
-              child: Text("CaptureView"))
+              child: Text("CaptureView")),
+          ElevatedButton(
+              onPressed: (() {
+                openDbScreen();
+              }),
+              child: Text("DatabaseView"))
         ],
       ),
     );
   }
 
- 
   static Future<String> getNativeMessage() async {
     try {
       final String message = await platform.invokeMethod('getNativeMessage');
@@ -97,6 +101,16 @@ class _HomeViewState extends State<HomeView> {
     try {
       print("Opening");
       final String message = await platform.invokeMethod('openCaptureView');
+      return message;
+    } catch (e) {
+      return "Failed to get native message: ${e.toString()}";
+    }
+  }
+
+  static Future<String> openDbScreen() async {
+    try {
+      print("Opening");
+      final String message = await platform.invokeMethod('openDbView');
       return message;
     } catch (e) {
       return "Failed to get native message: ${e.toString()}";
