@@ -1,7 +1,7 @@
 package com.example.identity_scan
 
 import android.Manifest
-import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -252,31 +252,42 @@ class ScanFrontActivity : AppCompatActivity() {
                             .setResolutionSelector(resolutionSelector1)
                             .build()
 
-                        imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
-                            if (isShutter) {
-                                println("Converting to Bitmap")
-                                bitmapToShow = imageProxy.toBitmap()
+                         imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
+                             if (isShutter) {
+                                 println("Converting to Bitmap")
+                                 bitmapToShow = imageProxy.toBitmap()
 
-                                var base64Img = bitmapToBase64(imageProxy.toBitmap())
-//                                println("Base64Img")
-//                                println(base64Img)
-                                base64Image2 = base64Img
-                                val matrix = Matrix()
-                                matrix.postRotate(90f)
-                                bitmapToShow = Bitmap.createBitmap(bitmapToShow!!, 0, 0, bitmapToShow!!.width, bitmapToShow!!.height, matrix, true)
-                                showDialog = true
-                                isShutter = false
-//
-//                                val imageWidth = imageProxy.width
-//                                val imageHeight = imageProxy.height
-//                                println("Image Resolution: $imageWidth x $imageHeight")
+                                 var base64Img = bitmapToBase64(imageProxy.toBitmap())
+                                 base64Image2 = base64Img
+                                 val matrix = Matrix()
+                                 matrix.postRotate(90f)
+                                 bitmapToShow = Bitmap.createBitmap(bitmapToShow!!, 0, 0, bitmapToShow!!.width, bitmapToShow!!.height, matrix, true)
+                                 showDialog = true
+                                 isShutter = false
+
+                                val imageWidth = imageProxy.width
+                                val imageHeight = imageProxy.height
+                                println("Image Resolution: $imageWidth x $imageHeight")
                             }
-                            processImageProxy(imageProxy) // Process the image
+                             processImageProxy(imageProxy)
 
-                            // Ensure to close the imageProxy after processing
-                            imageProxy.close()
-                        }
+                             //Ensure to close the imageProxy after processing
+                             imageProxy.close()
+                         }
 
+//                        imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
+//                            try {
+//                                // Process the image using your method
+//                                processImageProxy(imageProxy)
+//                            } catch (e: Exception) {
+//                                // Log any exception that occurs during image analysis
+//                                Log.e("ImageAnalysis", "Error analyzing image: ${e.message}", e)
+//                            } finally {
+//                                // Ensure the ImageProxy is always closed to avoid memory leaks
+//                                imageProxy.close()
+//                            }
+//                        }
+//
                         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
                         cameraProvider.bindToLifecycle(
@@ -311,7 +322,11 @@ class ScanFrontActivity : AppCompatActivity() {
 
         Button(
             onClick = {
-                println(base64Image2)
+//                println(base64Image2)
+                val resultIntent = Intent()
+                resultIntent.putExtra("key", base64Image2)
+                setResult(RESULT_OK, resultIntent)
+                finish()
             },
             modifier = Modifier
 
@@ -386,7 +401,7 @@ class ScanFrontActivity : AppCompatActivity() {
     }
 
     // อะไรไม่รู้
-    @SuppressLint("UnsafeOptInUsageError")
+    // @SuppressLint("UnsafeOptInUsageError")
     private fun processImageProxy(imageProxy: ImageProxy) {
         // Crop Image to square before processing further
         isProcessing = true
@@ -398,10 +413,9 @@ class ScanFrontActivity : AppCompatActivity() {
             if (currentTime - lastProcessedTime >= 350) {
                 lastProcessedTime = currentTime
 
-                val image = imageProxy.image
-                if (image != null) {
                     // Convert YUV to Bitmap
-                    val bitmap = yuvToRgb(image)
+                    val bitmap = imageProxy.toBitmap()
+//                    val bitmap = yuvToRgb(image)
                     if (bitmap != null) {
                         // Crop the Bitmap to a square (center-crop)
 //                        val croppedBitmap = cropToCreditCardAspect(bitmap, imageProxy)
@@ -438,9 +452,6 @@ class ScanFrontActivity : AppCompatActivity() {
                     } else {
                         println("Error: Bitmap is null.")
                     }
-                } else {
-                    println("Error: imageProxy.image is null.")
-                }
             }
         } catch (e: Exception) {
             e.printStackTrace()

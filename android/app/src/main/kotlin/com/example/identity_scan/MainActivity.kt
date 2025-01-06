@@ -58,6 +58,11 @@ class MainActivity : FlutterActivity() {
             val result = data?.getStringExtra("key") // รับค่าที่ส่งกลับจาก AnimaActivity
             // ใช้ผลลัพธ์ที่ได้ที่นี่
             println(result)
+        }else if (requestCode == 2 && resultCode == RESULT_OK) {
+            // ได้รับผลลัพธ์จาก AnimaActivity
+            val result = data?.getStringExtra("key") // รับค่าที่ส่งกลับจาก AnimaActivity
+            // ใช้ผลลัพธ์ที่ได้ที่นี่
+            println(result)
         }
     }
 }
