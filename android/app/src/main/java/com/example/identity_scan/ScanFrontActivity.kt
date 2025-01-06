@@ -255,12 +255,32 @@ class ScanFrontActivity : AppCompatActivity() {
                              if (isShutter) {
                                  println("Converting to Bitmap")
                                  bitmapToShow = imageProxy.toBitmap()
-                                 var base64Img = bitmapToBase64(imageProxy.toBitmap())
-                                 base64Image2 = base64Img
-                                 updateImageData(base64Image2)
+//                                 var base64Img = bitmapToBase64(imageProxy.toBitmap())
+//                                 base64Image2 = base64Img
+
+
+                                 // Update รูปภาพ ที่นี่
+//                                 updateImageData(base64Image2)
                                  val matrix = Matrix()
+//                                 matrix.postRotate(90f)
+//                                 bitmapToShow = Bitmap.createBitmap(bitmapToShow!!, 0, 0, bitmapToShow!!.width, bitmapToShow!!.height, matrix, true)
+//                                 base64Image  = bitmapToBase64(bitmapToShow)
+
                                  matrix.postRotate(90f)
-                                 bitmapToShow = Bitmap.createBitmap(bitmapToShow!!, 0, 0, bitmapToShow!!.width, bitmapToShow!!.height, matrix, true)
+
+                                 bitmapToShow = Bitmap.createBitmap(
+                                     bitmapToShow!!, // Original Bitmap
+                                     0, 0, // Starting coordinates
+                                     bitmapToShow!!.width, // Bitmap width
+                                     bitmapToShow!!.height, // Bitmap height
+                                     matrix, // The rotation matrix
+                                     true // Apply smooth transformation
+                                 )
+
+                                 // Convert the rotated Bitmap to Base64
+                                 var base64Image = bitmapToBase64(bitmapToShow!!)
+                                 updateImageData(base64Image)
+
                                  showDialog = true
                                  isShutter = false
 

@@ -16,7 +16,7 @@ class _ImageViewState extends State<ImageView> {
     return Scaffold(
       appBar: AppBar(title: const Text('Captured Image')),
       body: Center(
-        child: Image.memory(widget.imageBytes), // Display the image from bytes
+        child: Image.memory(widget.imageBytes),
       ),
     );
   }
