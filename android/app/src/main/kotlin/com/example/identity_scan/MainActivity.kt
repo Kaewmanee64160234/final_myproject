@@ -25,6 +25,8 @@ class MainActivity : FlutterActivity() {
                     openCaptureView()
                 } "openDbView" -> {
                     openDbView()
+                }"openOpenCVView" -> {
+                    openOpenCVView()
                 }
                 else -> {
                     result.notImplemented()
@@ -55,6 +57,11 @@ class MainActivity : FlutterActivity() {
 
     private fun openDbView() {
         val intent = Intent(this@MainActivity, DatabaseActivity::class.java)
+        startActivity(intent)
+    }
+
+    private fun openOpenCVView() {
+        val intent = Intent(this@MainActivity, OpenCVActivity::class.java)
         startActivity(intent)
     }
 

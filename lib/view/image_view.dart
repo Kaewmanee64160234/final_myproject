@@ -15,6 +15,7 @@ class ImageView extends StatefulWidget {
 
 class _ImageViewState extends State<ImageView> {
   Uint8List? imageBytes; // To store the loaded image bytes
+  String base64String = ''; // To store the Base64 string
 
   @override
   void initState() {
@@ -39,22 +40,71 @@ class _ImageViewState extends State<ImageView> {
     }
   }
 
+  // Convert image to Base64
+  void convertToBase64() {
+    if (imageBytes != null) {
+      String base64Encoded =
+          base64Encode(imageBytes!); // Convert image to Base64
+      setState(() {
+        base64String = base64Encoded; // Update the Base64 string state
+      });
+    } else {
+      print("Image not loaded yet.");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Captured Image')),
+      appBar: AppBar(
+        title: const Text('Captured Image'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share), // Icon for the action button
+            onPressed: () {
+              // Perform an action when the button is pressed, e.g., share the image or do something else
+              print("Share button pressed");
+              uploadImage();
+            },
+          ),
+        ],
+      ),
       body: Center(
-        child: imageBytes != null
-            ? Image.memory(imageBytes!) // Display the image once loaded
-            : const CircularProgressIndicator(), // Show loading indicator
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Display the image once loaded
+            imageBytes != null
+                ? Image.memory(imageBytes!)
+                : const CircularProgressIndicator(),
+            const SizedBox(height: 20),
+            // Show the Base64 string if available
+            if (base64String.isNotEmpty)
+              Column(
+                children: [
+                  Text(
+                    "Base64 Encoded Image:",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    base64String,
+                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 3,
+                  ),
+                ],
+              ),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: uploadImage,
-        child: const Icon(Icons.upload),
+        onPressed: convertToBase64, // Convert the image to Base64 when pressed
+        child: const Icon(Icons.file_copy), // Icon for conversion
       ),
     );
   }
 
+  // Upload the image (if necessary)
   void uploadImage() async {
     if (imageBytes == null) {
       print("No image loaded to upload.");
@@ -69,7 +119,8 @@ class _ImageViewState extends State<ImageView> {
 
     try {
       final response = await api.post('upload_front_Base64', formData);
-      // print("Upload response: $response");
+      // print(response);
+      print("Upload response: $response");
     } catch (e) {
       print("Error uploading image: $e");
     }

@@ -7,11 +7,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.ImageFormat
 import android.graphics.Matrix
 import android.graphics.Rect
-import android.graphics.YuvImage
-import android.media.Image
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -22,7 +19,6 @@ import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.core.resolutionselector.ResolutionSelector
@@ -111,7 +107,6 @@ class ScanFrontActivity : AppCompatActivity() {
     private val cameraViewModel: CameraViewModel by viewModels()
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
     private val imageCapture = ImageCapture.Builder()
-        .setTargetAspectRatio(AspectRatio.RATIO_16_9)
         .build()
 
     private lateinit var model: ModelFront
@@ -120,7 +115,6 @@ class ScanFrontActivity : AppCompatActivity() {
     private var isFound = false
     private lateinit var flutterEngine: FlutterEngine
     private lateinit var methodChannel: MethodChannel
-    var showDialog = false
     private val CHANNEL = "camera"
     private val dbHelper = DatabaseHelper(this)
 
@@ -183,13 +177,6 @@ class ScanFrontActivity : AppCompatActivity() {
 
                         Box(
                         ) {
-                            Button(onClick = { captureImage(imageCapture) }) {
-                                Text("Capture")
-                            }
-                        }
-
-                        Box(
-                        ) {
                             Button(onClick = {
 //                                isShutter = !isShutter
 //                                println("Update IsShutter")
@@ -221,7 +208,6 @@ class ScanFrontActivity : AppCompatActivity() {
         val lifecycleOwner = LocalLifecycleOwner.current
 //        val screenSize = if (rotation == 0) Size(720, 1280) else Size(1280, 720)
 
-        val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(ResolutionStrategy( android.util.Size(720, 1280), ResolutionStrategy.FALLBACK_RULE_NONE)).build()
         ScreenshotBox(screenshotState = screenshotState) {
             AndroidView(
                 factory = { ctx ->
@@ -232,7 +218,6 @@ class ScanFrontActivity : AppCompatActivity() {
                         val cameraProvider = cameraProviderFuture.get()
 
                         val preview = Preview.Builder()
-                            .setTargetAspectRatio(AspectRatio.RATIO_4_3)
                             .build()
 
                         // For High end device
@@ -377,15 +362,6 @@ class ScanFrontActivity : AppCompatActivity() {
         return file
     }
 
-
-    fun bitmapToBase64(bitmap: Bitmap): String {
-        val outputStream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-        val byteArray = outputStream.toByteArray()
-        return Base64.encodeToString(byteArray, Base64.DEFAULT)
-    }
-
-
     @Composable
     fun ShowImageDialog(bitmap: Bitmap, onDismiss: () -> Unit) {
         Dialog(onDismissRequest = onDismiss) {
@@ -447,42 +423,34 @@ class ScanFrontActivity : AppCompatActivity() {
 
                     // Convert YUV to Bitmap
                     val bitmap = imageProxy.toBitmap()
-                    if (bitmap != null) {
-                        // Crop the Bitmap to a square (center-crop)
+                // Crop the Bitmap to a square (center-crop)
 //                        val croppedBitmap = cropToCreditCardAspect(bitmap, imageProxy)
-                        // แก้ฟังก์ชัน Crop ที่นี่
+                // แก้ฟังก์ชัน Crop ที่นี่
 
-                        val rotatedBitmap = rotateBitmap(bitmap, 90f)
+                val rotatedBitmap = rotateBitmap(bitmap, 90f)
 
-                        // Now, crop the image based on the credit card aspect ratio
-                        val croppedBitmap = cropToCreditCardAspectRatio(rotatedBitmap)
+                // Now, crop the image based on the credit card aspect ratio
+                val croppedBitmap = cropToCreditCardAspectRatio(rotatedBitmap)
 
-                        if (croppedBitmap != null) {
-                            // Process the cropped Bitmap
-                            val byteArray = bitmapToByteArray(croppedBitmap)
-                            val outputBuffer = processImage(byteArray)
+                // Process the cropped Bitmap
+                val byteArray = bitmapToByteArray(croppedBitmap)
+                val outputBuffer = processImage(byteArray)
 
-                            if (outputBuffer != null) {
-                                val outputArray = outputBuffer.floatArray
-                                // println(outputArray)
-                                val maxIndex = outputArray.indices.maxByOrNull { outputArray[it] } ?: -1
+                if (outputBuffer != null) {
+                    val outputArray = outputBuffer.floatArray
+                    // println(outputArray)
+                    val maxIndex = outputArray.indices.maxByOrNull { outputArray[it] } ?: -1
 
-                                // Check for the condition "พบบัตร" (Found the card)
-                                if (maxIndex == 0) {
-                                    cameraViewModel.updateGuideText("พบบัตร")
-                                } else {
-                                    cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
-                                    isFound = false
-                                }
-                            } else {
-                                println("Error: Process Fail")
-                            }
-                        } else {
-                            println("Error: Cropped Bitmap is null.")
-                        }
+                    // Check for the condition "พบบัตร" (Found the card)
+                    if (maxIndex == 0) {
+                        cameraViewModel.updateGuideText("พบบัตร")
                     } else {
-                        println("Error: Bitmap is null.")
+                        cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
+                        isFound = false
                     }
+                } else {
+                    println("Error: Process Fail")
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -550,69 +518,15 @@ class ScanFrontActivity : AppCompatActivity() {
         }
     }
 
-    private fun captureImage(imageCapture: ImageCapture) {
-        // Define the output file
-        val photoFile = File(
-            externalMediaDirs.firstOrNull(),
-            "IMG_${System.currentTimeMillis()}.jpg"
-        )
-
-        // Set up output options to save the image
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-
-        // Take the picture
-        imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(this),
-            object : ImageCapture.OnImageSavedCallback {
-                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-
-                    // Optionally, read the image bytes (if needed for further processing)
-                    val byteArray = photoFile.readBytes()
-
-                    // Convert the byte array to a Bitmap
-                    val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
-
-                    // Rotate the Bitmap if necessary (example: rotating by 90 degrees)
-                    val rotatedBitmap = rotateBitmap(bitmap, 90f)
-
-                    // Now, crop the image based on the credit card aspect ratio
-                    val croppedBitmap = cropToCreditCardAspectRatio(rotatedBitmap)
-
-                    // Optionally, save or display the croppedBitmap
-                    saveCroppedImage(croppedBitmap)
-
-                    println("Captured and cropped image saved.")
-                }
-
-                override fun onError(exception: ImageCaptureException) {
-                    // Handle any errors that occur during image capture
-                    exception.printStackTrace()
-                }
-            }
-        )
-    }
 
 
     private fun rotateBitmap(bitmap: Bitmap, rotationDegrees: Float): Bitmap {
-        val matrix = android.graphics.Matrix()
+        val matrix = Matrix()
         matrix.postRotate(rotationDegrees) // Rotate the bitmap by the given angle
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 
-    private fun getRotationDegrees(imageProxy: ImageProxy): Int {
-        // Get the rotation degree from the imageProxy
-        return when (imageProxy.imageInfo.rotationDegrees) {
-            0 -> 0
-            90 -> 90
-            180 -> 180
-            270 -> 270
-            else -> 0
-        }
-    }
-
-
-    private fun cropToCreditCardAspectRatio(bitmap: Bitmap): Bitmap? {
+    private fun cropToCreditCardAspectRatio(bitmap: Bitmap): Bitmap {
         val creditCardAspectRatio = 3.37f / 2.125f // Aspect ratio 3.37:2.125
 
         // Get the bitmap's width and height
@@ -627,9 +541,6 @@ class ScanFrontActivity : AppCompatActivity() {
         val rectLeft = (width - rectWidth) / 2
         val rectTop = (height - rectHeight) / 2
 
-        // Calculate the crop area
-        val rectRight = rectLeft + rectWidth
-        val rectBottom = rectTop + rectHeight
 
         // Crop the Bitmap according to the calculated rectangle area
         return Bitmap.createBitmap(
@@ -641,32 +552,12 @@ class ScanFrontActivity : AppCompatActivity() {
         )
     }
 
-    private fun saveCroppedImage(croppedBitmap: Bitmap?) {
-        // Save the cropped image to a file or display it as needed
-        croppedBitmap?.let {
-            val croppedFile = File(externalMediaDirs.firstOrNull(), "Cropped_${System.currentTimeMillis()}.jpg")
-            val outputStream = croppedFile.outputStream()
-
-            // Compress the bitmap and save it to the file
-            it.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-            outputStream.close()
-
-            println("Cropped image saved to: ${croppedFile.absolutePath}")
-        }
-    }
-
-
     @Composable
     fun CameraWithOverlay(modifier: Modifier = Modifier, guideText: String) {
         Box(modifier = modifier) {
             // Camera Preview filling the whole screen
             CameraPreview(modifier = Modifier.fillMaxSize())
 
-            // สำหรับจัดตำแหน่ง Item
-//                modifier = Modifier
-//                    .align(Alignment.TopCenter)
-//                    .padding(top = 16.dp)
-//
             Text(
                 text = guideText,
                 color = Color.White,
@@ -674,7 +565,6 @@ class ScanFrontActivity : AppCompatActivity() {
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .align(Alignment.Center)
-//                    .padding(top = 16.dp)
             )
 
             Canvas(modifier = Modifier.fillMaxSize()) {

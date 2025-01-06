@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
 class Api {
@@ -7,7 +8,8 @@ class Api {
 
   Api(this.baseUrl);
 
-  Future<void> post(String endpoint, Map<String, dynamic> formData) async {
+  Future<http.Response?> post(
+      String endpoint, Map<String, dynamic> formData) async {
     try {
       // Convert the form data to JSON format
       String jsonData = jsonEncode(formData);
@@ -24,8 +26,10 @@ class Api {
       // Handle the response
       if (response.statusCode == 200) {
         print('Upload successful: ${response.body}');
+        return response;
       } else {
         print('Error: ${response.statusCode}, ${response.body}');
+        return response;
       }
     } catch (e) {
       print('There was an error: $e');

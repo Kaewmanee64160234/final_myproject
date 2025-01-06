@@ -48,7 +48,7 @@ class _HomeViewState extends State<HomeView> {
               child: Text("OpenCamera")),
           ElevatedButton(
               onPressed: (() {
-                openAnimationScreen();
+                openAnimationView();
               }),
               child: Text("Animation")),
           // ElevatedButton(
@@ -58,19 +58,24 @@ class _HomeViewState extends State<HomeView> {
           //     child: Text("ShowImage")),
           ElevatedButton(
               onPressed: (() {
-                openCaptureScreen();
+                openCaptureView();
               }),
               child: Text("CaptureView")),
+          // ElevatedButton(
+          //     onPressed: (() {
+          //       openDbScreen();
+          //     }),
+          //     child: Text("DatabaseView")),
           ElevatedButton(
-              onPressed: (() {
-                openDbScreen();
-              }),
-              child: Text("DatabaseView")),
-              ElevatedButton(
               onPressed: (() {
                 Get.to(DbView());
               }),
-              child: Text("Flutter DbView"))
+              child: Text("Flutter DbView")),
+          ElevatedButton(
+              onPressed: (() {
+                openOpenCVView();
+              }),
+              child: Text("OpenCV View"))
         ],
       ),
     );
@@ -94,7 +99,7 @@ class _HomeViewState extends State<HomeView> {
     }
   }
 
-  static Future<String> openAnimationScreen() async {
+  static Future<String> openAnimationView() async {
     try {
       final String message = await platform.invokeMethod('openAnimationView');
       return message;
@@ -103,7 +108,7 @@ class _HomeViewState extends State<HomeView> {
     }
   }
 
-  static Future<String> openCaptureScreen() async {
+  static Future<String> openCaptureView() async {
     try {
       print("Opening");
       final String message = await platform.invokeMethod('openCaptureView');
@@ -113,10 +118,18 @@ class _HomeViewState extends State<HomeView> {
     }
   }
 
-  static Future<String> openDbScreen() async {
+  static Future<String> openDbView() async {
     try {
-      print("Opening");
       final String message = await platform.invokeMethod('openDbView');
+      return message;
+    } catch (e) {
+      return "Failed to get native message: ${e.toString()}";
+    }
+  }
+
+  static Future<String> openOpenCVView() async {
+    try {
+      final String message = await platform.invokeMethod('openOpenCVView');
       return message;
     } catch (e) {
       return "Failed to get native message: ${e.toString()}";
