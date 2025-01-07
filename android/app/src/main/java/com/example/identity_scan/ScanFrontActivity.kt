@@ -217,7 +217,7 @@ class ScanFrontActivity : AppCompatActivity() {
                 println("Time remaining: ${millisUntilFinished / 1800} seconds")
             }
             override fun onFinish() {
-                println("Founded For 2.5S")
+                println("Founded For 1.8S")
                 isShutter = true
             }
         }

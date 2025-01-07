@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:identity_scan/api/api.dart';
+import 'package:identity_scan/model/front_data.dart';
 
 class ImageView extends StatefulWidget {
   final String imagePath; // Accept the image file path as a parameter
@@ -28,9 +29,9 @@ class _ImageViewState extends State<ImageView> {
     try {
       final file = File(widget.imagePath);
       if (await file.exists()) {
-        final bytes = await file.readAsBytes(); // Read file as bytes
+        final bytes = await file.readAsBytes(); 
         setState(() {
-          imageBytes = bytes; // Store the bytes in state
+          imageBytes = bytes; 
         });
       } else {
         throw Exception("File does not exist at ${widget.imagePath}");
@@ -40,13 +41,12 @@ class _ImageViewState extends State<ImageView> {
     }
   }
 
-  // Convert image to Base64
   void convertToBase64() {
     if (imageBytes != null) {
       String base64Encoded =
-          base64Encode(imageBytes!); // Convert image to Base64
+          base64Encode(imageBytes!); 
       setState(() {
-        base64String = base64Encoded; // Update the Base64 string state
+        base64String = base64Encoded;
       });
     } else {
       print("Image not loaded yet.");
@@ -62,9 +62,8 @@ class _ImageViewState extends State<ImageView> {
           IconButton(
             icon: const Icon(Icons.share), // Icon for the action button
             onPressed: () {
-              // Perform an action when the button is pressed, e.g., share the image or do something else
               print("Share button pressed");
-              uploadImage();
+              uploadImageFront();
             },
           ),
         ],
@@ -98,29 +97,30 @@ class _ImageViewState extends State<ImageView> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: convertToBase64, // Convert the image to Base64 when pressed
-        child: const Icon(Icons.file_copy), // Icon for conversion
+        onPressed: convertToBase64, 
+        child: const Icon(Icons.file_copy), 
       ),
     );
   }
 
   // Upload the image (if necessary)
-  void uploadImage() async {
+  void uploadImageFront() async {
     if (imageBytes == null) {
       print("No image loaded to upload.");
       return;
     }
 
     Api api = Api('https://events.controldata.co.th/cardocr/');
-    String base64Image = base64Encode(imageBytes!); // Convert image to Base64
     Map<String, dynamic> formData = {
-      'filedata': base64Image, // Send Base64-encoded image
+      'filedata': base64String, // Send Base64-encoded image
     };
 
     try {
-      final response = await api.post('upload_front_Base64', formData);
+      final response = await api.post('api/v1/upload_front_base64', formData);
       // print(response);
-      print("Upload response: $response");
+      // print("Upload response: $response");
+      FrontData frontData = FrontData.fromJson(response as Map<String, dynamic>);
+      print(frontData.fullName);
     } catch (e) {
       print("Error uploading image: $e");
     }
