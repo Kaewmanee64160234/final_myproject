@@ -38,8 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.example.identity_scan.ml.ModelFront
-import com.example.identity_scan.ml.ModelUnquantOpencv
+import com.example.identity_scan.ml.ModelUnquant
 import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.FlutterEngine
@@ -51,8 +50,7 @@ import java.util.concurrent.Executors
 class OpenCVActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
     private val CAMERA_REQUEST_CODE = 2001
-    private lateinit var model: ModelFront
-    private lateinit var modelOpenCV: ModelUnquantOpencv
+    private lateinit var model: ModelUnquant
     private lateinit var flutterEngine: FlutterEngine
     private lateinit var methodChannel: MethodChannel
     private val CHANNEL = "camera"
@@ -61,8 +59,7 @@ class OpenCVActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         cameraExecutor = Executors.newSingleThreadExecutor()
         checkAndRequestCameraPermission()
-        model = ModelFront.newInstance(this)
-        modelOpenCV = ModelUnquantOpencv.newInstance(this)
+        model = ModelUnquant.newInstance(this)
 
         // Initialize FlutterEngine manually
         flutterEngine = FlutterEngine(this)
@@ -82,6 +79,7 @@ class OpenCVActivity : AppCompatActivity() {
                 modifier = Modifier.fillMaxSize(),
                 color = Color.Black // Explicitly set the background color to black
             ) {
+
                 Column(modifier = Modifier.fillMaxSize()) {
                     // Title Row
                     Row(
