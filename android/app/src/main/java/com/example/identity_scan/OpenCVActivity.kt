@@ -99,6 +99,8 @@ class OpenCVActivity : AppCompatActivity() {
     private var statusMessage = mutableStateOf("Lighting conditions are optimal.")
     private var imagePathList = mutableStateListOf<String>()
     private lateinit var imageCapture: ImageCapture
+    private var captureComplete = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -215,11 +217,6 @@ class OpenCVActivity : AppCompatActivity() {
         }
 
 
-
-
-
-
-
     }
     @Composable
     fun CameraPreview(
@@ -258,72 +255,78 @@ class OpenCVActivity : AppCompatActivity() {
                                 .build()
 
                             imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
-                                val currentTime = System.currentTimeMillis()
-                                if (currentTime - lastAnalysisTime >= 1000) { // Throttle to 1 second
-                                    lastAnalysisTime = currentTime
+                                if (!captureComplete){
+                                    val currentTime = System.currentTimeMillis()
+                                    if (currentTime - lastAnalysisTime >= 1000) { // Throttle to 1 second
+                                        lastAnalysisTime = currentTime
 
-                                    try {
-                                        // Convert ImageProxy to Bitmap
-                                        val bitmap = imageProxyToBitmap(imageProxy)
-                                        val resizedBitmap = resizeBitmapTo224x224(bitmap)
+                                        try {
+                                            // Convert ImageProxy to Bitmap
+                                            val bitmap = imageProxyToBitmap(imageProxy)
+                                            val resizedBitmap = resizeBitmapTo224x224(bitmap)
 
-                                        // Convert Bitmap to ByteBuffer for TensorFlow Lite
-                                        val inputByteBuffer = convertBitmapToByteBuffer(resizedBitmap)
+                                            // Convert Bitmap to ByteBuffer for TensorFlow Lite
+                                            val inputByteBuffer = convertBitmapToByteBuffer(resizedBitmap)
 
-                                        val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 224, 224, 3), DataType.FLOAT32)
-                                        inputFeature0.loadBuffer(inputByteBuffer)
-                                        val outputs = model.process(inputFeature0)
-                                        val outputFeature0 = outputs.outputFeature0AsTensorBuffer
+                                            val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 224, 224, 3), DataType.FLOAT32)
+                                            inputFeature0.loadBuffer(inputByteBuffer)
+                                            val outputs = model.process(inputFeature0)
+                                            val outputFeature0 = outputs.outputFeature0AsTensorBuffer
 
-                                        val predictedClass = outputFeature0.floatArray.indices.maxByOrNull { outputFeature0.floatArray[it] } ?: -1
-                                        Log.w("Model Prediction", predictedClass.toString())
+                                            val predictedClass = outputFeature0.floatArray.indices.maxByOrNull { outputFeature0.floatArray[it] } ?: -1
+                                            Log.w("Model Prediction", predictedClass.toString())
 
-                                        if (predictedClass == 0) { // Optimal conditions
-                                            val mat = bitmapToMat(bitmap)
+                                            if (predictedClass == 0) { // Optimal conditions
+                                                val mat = bitmapToMat(bitmap)
 
-                                            // Perform brightness and glare analysis
-                                            val avgBrightness = calculateBrightness(mat)
-                                            val avgGlare = analyzeBrightRegions(mat)
+                                                // Perform brightness and glare analysis
+                                                val avgBrightness = calculateBrightness(mat)
+                                                val avgGlare = analyzeBrightRegions(mat)
 
-                                            Log.e("OpenCV Brightness", avgBrightness.toString())
-                                            Log.e("OpenCV Glare", avgGlare.toString())
+                                                Log.e("OpenCV Brightness", avgBrightness.toString())
+                                                Log.e("OpenCV Glare", avgGlare.toString())
 
-                                            val isOptimal = avgBrightness in 70.0..155.0 && avgGlare <= 20.0
+                                                val isOptimal = avgBrightness in 70.0..155.0 && avgGlare <= 20.0
 
-                                            CoroutineScope(Dispatchers.Main).launch {
-                                                statusMessage.value = when {
-                                                    avgBrightness < 70 -> "Brightness too low. Increase lighting."
-                                                    avgBrightness > 155 -> "Brightness too high. Reduce lighting."
-                                                    avgGlare > 20.0 -> "High glare detected. Adjust lighting."
-                                                    else -> "Lighting conditions are optimal."
-                                                }
+                                                CoroutineScope(Dispatchers.Main).launch {
+                                                    statusMessage.value = when {
+                                                        avgBrightness < 70 -> "Brightness too low. Increase lighting."
+                                                        avgBrightness > 155 -> "Brightness too high. Reduce lighting."
+                                                        avgGlare > 20.0 -> "High glare detected. Adjust lighting."
+                                                        else -> "Lighting conditions are optimal."
+                                                    }
 
-                                                if (isOptimal) {
-                                                    delay(2000) // Wait for 2 seconds
-                                                    if (statusMessage.value == "Lighting conditions are optimal.") {
-                                                        captureBurstImages(imageCapture, 5) {
-                                                            Log.d("Burst Capture", "All images captured successfully.")
+                                                    if (isOptimal) {
+                                                        delay(2000) // Wait for 2 seconds
+                                                        if (statusMessage.value == "Lighting conditions are optimal.") {
+                                                            captureBurstImages(imageCapture, 5) {
+                                                                Log.d("Burst Capture", "All images captured successfully.")
+                                                                captureComplete = true
+                                                                statusMessage.value = "captured!!!!"
+                                                                
+                                                            }
                                                         }
                                                     }
                                                 }
-                                            }
 
-                                            mat.release()
-                                        } else if (predictedClass == 1) {
-                                            statusMessage.value = "Please use a Real ID Card"
-                                        } else if (predictedClass == 2) {
-                                            statusMessage.value = "Please move your hand away from the card"
-                                        } else {
-                                            statusMessage.value = "Card not found"
+                                                mat.release()
+                                            } else if (predictedClass == 1) {
+                                                statusMessage.value = "Please use a Real ID Card"
+                                            } else if (predictedClass == 2) {
+                                                statusMessage.value = "Please move your hand away from the card"
+                                            } else {
+                                                statusMessage.value = "Card not found"
+                                            }
+                                        } catch (e: Exception) {
+                                            e.printStackTrace()
+                                        } finally {
+                                            imageProxy.close()
                                         }
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
-                                    } finally {
+                                    } else {
                                         imageProxy.close()
                                     }
-                                } else {
-                                    imageProxy.close()
                                 }
+
                             }
 
                             // Bind use cases to lifecycle
