@@ -433,8 +433,10 @@ class ScanFrontActivity : AppCompatActivity() {
                 val croppedBitmap = cropToCreditCardAspectRatio(rotatedBitmap)
 
                 // Process the cropped Bitmap
-                val byteArray = bitmapToByteArray(croppedBitmap)
-                val outputBuffer = processImage(byteArray)
+//                val byteArray = bitmapToByteArray(croppedBitmap)
+
+                // แก้ให้ไม่ต้องแปลงเป็น ByteArray แต่ให้เป็น Bitmap เลย
+                val outputBuffer = processImage(croppedBitmap)
 
                 if (outputBuffer != null) {
                     val outputArray = outputBuffer.floatArray
@@ -460,23 +462,20 @@ class ScanFrontActivity : AppCompatActivity() {
         }
     }
 
-    private fun processImage(imageBytes: ByteArray): TensorBuffer? {
+    private fun processImage(imageBytes: Bitmap): TensorBuffer? {
         try {
-            // Decode the raw image bytes to a Bitmap
-            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+//            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
 
             // Check if the bitmap is null
-            if (bitmap == null) {
-                println("Error: Failed to decode image bytes into Bitmap. ByteArray might be invalid or unsupported format.")
-                return null
-            }
-
-            // println("Image loaded successfully.")
+//            if (imageBytes == null) {
+//                println("Error: Failed to decode image bytes into Bitmap. ByteArray might be invalid or unsupported format.")
+//                return null
+//            }
 
             // Resize the image to the required input size for the model (224x224)
             val height = 224
             val width = 224
-            val resizedBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true)
+            val resizedBitmap = Bitmap.createScaledBitmap(imageBytes, width, height, true)
             // println("Image resized to $width x $height.")
 
             // Prepare a ByteBuffer to hold image data in the required format (Float32)
