@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
-import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
 class Api {
@@ -8,28 +6,42 @@ class Api {
 
   Api(this.baseUrl);
 
-  Future<http.Response?> post(
-      String endpoint, Map<String, dynamic> formData) async {
+ 
+  Future<http.Response?> post(String endpoint, Map<String, dynamic> formData, {String? authToken}) async {
     try {
-      // Convert the form data to JSON format
-      String jsonData = jsonEncode(formData);
+      // Create MultipartRequest for sending form data
+      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl$endpoint'))
+        ..headers.addAll({
+          'Authorization':  '66eb9f21-8e1c-8011-97a5-08ddd9b9a7c7', // Add your auth token here
+        });
 
-      // Send a POST request
-      final response = await http.post(
-        Uri.parse('$baseUrl$endpoint'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonData,
-      );
+      // Ensure 'filedata' is included in the formData and handle accordingly
+      if (!formData.containsKey('filedata')) {
+        print('Error: filedata field is required.');
+        return null;
+      }
 
-      // Handle the response
+      // Add fields to the multipart request (add text fields)
+      formData.forEach((key, value) {
+        if (value is String) {
+          request.fields[key] = value; // Add string fields
+        } else if (value is List<int>) {
+          request.files.add(http.MultipartFile.fromBytes(key, value, filename: key));
+        }
+      });
+
+      // Send the request
+      var response = await request.send();
+
+      // Check response status
       if (response.statusCode == 200) {
-        print('Upload successful: ${response.body}');
-        return response;
+        final responseBody = await response.stream.bytesToString();
+        print('Upload successful: $responseBody');
+        return http.Response(responseBody, 200);
       } else {
-        print('Error: ${response.statusCode}, ${response.body}');
-        return response;
+        final responseBody = await response.stream.bytesToString();
+        print('Error: ${response.statusCode}, $responseBody');
+        return http.Response(responseBody, response.statusCode);
       }
     } catch (e) {
       print('There was an error: $e');
@@ -37,11 +49,3 @@ class Api {
   }
 }
 
-// void main() async {
-//   Api api = Api('https://events.controldata.co.th/cardocr/');
-//   Map<String, dynamic> formData = {
-//     'filedata': 'yourBase64EncodedFileString',  // Base64-encoded file
-//   };
-
-//   await api.post('upload_front_Base64', formData);
-// }

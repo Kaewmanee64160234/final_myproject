@@ -11,6 +11,7 @@ import android.graphics.Matrix
 import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -119,6 +120,10 @@ class ScanFrontActivity : AppCompatActivity() {
     private val dbHelper = DatabaseHelper(this)
 
 
+
+    private var isTiming = false
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -206,7 +211,16 @@ class ScanFrontActivity : AppCompatActivity() {
 
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
-//        val screenSize = if (rotation == 0) Size(720, 1280) else Size(1280, 720)
+
+         val timer = object : CountDownTimer(2000, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                println("Time remaining: ${millisUntilFinished / 1800} seconds")
+            }
+            override fun onFinish() {
+                println("Founded For 1.8S")
+                isShutter = true
+            }
+        }
 
         ScreenshotBox(screenshotState = screenshotState) {
             AndroidView(
@@ -242,14 +256,11 @@ class ScanFrontActivity : AppCompatActivity() {
 
                          imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
                              if (isShutter) {
-                                 println("Converting to Bitmap")
+//                                 println("Converting to Bitmap")
                                  bitmapToShow = imageProxy.toBitmap()
 
                                  // Update รูปภาพ ที่นี่
                                  val matrix = Matrix()
-//                                 matrix.postRotate(90f)
-//                                 bitmapToShow = Bitmap.createBitmap(bitmapToShow!!, 0, 0, bitmapToShow!!.width, bitmapToShow!!.height, matrix, true)
-//                                 base64Image  = bitmapToBase64(bitmapToShow)
 
                                  matrix.postRotate(90f)
 
@@ -262,13 +273,7 @@ class ScanFrontActivity : AppCompatActivity() {
                                      true // Apply smooth transformation
                                  )
 
-                                 // Convert the rotated Bitmap to Base64
-//                                 var base64Image = bitmapToBase64(bitmapToShow!!)
-
                                  bitmapToJpg(bitmapToShow!!,context,"image.jpg")
-
-                                 // Update Basse64 sqlite databae
-//                                 updateImageData(base64Image)
 
                                  showDialog = true
                                  isShutter = false
@@ -277,6 +282,17 @@ class ScanFrontActivity : AppCompatActivity() {
 //                                val imageHeight = imageProxy.height
 //                                println("Image Resolution: $imageWidth x $imageHeight")
                              }else{
+                                 if (isFound){
+                                     if (!isTiming){
+                                         isTiming = true
+                                         timer.start()
+                                     }
+                                 }else{
+                                     timer.cancel()
+                                     isTiming = false
+                                     println("Cancelled Timer")
+                                 }
+
                                  processImageProxy(imageProxy)
                              }
 
@@ -416,25 +432,18 @@ class ScanFrontActivity : AppCompatActivity() {
         try {
             // Get the current time
             val currentTime = System.currentTimeMillis()
-
             // Check if 350 milliseconds have passed since the last processing
             if (currentTime - lastProcessedTime >= 350) {
                 lastProcessedTime = currentTime
-
-                    // Convert YUV to Bitmap
-                    val bitmap = imageProxy.toBitmap()
-                // Crop the Bitmap to a square (center-crop)
-//                        val croppedBitmap = cropToCreditCardAspect(bitmap, imageProxy)
-                // แก้ฟังก์ชัน Crop ที่นี่
-
+                // Convert YUV to Bitmap
+                val bitmap = imageProxy.toBitmap()
+                // Rotate ภาพ
                 val rotatedBitmap = rotateBitmap(bitmap, 90f)
 
-                // Now, crop the image based on the credit card aspect ratio
+                // ตัดภาพตามสัดส่วนบัตรเครดิต
                 val croppedBitmap = cropToCreditCardAspectRatio(rotatedBitmap)
-
-                // Process the cropped Bitmap
-                val byteArray = bitmapToByteArray(croppedBitmap)
-                val outputBuffer = processImage(byteArray)
+                // แก้ให้ไม่ต้องแปลงเป็น ByteArray แต่ให้เป็น Bitmap เลย
+                val outputBuffer = processImage(croppedBitmap)
 
                 if (outputBuffer != null) {
                     val outputArray = outputBuffer.floatArray
@@ -443,9 +452,13 @@ class ScanFrontActivity : AppCompatActivity() {
 
                     // Check for the condition "พบบัตร" (Found the card)
                     if (maxIndex == 0) {
+                        // เริ่มจับเวลา 1.5 วินาทีโดยใข้ตัวแปร Local
                         cameraViewModel.updateGuideText("พบบัตร")
+                        isFound = true
                     } else {
+                        // รีเซ็ตตัวจับเวลา
                         cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
+//                        foundCardTimer = 0
                         isFound = false
                     }
                 } else {
@@ -460,23 +473,20 @@ class ScanFrontActivity : AppCompatActivity() {
         }
     }
 
-    private fun processImage(imageBytes: ByteArray): TensorBuffer? {
+    private fun processImage(imageBytes: Bitmap): TensorBuffer? {
         try {
-            // Decode the raw image bytes to a Bitmap
-            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+//            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
 
             // Check if the bitmap is null
-            if (bitmap == null) {
-                println("Error: Failed to decode image bytes into Bitmap. ByteArray might be invalid or unsupported format.")
-                return null
-            }
-
-            // println("Image loaded successfully.")
+//            if (imageBytes == null) {
+//                println("Error: Failed to decode image bytes into Bitmap. ByteArray might be invalid or unsupported format.")
+//                return null
+//            }
 
             // Resize the image to the required input size for the model (224x224)
             val height = 224
             val width = 224
-            val resizedBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true)
+            val resizedBitmap = Bitmap.createScaledBitmap(imageBytes, width, height, true)
             // println("Image resized to $width x $height.")
 
             // Prepare a ByteBuffer to hold image data in the required format (Float32)
