@@ -1,0 +1,3 @@
+D:/cdg/buldWork/identity_flutter_w_jetpackcompose/android/opencv/.cxx/Debug/5c735i4h/x86/CMakeFiles/opencv_jni_shared.dir
+D:/cdg/buldWork/identity_flutter_w_jetpackcompose/android/opencv/.cxx/Debug/5c735i4h/x86/CMakeFiles/edit_cache.dir
+D:/cdg/buldWork/identity_flutter_w_jetpackcompose/android/opencv/.cxx/Debug/5c735i4h/x86/CMakeFiles/rebuild_cache.dir

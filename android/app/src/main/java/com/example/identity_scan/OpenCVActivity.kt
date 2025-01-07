@@ -70,6 +70,12 @@ class OpenCVActivity : AppCompatActivity() {
             DartExecutor.DartEntrypoint.createDefault()
         )
         methodChannel = MethodChannel(flutterEngine.dartExecutor, CHANNEL)
+//        install open cv
+        if (!org.opencv.android.OpenCVLoader.initDebug()) {
+            Log.e("OpenCV", "OpenCV initialization failed")
+        } else {
+            Log.d("OpenCV", "OpenCV initialization successful")
+        }
 
         setContent {
             Surface(
