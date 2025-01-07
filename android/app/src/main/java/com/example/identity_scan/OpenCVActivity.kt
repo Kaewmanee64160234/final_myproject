@@ -14,6 +14,8 @@ import android.util.Size
 import androidx.activity.compose.setContent
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.core.resolutionselector.ResolutionSelector
@@ -43,6 +45,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -65,7 +68,10 @@ import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.opencv.android.Utils
 import org.opencv.core.Core
 import org.opencv.core.Mat
@@ -91,7 +97,8 @@ class OpenCVActivity : AppCompatActivity() {
     private lateinit var methodChannel: MethodChannel
     private val CHANNEL = "camera"
     private var statusMessage = mutableStateOf("Lighting conditions are optimal.")
-
+    private var imagePathList = mutableStateListOf<String>()
+    private lateinit var imageCapture: ImageCapture
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -255,6 +262,9 @@ class OpenCVActivity : AppCompatActivity() {
 
                             imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
                                 val currentTime = System.currentTimeMillis()
+                                imageCapture = ImageCapture.Builder()
+                                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                                    .build()
                                 if (currentTime - lastAnalysisTime >= 1000) { // Throttle to 1 second
                                     lastAnalysisTime = currentTime
 
@@ -262,6 +272,7 @@ class OpenCVActivity : AppCompatActivity() {
                                         // Convert ImageProxy to Bitmap
                                         val bitmap = imageProxyToBitmap(imageProxy)
                                         val resizedBitmap = resizeBitmapTo224x224(bitmap)
+
                                         // Convert Bitmap to ByteBuffer for TensorFlow Lite
                                         val inputByteBuffer = convertBitmapToByteBuffer(resizedBitmap)
 
@@ -271,8 +282,9 @@ class OpenCVActivity : AppCompatActivity() {
                                         val outputFeature0 = outputs.outputFeature0AsTensorBuffer
 
                                         val predictedClass = outputFeature0.floatArray.indices.maxByOrNull { outputFeature0.floatArray[it] } ?: -1
-                                        Log.w("result",predictedClass.toString())
-                                        if(predictedClass==0){
+                                        Log.w("Model Prediction", predictedClass.toString())
+
+                                        if (predictedClass == 0) { // Optimal conditions
                                             // Convert Bitmap to Mat for OpenCV functions
                                             val mat = bitmapToMat(bitmap)
 
@@ -283,7 +295,9 @@ class OpenCVActivity : AppCompatActivity() {
                                             Log.e("OpenCV Brightness", avgBrightness.toString())
                                             Log.e("OpenCV Glare", avgGlare.toString())
 
-                                            // Update status message based on results
+                                            // Check for optimal conditions
+                                            val isOptimal = avgBrightness in 70.0..155.0 && avgGlare <= 20.0
+
                                             CoroutineScope(Dispatchers.Main).launch {
                                                 statusMessage.value = when {
                                                     avgBrightness < 70 -> "Brightness too low. Increase lighting."
@@ -291,23 +305,27 @@ class OpenCVActivity : AppCompatActivity() {
                                                     avgGlare > 20.0 -> "High glare detected. Adjust lighting."
                                                     else -> "Lighting conditions are optimal."
                                                 }
+
+                                                // If conditions are optimal, wait for 2 seconds and capture burst images
+                                                if (isOptimal) {
+                                                    delay(2000) // Wait for 2 seconds
+                                                    if (statusMessage.value == "Lighting conditions are optimal.") {
+                                                        captureBurstImages(imageCapture, 5) {
+                                                            Log.d("Burst Capture", "All images captured successfully.")
+                                                        }
+                                                    }
+                                                }
                                             }
 
-                                            // Release resources
+                                            // Release Mat resources
                                             mat.release()
+                                        } else if (predictedClass == 1) {
+                                            statusMessage.value = "Please use a Real ID Card"
+                                        } else if (predictedClass == 2) {
+                                            statusMessage.value = "Please move your hand away from the card"
+                                        } else {
+                                            statusMessage.value = "Card not found"
                                         }
-                                        if(predictedClass == 1){
-                                            statusMessage.value = "Please use Real IdCard"
-                                        }
-                                        if(predictedClass == 2){
-                                            statusMessage.value = "Please move your hand out"
-                                        }
-                                        else{
-                                            statusMessage.value = "Not found Card"
-                                        }
-
-
-
                                     } catch (e: Exception) {
                                         e.printStackTrace()
                                     } finally {
@@ -317,6 +335,7 @@ class OpenCVActivity : AppCompatActivity() {
                                     imageProxy.close()
                                 }
                             }
+
 
                             cameraProvider.bindToLifecycle(
                                 lifecycleOwner,
@@ -332,6 +351,60 @@ class OpenCVActivity : AppCompatActivity() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(4f / 3f)
+                )
+            }
+        }
+    }
+
+    private fun captureBurstImages(
+        imageCapture: ImageCapture,
+        totalCaptures: Int = 5,
+        onComplete: () -> Unit
+    ) {
+        var remainingCaptures = totalCaptures
+        val photoFiles = List(totalCaptures) { index ->
+            File(externalMediaDirs.firstOrNull(), "IMG_${System.currentTimeMillis()}_$index.jpg")
+
+        }
+
+        photoFiles.forEach { file ->
+            Log.d("PhotoFiles", "File Path: ${file.absolutePath}")
+            println("File Path: ${file.absolutePath}")
+        }
+        GlobalScope.launch(Dispatchers.Main) {
+            photoFiles.forEach { photoFile ->
+                val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+                imageCapture.takePicture(
+                    outputOptions,
+                    ContextCompat.getMainExecutor(this@OpenCVActivity),
+                    object : ImageCapture.OnImageSavedCallback {
+                        override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                            GlobalScope.launch(Dispatchers.IO) {
+                                // Save path
+                                imagePathList.add(photoFile.absolutePath)
+                                Log.d("Burst", "Image saved: ${photoFile.absolutePath}")
+
+                                // Decrement remaining count
+                                remainingCaptures--
+
+                                // If all captures are done, invoke onComplete
+                                if (remainingCaptures == 0) {
+                                    withContext(Dispatchers.Main) {
+                                        onComplete()
+                                    }
+                                }
+                            }
+                        }
+
+                        override fun onError(exception: ImageCaptureException) {
+                            Log.e("Burst", "Error capturing image: ${exception.message}")
+                            remainingCaptures--
+                            if (remainingCaptures == 0) {
+                                onComplete()
+                            }
+                        }
+                    }
                 )
             }
         }
