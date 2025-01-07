@@ -3,6 +3,9 @@ package com.example.identity_scan
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
+import android.graphics.YuvImage
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -11,6 +14,7 @@ import android.util.Size
 import androidx.activity.compose.setContent
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
@@ -22,16 +26,13 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,8 +45,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,7 +53,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -70,17 +68,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.opencv.android.Utils
 import org.opencv.core.Core
-import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.MatOfDouble
 import org.opencv.core.MatOfPoint
+import org.opencv.core.Rect
 import org.opencv.imgproc.Imgproc
+import org.tensorflow.lite.DataType
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import kotlin.math.log
 
 class OpenCVActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
@@ -258,59 +259,55 @@ class OpenCVActivity : AppCompatActivity() {
                                     lastAnalysisTime = currentTime
 
                                     try {
-                                        // Get the YUV data from ImageProxy
-                                        val yBuffer = imageProxy.planes[0].buffer // Y plane
-                                        val uBuffer = imageProxy.planes[1].buffer // U plane
-                                        val vBuffer = imageProxy.planes[2].buffer // V plane
+                                        // Convert ImageProxy to Bitmap
+                                        val bitmap = imageProxyToBitmap(imageProxy)
+                                        val resizedBitmap = resizeBitmapTo224x224(bitmap)
+                                        // Convert Bitmap to ByteBuffer for TensorFlow Lite
+                                        val inputByteBuffer = convertBitmapToByteBuffer(resizedBitmap)
 
-                                        val ySize = yBuffer.remaining()
-                                        val uSize = uBuffer.remaining()
-                                        val vSize = vBuffer.remaining()
+                                        val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 224, 224, 3), DataType.FLOAT32)
+                                        inputFeature0.loadBuffer(inputByteBuffer)
+                                        val outputs = model.process(inputFeature0)
+                                        val outputFeature0 = outputs.outputFeature0AsTensorBuffer
 
-                                        val nv21 = ByteArray(ySize + uSize + vSize)
+                                        val predictedClass = outputFeature0.floatArray.indices.maxByOrNull { outputFeature0.floatArray[it] } ?: -1
+                                        Log.w("result",predictedClass.toString())
+                                        if(predictedClass==0){
+                                            // Convert Bitmap to Mat for OpenCV functions
+                                            val mat = bitmapToMat(bitmap)
 
-                                        // Copy Y, U, and V data into NV21 format
-                                        yBuffer.get(nv21, 0, ySize)
-                                        vBuffer.get(nv21, ySize, vSize)
-                                        uBuffer.get(nv21, ySize + vSize, uSize)
+                                            // Perform brightness and glare analysis
+                                            val avgBrightness = calculateBrightness(mat)
+                                            val avgGlare = analyzeBrightRegions(mat)
 
-                                        // Convert NV21 to Mat
-                                        val yuvMat = Mat(
-                                            imageProxy.height + imageProxy.height / 2,
-                                            imageProxy.width,
-                                            CvType.CV_8UC1
-                                        )
-                                        yuvMat.put(0, 0, nv21)
+                                            Log.e("OpenCV Brightness", avgBrightness.toString())
+                                            Log.e("OpenCV Glare", avgGlare.toString())
 
-                                        val rgbMat = Mat()
-                                        Imgproc.cvtColor(yuvMat, rgbMat, Imgproc.COLOR_YUV2RGB_NV21)
-
-                                        // Process the RGB Mat for brightness and glare
-                                        val avgBrightness = calculateBrightness(rgbMat)
-                                        val avgGlare = analyzeBrightRegions(rgbMat)
-                                        Log.e("OpenCV Brightness", avgBrightness.toString())
-                                        Log.e("OpenCV Glare", avgGlare.toString())
-
-                                        // Update the status message based on conditions
-                                        CoroutineScope(Dispatchers.Main).launch {
-                                            statusMessage.value = when {
-                                                avgBrightness < 70 -> "Brightness too low. Increase lighting."
-                                                avgBrightness > 155 -> "Brightness too high. Reduce lighting."
-                                                avgGlare > 20.0 -> "High glare detected. Adjust lighting."
-                                                else -> "Lighting conditions are optimal."
+                                            // Update status message based on results
+                                            CoroutineScope(Dispatchers.Main).launch {
+                                                statusMessage.value = when {
+                                                    avgBrightness < 70 -> "Brightness too low. Increase lighting."
+                                                    avgBrightness > 155 -> "Brightness too high. Reduce lighting."
+                                                    avgGlare > 20.0 -> "High glare detected. Adjust lighting."
+                                                    else -> "Lighting conditions are optimal."
+                                                }
                                             }
+
+                                            // Release resources
+                                            mat.release()
+                                        }
+                                        if(predictedClass == 1){
+                                            statusMessage.value = "Please use Real IdCard"
+                                        }
+                                        if(predictedClass == 2){
+                                            statusMessage.value = "Please move your hand out"
+                                        }
+                                        else{
+                                            statusMessage.value = "Not found Card"
                                         }
 
-                                        // Perform your calculations here using avgBrightness and avgGlare
-                                        // For example, trigger further logic if conditions are good
-                                        if (avgBrightness in 70.0..140.0 && avgGlare <= 20.0) {
-                                            Log.d("ConditionCheck", "Optimal conditions met for further calculations.")
-                                            // Add any additional calculation logic here
-                                        }
 
-                                        // Release resources
-                                        yuvMat.release()
-                                        rgbMat.release()
+
                                     } catch (e: Exception) {
                                         e.printStackTrace()
                                     } finally {
@@ -320,8 +317,6 @@ class OpenCVActivity : AppCompatActivity() {
                                     imageProxy.close()
                                 }
                             }
-
-
 
                             cameraProvider.bindToLifecycle(
                                 lifecycleOwner,
@@ -341,6 +336,32 @@ class OpenCVActivity : AppCompatActivity() {
             }
         }
     }
+    private fun bitmapToMat(bitmap: Bitmap): Mat {
+        val mat = Mat() // Create an empty Mat
+        Utils.bitmapToMat(bitmap, mat) // Convert Bitmap to Mat
+        return mat
+    }
+
+    private fun convertBitmapToByteBuffer(bitmap: Bitmap): ByteBuffer {
+        val byteBuffer = ByteBuffer.allocateDirect(4 * 224 * 224 * 3) // FLOAT32 has 4 bytes
+        byteBuffer.order(ByteOrder.nativeOrder())
+
+        val intValues = IntArray(224 * 224)
+        bitmap.getPixels(intValues, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+
+        for (pixel in intValues) {
+            val r = (pixel shr 16 and 0xFF) / 255.0f
+            val g = (pixel shr 8 and 0xFF) / 255.0f
+            val b = (pixel and 0xFF) / 255.0f
+
+            byteBuffer.putFloat(r)
+            byteBuffer.putFloat(g)
+            byteBuffer.putFloat(b)
+        }
+
+        return byteBuffer
+    }
+
     private fun saveFrame(rgbMat: Mat) {
         // Convert Mat to Bitmap
         val bitmap = Bitmap.createBitmap(rgbMat.width(), rgbMat.height(), Bitmap.Config.ARGB_8888)
@@ -355,6 +376,36 @@ class OpenCVActivity : AppCompatActivity() {
         Log.d("SaveFrame", "Frame saved to ${file.absolutePath}")
     }
 
+    private fun imageProxyToBitmap(imageProxy: ImageProxy): Bitmap {
+        val yBuffer = imageProxy.planes[0].buffer // Y plane
+        val uBuffer = imageProxy.planes[1].buffer // U plane
+        val vBuffer = imageProxy.planes[2].buffer // V plane
+
+        val ySize = yBuffer.remaining()
+        val uSize = uBuffer.remaining()
+        val vSize = vBuffer.remaining()
+
+        val nv21 = ByteArray(ySize + uSize + vSize)
+
+        yBuffer.get(nv21, 0, ySize)
+        vBuffer.get(nv21, ySize, vSize)
+        uBuffer.get(nv21, ySize + vSize, uSize)
+
+        val yuvImage = YuvImage(nv21, ImageFormat.NV21, imageProxy.width, imageProxy.height, null)
+        val out = ByteArrayOutputStream()
+
+        // Use android.graphics.Rect for the compression area
+        val rect = android.graphics.Rect(0, 0, imageProxy.width, imageProxy.height)
+        yuvImage.compressToJpeg(rect, 100, out)
+
+        val imageBytes = out.toByteArray()
+        return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+    }
+
+
+    private fun resizeBitmapTo224x224(bitmap: Bitmap): Bitmap {
+        return Bitmap.createScaledBitmap(bitmap, 224, 224, true)
+    }
 
     @Composable
     fun RectangleOverlay(
@@ -407,30 +458,31 @@ class OpenCVActivity : AppCompatActivity() {
         Imgproc.threshold(gray, binary, 230.0, 255.0, Imgproc.THRESH_BINARY)
 
         val contours = ArrayList<MatOfPoint>()
-        val hierarchy = Mat()
-        Imgproc.findContours(binary, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
+        Imgproc.findContours(binary, contours, Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
 
         var glareArea = 0.0
         for (contour in contours) {
             val area = Imgproc.contourArea(contour)
-            if (area > 500) {
+            if (area > 500) { // Ignore small noise
                 glareArea += area
             }
         }
 
         gray.release()
         binary.release()
+
         return glareArea
     }
-
 
     private fun calculateBrightness(mat: Mat): Double {
         val gray = Mat()
         Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGR2GRAY)
-        val meanIntensity = Core.mean(gray).`val`[0]
+        val mean = Core.mean(gray)
         gray.release()
-        return meanIntensity
+        return mean.`val`[0]
     }
+
+
 
 
     override fun onDestroy() {
