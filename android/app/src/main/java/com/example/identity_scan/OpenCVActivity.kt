@@ -244,27 +244,21 @@ class OpenCVActivity : AppCompatActivity() {
                         cameraProviderFuture.addListener({
                             val cameraProvider = cameraProviderFuture.get()
 
+                            // Create Preview use case
                             val preview = Preview.Builder().build()
 
-                            val resolutionSelector = ResolutionSelector.Builder()
-                                .setResolutionStrategy(
-                                    ResolutionStrategy(
-                                        Size(1080, 1440),
-                                        ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
-                                    )
-                                )
+                            // Create ImageCapture use case
+                            val imageCapture = ImageCapture.Builder()
+                                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                                 .build()
 
+                            // Create ImageAnalysis use case
                             val imageAnalysis = ImageAnalysis.Builder()
                                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                                .setResolutionSelector(resolutionSelector)
                                 .build()
 
                             imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
                                 val currentTime = System.currentTimeMillis()
-                                imageCapture = ImageCapture.Builder()
-                                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                                    .build()
                                 if (currentTime - lastAnalysisTime >= 1000) { // Throttle to 1 second
                                     lastAnalysisTime = currentTime
 
@@ -285,7 +279,6 @@ class OpenCVActivity : AppCompatActivity() {
                                         Log.w("Model Prediction", predictedClass.toString())
 
                                         if (predictedClass == 0) { // Optimal conditions
-                                            // Convert Bitmap to Mat for OpenCV functions
                                             val mat = bitmapToMat(bitmap)
 
                                             // Perform brightness and glare analysis
@@ -295,7 +288,6 @@ class OpenCVActivity : AppCompatActivity() {
                                             Log.e("OpenCV Brightness", avgBrightness.toString())
                                             Log.e("OpenCV Glare", avgGlare.toString())
 
-                                            // Check for optimal conditions
                                             val isOptimal = avgBrightness in 70.0..155.0 && avgGlare <= 20.0
 
                                             CoroutineScope(Dispatchers.Main).launch {
@@ -306,7 +298,6 @@ class OpenCVActivity : AppCompatActivity() {
                                                     else -> "Lighting conditions are optimal."
                                                 }
 
-                                                // If conditions are optimal, wait for 2 seconds and capture burst images
                                                 if (isOptimal) {
                                                     delay(2000) // Wait for 2 seconds
                                                     if (statusMessage.value == "Lighting conditions are optimal.") {
@@ -317,7 +308,6 @@ class OpenCVActivity : AppCompatActivity() {
                                                 }
                                             }
 
-                                            // Release Mat resources
                                             mat.release()
                                         } else if (predictedClass == 1) {
                                             statusMessage.value = "Please use a Real ID Card"
@@ -336,15 +326,18 @@ class OpenCVActivity : AppCompatActivity() {
                                 }
                             }
 
-
+                            // Bind use cases to lifecycle
                             cameraProvider.bindToLifecycle(
                                 lifecycleOwner,
                                 CameraSelector.DEFAULT_BACK_CAMERA,
                                 preview,
+                                imageCapture,
                                 imageAnalysis
                             )
+
                             preview.setSurfaceProvider(previewView.surfaceProvider)
                         }, ContextCompat.getMainExecutor(ctx))
+
 
                         previewView
                     },
