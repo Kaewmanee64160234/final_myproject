@@ -47,6 +47,5 @@ class DatabaseHelper {
     ImageData image  = ImageData.fromMap(result[0]);
     print(image.imageData.length);
     return image;
-
   }
 }

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:identity_scan/db/db_helper.dart';
 import 'package:identity_scan/model/image.dart';
 import 'package:identity_scan/view/image_view.dart';
+import 'package:identity_scan/view/result/front_result_view.dart';
 
 class DbView extends StatefulWidget {
   const DbView({super.key});
@@ -34,7 +35,10 @@ class _DbViewState extends State<DbView> {
                 // String cleanedBase64 = base64Image.replaceAll(RegExp(r'\s'), ''); // Remove all whitespaces
 
                 // var imgMemory = base64Decode(cleanedBase64);
-                Get.to(ImageView(imagePath: '/data/user/0/com.example.identity_scan/app_Images/image.jpg',));
+                Get.to(ImageView(
+                  imagePath:
+                      '/data/user/0/com.example.identity_scan/app_Images/image.jpg',
+                ));
               } catch (e) {
                 print("Error decoding Base64 string: $e");
                 setState(() {
@@ -42,7 +46,16 @@ class _DbViewState extends State<DbView> {
                 });
               }
             }),
-            child: Text("Show Image"))
+            child: Text("Image View")),
+        ElevatedButton(
+            onPressed: (() async {
+              try {
+                Get.to(FrontResultView());
+              } catch (e) {
+                print(e);
+              }
+            }),
+            child: Text("Result View"))
       ],
     ));
   }

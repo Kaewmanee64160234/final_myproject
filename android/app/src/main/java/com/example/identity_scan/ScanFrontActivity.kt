@@ -80,6 +80,7 @@ import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 import android.util.Base64
+import androidx.compose.foundation.layout.wrapContentSize
 import java.io.FileOutputStream
 import java.io.OutputStream
 
@@ -368,7 +369,7 @@ class ScanFrontActivity : AppCompatActivity() {
         try {
             // Create an output stream to write the bitmap data to the file
             val stream: OutputStream = FileOutputStream(file)
-            bitmapImg.compress(Bitmap.CompressFormat.JPEG, 25, stream) // Compress to JPEG with quality 25%
+            bitmapImg.compress(Bitmap.CompressFormat.JPEG, 100, stream) // Compress to JPEG with quality 25%
             stream.flush()
             stream.close()
         } catch (e: Exception) {
@@ -377,6 +378,67 @@ class ScanFrontActivity : AppCompatActivity() {
 
         return file
     }
+//
+//    fun captureMultiImages(context: Context): List<File> {
+//        val wrapper = ContextWrapper(context)
+//        val fileDir = wrapper.getDir("Images", Context.MODE_PRIVATE)
+//
+//        val files = mutableListOf<File>()
+//
+//        try {
+//            for (i in 1..3) {
+//                val fileName = "img_$i.jpg"
+//                val file = File(fileDir, fileName)
+//
+//                val stream: OutputStream = FileOutputStream(file)
+//                bitmapImg.compress(Bitmap.CompressFormat.JPEG, 100, stream) // Compress to JPEG with quality 25%
+//                stream.flush()
+//                stream.close()
+//
+//                files.add(file)
+//            }
+//        } catch (e: Exception) {
+//            e.printStackTrace()
+//        }
+//
+//        return files
+//    }
+
+
+//
+//    @Composable
+//    fun ShowImageDialog(bitmap: Bitmap, onDismiss: () -> Unit) {
+//        Dialog(onDismissRequest = onDismiss) {
+//            Box(
+//                modifier = Modifier
+//                    .fillMaxSize()
+//                    .padding(16.dp)
+//            ) {
+//
+//                Column {
+//                    Row {
+//                        Image(
+//                            bitmap = bitmap.asImageBitmap(),
+//                            contentDescription = "Captured Image",
+//                            modifier = Modifier.fillMaxSize()
+//                        )
+//                    }
+//                    Row {
+//                        Button(
+//                            onClick = {
+//                                finish()
+//                            },
+////                            modifier = Modifier
+////                                .padding(60.dp)
+//                        ) {
+//                            Text("Ok")
+//                        }
+//                    }
+//                }
+//
+//            }
+//        }
+//    }
 
     @Composable
     fun ShowImageDialog(bitmap: Bitmap, onDismiss: () -> Unit) {
@@ -384,16 +446,49 @@ class ScanFrontActivity : AppCompatActivity() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center // Centers the entire dialog content
             ) {
-                Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = "Captured Image",
-                    modifier = Modifier.fillMaxSize()
-                )
+                Column(
+                    modifier = Modifier.wrapContentSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Display the image with restricted height
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Captured Image",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(500.dp) // Adjust height as needed
+                            .padding(bottom = 16.dp)
+                    )
+
+                    // Display the buttons in a row
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp), // Space between buttons
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Button(
+                            onClick = {
+                                onDismiss() // Handle cancel button action
+                            }
+                        ) {
+                            Text("Cancel")
+                        }
+                        Button(
+                            onClick = {
+                                finish()
+                            }
+                        ) {
+                            Text("Ok")
+                        }
+                    }
+                }
             }
         }
     }
+
+
 
 
     private fun updateImageData(newImageData: String) {

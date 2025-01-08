@@ -43,6 +43,25 @@ class FrontData {
       portrait: json['portrait'], // The portrait image (base64 string or path)
     );
   }
+
+  // Convert FrontData to JSON map
+  Map<String, dynamic> toJson() {
+    return {
+      'idNumber': idNumber,
+      'th': {
+        'fullName': fullName,
+        'prefix': prefix,
+        'name': name,
+        'lastName': lastName,
+        'dateOfBirth': dateOfBirth,
+        'dateOfIssue': dateOfIssue,
+        'dateOfExpiry': dateOfExpiry,
+        'religion': religion,
+        'address': address.toJson(),
+      },
+      'portrait': portrait,
+    };
+  }
 }
 
 class Address {
@@ -69,5 +88,16 @@ class Address {
       district: json['district'],
       province: json['province'],
     );
+  }
+
+  // Convert Address to JSON map
+  Map<String, dynamic> toJson() {
+    return {
+      'full': full,
+      'firstPart': firstPart,
+      'subdistrict': subdistrict,
+      'district': district,
+      'province': province,
+    };
   }
 }

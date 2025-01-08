@@ -36,7 +36,9 @@ class Api {
       // Check response status
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
-        print('Upload successful: $responseBody');
+        // print('Upload successful: $responseBody');
+        // Error ที่นี่
+
         return http.Response(responseBody, 200);
       } else {
         final responseBody = await response.stream.bytesToString();

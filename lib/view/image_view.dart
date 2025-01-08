@@ -117,10 +117,13 @@ class _ImageViewState extends State<ImageView> {
 
     try {
       final response = await api.post('api/v1/upload_front_base64', formData);
+      if(response!=null){
+        print(response.body);
+      }
       // print(response);
       // print("Upload response: $response");
-      FrontData frontData = FrontData.fromJson(response as Map<String, dynamic>);
-      print(frontData.fullName);
+      // FrontData frontData = FrontData.fromJson(response as Map<String, dynamic>);
+      // print(frontData.fullName);
     } catch (e) {
       print("Error uploading image: $e");
     }
