@@ -3,7 +3,12 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:identity_scan/api/api.dart';
+import 'package:identity_scan/model/front/id_card.dart';
+import 'package:identity_scan/view/result/front_result_view.dart';
+
+import '../result/error_view.dart';
 
 class LoadingView extends StatefulWidget {
   const LoadingView({super.key});
@@ -27,10 +32,12 @@ class _LoadingViewState extends State<LoadingView> {
         setState(() {
           imageBytes = bytes;
         });
+        showSuccessSnackbar(title: "Success",message: "Load Image Sucess");
       } else {
         throw Exception("File does not exist at ${imagePath}");
       }
     } catch (e) {
+      showErrorSnackbar(title: "Error", message: e.toString());
       print("Error loading image from path: $e");
     }
   }
@@ -45,7 +52,58 @@ class _LoadingViewState extends State<LoadingView> {
   void loadImageAndStartOCR() async {
     await loadImageFromPath();
     convertToBase64();
-    await api.sendOcrFront(base64Image);
+    ID_CARD? result = await api.sendOcrFront(base64Image);
+    if (result != null) {
+      Get.to(FrontResultView(idCard: result));
+    } else {
+      Get.to(ErrorView());
+      print("No Result");
+    }
+  }
+
+  void showErrorSnackbar({
+    required String title,
+    required String message,
+  }) {
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+      duration: Duration(seconds: 3),
+      titleText: Text(
+        title,
+        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+      ),
+      messageText: Text(
+        message,
+        style: TextStyle(color: Colors.white),
+      ),
+    );
+  }
+
+  
+  void showSuccessSnackbar({
+    required String title,
+    required String message,
+  }) {
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+      duration: Duration(seconds: 3),
+      titleText: Text(
+        title,
+        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+      ),
+      messageText: Text(
+        message,
+        style: TextStyle(color: Colors.white),
+      ),
+    );
   }
 
   @override

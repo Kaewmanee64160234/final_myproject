@@ -50,7 +50,7 @@ class _DbViewState extends State<DbView> {
         ElevatedButton(
             onPressed: (() async {
               try {
-                Get.to(FrontResultView());
+                // Get.to(FrontResultView());
               } catch (e) {
                 print(e);
               }

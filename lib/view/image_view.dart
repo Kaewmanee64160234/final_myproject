@@ -109,7 +109,7 @@ class _ImageViewState extends State<ImageView> {
       return;
     }
 
-    Api api = Api('https://events.controldata.co.th/cardocr/');
+    Api api = Api();
     Map<String, dynamic> formData = {
       'filedata': base64String, // Send Base64-encoded image
     };
@@ -118,7 +118,7 @@ class _ImageViewState extends State<ImageView> {
       // final response = await api.post('api/v1/upload_front_base64', formData);
 
       final response =
-          await api.sendOcrFront('api/v1/upload_front_base64', base64String);
+          await api.sendOcrFront(base64String);
 
       // if (response != null) {
       //   print(response.body);

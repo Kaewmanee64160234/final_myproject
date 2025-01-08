@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:identity_scan/model/front/id_card.dart';
 
 class FrontResultView extends StatefulWidget {
-  const FrontResultView({super.key});
+  final ID_CARD idCard;
+
+  const FrontResultView({super.key, required this.idCard});
 
   @override
   State<FrontResultView> createState() => _FrontResultViewState();
@@ -16,7 +19,11 @@ class _FrontResultViewState extends State<FrontResultView> {
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [Text("Name"), Text("Surname")],
+        children: [
+          Center(child: Text("ID Card: ${widget.idCard.idNumber}")),
+          Center(child: Text("FullName : ${widget.idCard.th.fullName}")),
+          Center(child: Text("Address : ${widget.idCard.th.address.full}")),
+        ],
       ),
     );
   }
