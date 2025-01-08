@@ -304,10 +304,12 @@ class OpenCVActivity : AppCompatActivity() {
                                                     if (isOptimal) {
                                                         delay(2000) // Wait for 2 seconds
                                                         if (statusMessage.value == "Lighting conditions are optimal.") {
-
+                                                            statusMessage.value = "capture !!!"
                                                             captureBurstImages(imageCapture, 5) {
-                                                                Log.d("Burst Capture", "All images captured successfully.")
-                                                                statusMessage.value = "Captured!"
+                                                                val (sharpestPath, maxVariance) = findSharpestImage(imagePathList)
+                                                                sharpestPath?.let {
+                                                                    statusMessage.value = "Sharpest Image: $it\nVariance: $maxVariance"
+                                                                }
                                                             }
                                                             captureComplete = true
 
@@ -393,6 +395,10 @@ class OpenCVActivity : AppCompatActivity() {
                                 if (remainingCaptures == 0) {
                                     captureComplete = true // Mark capture as complete
                                     withContext(Dispatchers.Main) {
+                                        val (sharpestPath, maxVariance) = findSharpestImage(imagePathList)
+                                        sharpestPath?.let {
+                                            Log.d("Sharpest Image", "Path: $it, Variance: $maxVariance")
+                                        }
                                         onComplete()
                                     }
                                 }
@@ -404,6 +410,10 @@ class OpenCVActivity : AppCompatActivity() {
                             remainingCaptures--
                             if (remainingCaptures == 0) {
                                 captureComplete = true // Mark capture as complete
+                                val (sharpestPath, maxVariance) = findSharpestImage(imagePathList)
+                                sharpestPath?.let {
+                                    Log.d("Sharpest Image", "Path: $it, Variance: $maxVariance")
+                                }
                                 onComplete()
                             }
                         }
@@ -413,6 +423,26 @@ class OpenCVActivity : AppCompatActivity() {
         }
     }
 
+    private fun findSharpestImage(imagePaths: List<String>): Pair<String?, Double> {
+        var sharpestPath: String? = null
+        var maxVariance = 0.0
+
+        for (path in imagePaths) {
+            val bitmap = BitmapFactory.decodeFile(path) ?: continue
+            val mat = bitmapToMat(bitmap) ?: continue
+
+            if (!mat.empty()) {
+                val variance = calculateLaplacianVariance(mat)
+                if (variance > maxVariance) {
+                    maxVariance = variance
+                    sharpestPath = path
+                }
+                mat.release()
+            }
+        }
+
+        return Pair(sharpestPath, maxVariance)
+    }
     private fun bitmapToMat(bitmap: Bitmap): Mat {
         val mat = Mat() // Create an empty Mat
         Utils.bitmapToMat(bitmap, mat) // Convert Bitmap to Mat
