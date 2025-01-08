@@ -1,13 +1,11 @@
 package com.example.identity_scan
 
 import android.Manifest
-import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.graphics.Rect
 import android.os.Build
@@ -17,7 +15,6 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
@@ -80,7 +77,6 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
-import android.util.Base64
 import androidx.compose.foundation.layout.wrapContentSize
 import java.io.FileOutputStream
 import java.io.OutputStream
@@ -209,10 +205,10 @@ class ScanFrontActivity : AppCompatActivity() {
 
          val timer = object : CountDownTimer(2000, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                println("Time remaining: ${millisUntilFinished / 1800} seconds")
+                println("Time remaining: ${millisUntilFinished / 1000} seconds")
             }
             override fun onFinish() {
-                println("Founded For 1.8S")
+                println("Founded For 1S")
                 isShutter = true
             }
         }
@@ -515,7 +511,7 @@ class ScanFrontActivity : AppCompatActivity() {
             // Get the current time
             val currentTime = System.currentTimeMillis()
             // Check if 350 milliseconds have passed since the last processing
-            if (currentTime - lastProcessedTime >= 350) {
+            if (currentTime - lastProcessedTime >= 200) {
                 lastProcessedTime = currentTime
                 // Convert YUV to Bitmap
                 val bitmap = imageProxy.toBitmap()
