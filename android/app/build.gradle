@@ -75,7 +75,7 @@ android {
         implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0-rc2'
         implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
         implementation 'androidx.sqlite:sqlite:2.1.0'
-
+        implementation "io.coil-kt:coil-compose:2.2.2"
         implementation 'com.github.SmartToolFactory:Compose-Screenshot:1.0.3'
 
 

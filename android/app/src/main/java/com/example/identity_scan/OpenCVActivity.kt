@@ -28,6 +28,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,8 +36,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -60,6 +63,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import coil.compose.rememberImagePainter
+import coil.decode.DecodeUtils.calculateInSampleSize
 import com.example.identity_scan.ml.ModelUnquant
 import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
@@ -100,6 +105,7 @@ class OpenCVActivity : AppCompatActivity() {
     private var imagePathList = mutableStateListOf<String>()
     private lateinit var imageCapture: ImageCapture
     private var captureComplete = false
+    private var sharpestImagePath = ""
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -158,6 +164,44 @@ class OpenCVActivity : AppCompatActivity() {
                                 .align(Alignment.Center), // Ensure it is centered
                             statusMessage = statusMessage // Pass status message to preview
                         )
+                        if(captureComplete){
+                            LazyColumn {
+                                sharpestImagePath?.let { path ->
+                                    item {
+                                        // Decode the image again for display (sampled to e.g. 800x800)
+                                        val sampledBitmap = decodeSampledBitmap(path, 800, 800)
+                                        if (sampledBitmap != null) {
+                                            val mat = bitmapToMat(sampledBitmap)
+                                            val variance = mat?.let { calculateLaplacianVariance(it) } ?: 0.0
+                                            mat?.release()
+
+                                            Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+                                                // Show the image (Coil can handle sampling too)
+                                                Image(
+                                                    painter = rememberImagePainter(path),
+                                                    contentDescription = "Captured Image",
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(200.dp)
+                                                )
+                                                androidx.compose.material.Text(
+                                                    text = "Laplacian Variance: $variance",
+                                                    color = Color.Black,
+                                                    fontSize = 14.sp
+                                                )
+                                            }
+                                        } else {
+                                            androidx.compose.material.Text(
+                                                text = "Failed to load image: $path",
+                                                color = Color.Red,
+                                                fontSize = 14.sp,
+                                                modifier = Modifier.padding(8.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     // Overlay with Rectangle and Text
@@ -218,6 +262,35 @@ class OpenCVActivity : AppCompatActivity() {
 
 
     }
+    private fun decodeSampledBitmap(path: String, reqWidth: Int, reqHeight: Int): Bitmap? {
+        // First decode with inJustDecodeBounds=true to check dimensions
+        val options = BitmapFactory.Options().apply {
+            inJustDecodeBounds = true
+        }
+        BitmapFactory.decodeFile(path, options)
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight)
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false
+        return BitmapFactory.decodeFile(path, options)
+    }
+    private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+        val (height: Int, width: Int) = options.run { outHeight to outWidth }
+        var inSampleSize = 1
+
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight: Int = height / 2
+            val halfWidth: Int = width / 2
+
+            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+        return inSampleSize
+    }
+
     @Composable
     fun CameraPreview(
         modifier: Modifier = Modifier,
@@ -308,6 +381,7 @@ class OpenCVActivity : AppCompatActivity() {
                                                             captureBurstImages(imageCapture, 5) {
                                                                 val (sharpestPath, maxVariance) = findSharpestImage(imagePathList)
                                                                 sharpestPath?.let {
+                                                                    sharpestImagePath = it
                                                                     statusMessage.value = "Sharpest Image: $it\nVariance: $maxVariance"
                                                                 }
                                                             }
