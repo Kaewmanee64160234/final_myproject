@@ -1,6 +1,7 @@
 package com.example.identity_scan
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
@@ -176,21 +177,14 @@ class ScanFrontActivity : AppCompatActivity() {
                     ){
                         Box(
                         ) {
-                            Button(onClick = { finish() }) {
+                            Button(onClick = {
+                                finish()
+                            }) {
                                 Text("Exit")
                             }
                         }
 
-                        Box(
-                        ) {
-                            Button(onClick = {
-//                                isShutter = !isShutter
-//                                println("Update IsShutter")
-//                                println(isShutter)
-                            }) {
-                                Text("Toggle Camera")
-                            }
-                        }
+
                     }
                 }
             }
@@ -331,22 +325,7 @@ class ScanFrontActivity : AppCompatActivity() {
         ) {
             Text("Capture Image")
         }
-
-
-        Button(
-            onClick = {
-                val resultIntent = Intent()
-                resultIntent.putExtra("key", base64Image2)
-                setResult(RESULT_OK, resultIntent)
-                finish()
-            },
-            modifier = Modifier
-
-                .padding(60.dp)
-        ) {
-            Text("Print Base64")
-        }
-
+        
         // Show Dialog
         if (showDialog && bitmapToShow != null) {
             ShowImageDialog(bitmap = bitmapToShow!!) {
@@ -470,13 +449,21 @@ class ScanFrontActivity : AppCompatActivity() {
                     ) {
                         Button(
                             onClick = {
-                                onDismiss() // Handle cancel button action
+                                val resultIntent = Intent()
+                                resultIntent.putExtra("result", "cancel")
+                                println("Intent before setResult: ${resultIntent.extras}")
+                                setResult(RESULT_OK, resultIntent)
+                                finish()
                             }
                         ) {
                             Text("Cancel")
                         }
                         Button(
                             onClick = {
+                                val resultIntent = Intent()
+                                resultIntent.putExtra("result", "ok") // Use "result" to match
+                                println("Intent before setResult: ${resultIntent.extras}") // Log intent extras
+                                setResult(RESULT_OK, resultIntent)
                                 finish()
                             }
                         ) {

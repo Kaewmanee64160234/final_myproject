@@ -1,5 +1,6 @@
 package com.example.identity_scan
 
+import android.app.Activity
 import android.content.Intent
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -7,6 +8,7 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val channel = "native_function"
+    private val REQUEST_CODE_SCAN = 1001
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -33,6 +35,7 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
+
     }
 
     private fun getNativeMessage(): String {
@@ -41,7 +44,9 @@ class MainActivity : FlutterActivity() {
 
     private fun openCameraPage() {
         val intent = Intent(this@MainActivity, ScanFrontActivity::class.java)
-        startActivity(intent)
+        startActivityForResult(intent, REQUEST_CODE_SCAN)
+
+//        startActivity(intent)
     }
 
     private fun openAnimationView() {
@@ -76,6 +81,10 @@ class MainActivity : FlutterActivity() {
             // ได้รับผลลัพธ์จาก AnimaActivity
             val result = data?.getStringExtra("key") // รับค่าที่ส่งกลับจาก AnimaActivity
             // ใช้ผลลัพธ์ที่ได้ที่นี่
+            println(result)
+        }else if (requestCode == REQUEST_CODE_SCAN){
+            val result = data?.getStringExtra("result") // รับค่าที่ส่งกลับจาก ScanFronActivity
+            println("Result From ScanFront Activity")
             println(result)
         }
     }
