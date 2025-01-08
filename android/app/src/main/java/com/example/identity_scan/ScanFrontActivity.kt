@@ -78,6 +78,8 @@ import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.MaterialTheme.colors
+import androidx.compose.material3.ButtonDefaults
 import java.io.FileOutputStream
 import java.io.OutputStream
 
@@ -159,7 +161,7 @@ class ScanFrontActivity : AppCompatActivity() {
                     ) {
                         Text( modifier = Modifier
                             .height(80.dp)
-                            .padding(16.dp),
+                            .padding(top = 40.dp),
                             text = "สแกนหน้าบัตร",
                             color = Color.White,
                             style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
@@ -169,18 +171,27 @@ class ScanFrontActivity : AppCompatActivity() {
                     CameraWithOverlay(modifier = Modifier.weight(1f), guideText = cameraViewModel.guideText)
 
                     Row(
-
-                    ){
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Box(
+                            modifier = Modifier
+                                .wrapContentSize(Alignment.Center)
                         ) {
-                            Button(onClick = {
-                                finish()
-                            }) {
-                                Text("Exit")
+                            Button(
+                                onClick = { finish() },
+                                colors = ButtonDefaults.buttonColors(Color.Red)
+                            ) {
+                                Text(
+                                    text = "ยกเลิก",
+                                    color = Color.White,
+                                    fontSize = 16.sp
+                                )
                             }
                         }
-
-
                     }
                 }
             }
@@ -203,9 +214,9 @@ class ScanFrontActivity : AppCompatActivity() {
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
 
-         val timer = object : CountDownTimer(2000, 1000) {
+         val timer = object : CountDownTimer(2000, 800) {
             override fun onTick(millisUntilFinished: Long) {
-                println("Time remaining: ${millisUntilFinished / 1000} seconds")
+                println("Time remaining: ${millisUntilFinished / 800} seconds")
             }
             override fun onFinish() {
                 println("Founded For 1S")
@@ -310,17 +321,17 @@ class ScanFrontActivity : AppCompatActivity() {
             )
         }
 
-        Button(
-            onClick = {
-                //ถ่ายรูปที่นี่
-                isShutter = true
-            },
-            modifier = Modifier
-
-                .padding(16.dp)
-        ) {
-            Text("Capture Image")
-        }
+//        Button(
+//            onClick = {
+//                //ถ่ายรูปที่นี่
+//                isShutter = true
+//            },
+//            modifier = Modifier
+//
+//                .padding(16.dp)
+//        ) {
+//            Text("Capture Image")
+//        }
         
         // Show Dialog
         if (showDialog && bitmapToShow != null) {
@@ -353,67 +364,6 @@ class ScanFrontActivity : AppCompatActivity() {
 
         return file
     }
-//
-//    fun captureMultiImages(context: Context): List<File> {
-//        val wrapper = ContextWrapper(context)
-//        val fileDir = wrapper.getDir("Images", Context.MODE_PRIVATE)
-//
-//        val files = mutableListOf<File>()
-//
-//        try {
-//            for (i in 1..3) {
-//                val fileName = "img_$i.jpg"
-//                val file = File(fileDir, fileName)
-//
-//                val stream: OutputStream = FileOutputStream(file)
-//                bitmapImg.compress(Bitmap.CompressFormat.JPEG, 100, stream) // Compress to JPEG with quality 25%
-//                stream.flush()
-//                stream.close()
-//
-//                files.add(file)
-//            }
-//        } catch (e: Exception) {
-//            e.printStackTrace()
-//        }
-//
-//        return files
-//    }
-
-
-//
-//    @Composable
-//    fun ShowImageDialog(bitmap: Bitmap, onDismiss: () -> Unit) {
-//        Dialog(onDismissRequest = onDismiss) {
-//            Box(
-//                modifier = Modifier
-//                    .fillMaxSize()
-//                    .padding(16.dp)
-//            ) {
-//
-//                Column {
-//                    Row {
-//                        Image(
-//                            bitmap = bitmap.asImageBitmap(),
-//                            contentDescription = "Captured Image",
-//                            modifier = Modifier.fillMaxSize()
-//                        )
-//                    }
-//                    Row {
-//                        Button(
-//                            onClick = {
-//                                finish()
-//                            },
-////                            modifier = Modifier
-////                                .padding(60.dp)
-//                        ) {
-//                            Text("Ok")
-//                        }
-//                    }
-//                }
-//
-//            }
-//        }
-//    }
 
     @Composable
     fun ShowImageDialog(bitmap: Bitmap, onDismiss: () -> Unit) {
@@ -437,34 +387,41 @@ class ScanFrontActivity : AppCompatActivity() {
                             .height(500.dp) // Adjust height as needed
                             .padding(bottom = 16.dp)
                     )
-
                     // Display the buttons in a row
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(16.dp), // Space between buttons
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Button(
-                            onClick = {
-                                val resultIntent = Intent()
-                                resultIntent.putExtra("result", "cancel")
-                                println("Intent before setResult: ${resultIntent.extras}")
-                                setResult(RESULT_OK, resultIntent)
-                                finish()
+                            // Red Button: "ถ่ายใหม่"
+                            Button(
+                                onClick = {
+                                    isFound = false
+                                    onDismiss() // Close the dialog when clicking "ถ่ายใหม่"
+                                          },
+                                colors = ButtonDefaults.buttonColors(Color.Red)
+                            ) {
+                                Text(
+                                    text = "ถ่ายใหม่",
+                                    color = Color.White,
+                                    fontSize = 16.sp
+                                )
                             }
-                        ) {
-                            Text("Cancel")
-                        }
-                        Button(
-                            onClick = {
-                                val resultIntent = Intent()
-                                resultIntent.putExtra("result", "ok") // Use "result" to match
-                                println("Intent before setResult: ${resultIntent.extras}") // Log intent extras
-                                setResult(RESULT_OK, resultIntent)
-                                finish()
+
+                            // Default Button: "ใช้ภาพนี้"
+                            Button(
+                                onClick = {
+                                    val resultIntent = Intent()
+                                    resultIntent.putExtra("result", "ok") // Pass result data
+                                    println("Intent before setResult: ${resultIntent.extras}") // Debugging log
+                                    setResult(RESULT_OK, resultIntent) // Return result to the caller
+                                    finish() // Close activity
+                                }
+                            ) {
+                                Text(
+                                    text = "ใช้ภาพนี้",
+                                    fontSize = 16.sp
+                                )
                             }
-                        ) {
-                            Text("Ok")
-                        }
                     }
                 }
             }
@@ -528,10 +485,9 @@ class ScanFrontActivity : AppCompatActivity() {
                     // println(outputArray)
                     val maxIndex = outputArray.indices.maxByOrNull { outputArray[it] } ?: -1
 
-                    // Check for the condition "พบบัตร" (Found the card)
                     if (maxIndex == 0) {
                         // เริ่มจับเวลา 1.5 วินาทีโดยใข้ตัวแปร Local
-                        cameraViewModel.updateGuideText("พบบัตร")
+                        cameraViewModel.updateGuideText("ถือค้างไว้")
                         isFound = true
                     } else {
                         // รีเซ็ตตัวจับเวลา
