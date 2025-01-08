@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:identity_scan/api/api.dart';
-import 'package:identity_scan/model/front_data.dart';
+import 'package:identity_scan/model/front/id_card.dart';
 
 class ImageView extends StatefulWidget {
   final String imagePath; // Accept the image file path as a parameter
@@ -29,9 +29,9 @@ class _ImageViewState extends State<ImageView> {
     try {
       final file = File(widget.imagePath);
       if (await file.exists()) {
-        final bytes = await file.readAsBytes(); 
+        final bytes = await file.readAsBytes();
         setState(() {
-          imageBytes = bytes; 
+          imageBytes = bytes;
         });
       } else {
         throw Exception("File does not exist at ${widget.imagePath}");
@@ -43,8 +43,7 @@ class _ImageViewState extends State<ImageView> {
 
   void convertToBase64() {
     if (imageBytes != null) {
-      String base64Encoded =
-          base64Encode(imageBytes!); 
+      String base64Encoded = base64Encode(imageBytes!);
       setState(() {
         base64String = base64Encoded;
       });
@@ -97,8 +96,8 @@ class _ImageViewState extends State<ImageView> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: convertToBase64, 
-        child: const Icon(Icons.file_copy), 
+        onPressed: convertToBase64,
+        child: const Icon(Icons.file_copy),
       ),
     );
   }
@@ -110,17 +109,24 @@ class _ImageViewState extends State<ImageView> {
       return;
     }
 
-    Api api = Api('https://events.controldata.co.th/cardocr/');
+    Api api = Api();
     Map<String, dynamic> formData = {
       'filedata': base64String, // Send Base64-encoded image
     };
 
     try {
-      final response = await api.post('api/v1/upload_front_base64', formData);
+      // final response = await api.post('api/v1/upload_front_base64', formData);
+
+      final response =
+          await api.sendOcrFront(base64String);
+
+      // if (response != null) {
+      //   print(response.body);
+      // }
       // print(response);
       // print("Upload response: $response");
-      FrontData frontData = FrontData.fromJson(response as Map<String, dynamic>);
-      print(frontData.fullName);
+      // FrontData frontData = FrontData.fromJson(response as Map<String, dynamic>);
+      // print(frontData.fullName);
     } catch (e) {
       print("Error uploading image: $e");
     }

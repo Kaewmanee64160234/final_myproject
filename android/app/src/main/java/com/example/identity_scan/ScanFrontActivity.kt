@@ -6,7 +6,6 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.graphics.Rect
 import android.os.Build
@@ -16,7 +15,6 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
@@ -79,7 +77,9 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
-import android.util.Base64
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.MaterialTheme.colors
+import androidx.compose.material3.ButtonDefaults
 import java.io.FileOutputStream
 import java.io.OutputStream
 
@@ -161,7 +161,7 @@ class ScanFrontActivity : AppCompatActivity() {
                     ) {
                         Text( modifier = Modifier
                             .height(80.dp)
-                            .padding(16.dp),
+                            .padding(top = 40.dp),
                             text = "สแกนหน้าบัตร",
                             color = Color.White,
                             style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
@@ -171,23 +171,25 @@ class ScanFrontActivity : AppCompatActivity() {
                     CameraWithOverlay(modifier = Modifier.weight(1f), guideText = cameraViewModel.guideText)
 
                     Row(
-
-                    ){
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Box(
+                            modifier = Modifier
+                                .wrapContentSize(Alignment.Center)
                         ) {
-                            Button(onClick = { finish() }) {
-                                Text("Exit")
-                            }
-                        }
-
-                        Box(
-                        ) {
-                            Button(onClick = {
-//                                isShutter = !isShutter
-//                                println("Update IsShutter")
-//                                println(isShutter)
-                            }) {
-                                Text("Toggle Camera")
+                            Button(
+                                onClick = { finish() },
+                                colors = ButtonDefaults.buttonColors(Color.Red)
+                            ) {
+                                Text(
+                                    text = "ยกเลิก",
+                                    color = Color.White,
+                                    fontSize = 16.sp
+                                )
                             }
                         }
                     }
@@ -212,12 +214,12 @@ class ScanFrontActivity : AppCompatActivity() {
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
 
-         val timer = object : CountDownTimer(2000, 1000) {
+         val timer = object : CountDownTimer(2000, 800) {
             override fun onTick(millisUntilFinished: Long) {
-                println("Time remaining: ${millisUntilFinished / 1800} seconds")
+                println("Time remaining: ${millisUntilFinished / 800} seconds")
             }
             override fun onFinish() {
-                println("Founded For 1.8S")
+                println("Founded For 1S")
                 isShutter = true
             }
         }
@@ -319,33 +321,18 @@ class ScanFrontActivity : AppCompatActivity() {
             )
         }
 
-        Button(
-            onClick = {
-                //ถ่ายรูปที่นี่
-                isShutter = true
-            },
-            modifier = Modifier
-
-                .padding(16.dp)
-        ) {
-            Text("Capture Image")
-        }
-
-
-        Button(
-            onClick = {
-                val resultIntent = Intent()
-                resultIntent.putExtra("key", base64Image2)
-                setResult(RESULT_OK, resultIntent)
-                finish()
-            },
-            modifier = Modifier
-
-                .padding(60.dp)
-        ) {
-            Text("Print Base64")
-        }
-
+//        Button(
+//            onClick = {
+//                //ถ่ายรูปที่นี่
+//                isShutter = true
+//            },
+//            modifier = Modifier
+//
+//                .padding(16.dp)
+//        ) {
+//            Text("Capture Image")
+//        }
+        
         // Show Dialog
         if (showDialog && bitmapToShow != null) {
             ShowImageDialog(bitmap = bitmapToShow!!) {
@@ -368,7 +355,7 @@ class ScanFrontActivity : AppCompatActivity() {
         try {
             // Create an output stream to write the bitmap data to the file
             val stream: OutputStream = FileOutputStream(file)
-            bitmapImg.compress(Bitmap.CompressFormat.JPEG, 25, stream) // Compress to JPEG with quality 25%
+            bitmapImg.compress(Bitmap.CompressFormat.JPEG, 100, stream) // Compress to JPEG with quality 25%
             stream.flush()
             stream.close()
         } catch (e: Exception) {
@@ -384,16 +371,64 @@ class ScanFrontActivity : AppCompatActivity() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center // Centers the entire dialog content
             ) {
-                Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = "Captured Image",
-                    modifier = Modifier.fillMaxSize()
-                )
+                Column(
+                    modifier = Modifier.wrapContentSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Display the image with restricted height
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Captured Image",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(500.dp) // Adjust height as needed
+                            .padding(bottom = 16.dp)
+                    )
+                    // Display the buttons in a row
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp), // Space between buttons
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                            // Red Button: "ถ่ายใหม่"
+                            Button(
+                                onClick = {
+                                    isFound = false
+                                    onDismiss() // Close the dialog when clicking "ถ่ายใหม่"
+                                          },
+                                colors = ButtonDefaults.buttonColors(Color.Red)
+                            ) {
+                                Text(
+                                    text = "ถ่ายใหม่",
+                                    color = Color.White,
+                                    fontSize = 16.sp
+                                )
+                            }
+
+                            // Default Button: "ใช้ภาพนี้"
+                            Button(
+                                onClick = {
+                                    val resultIntent = Intent()
+                                    resultIntent.putExtra("result", "ok") // Pass result data
+                                    println("Intent before setResult: ${resultIntent.extras}") // Debugging log
+                                    setResult(RESULT_OK, resultIntent) // Return result to the caller
+                                    finish() // Close activity
+                                }
+                            ) {
+                                Text(
+                                    text = "ใช้ภาพนี้",
+                                    fontSize = 16.sp
+                                )
+                            }
+                    }
+                }
             }
         }
     }
+
+
 
 
     private fun updateImageData(newImageData: String) {
@@ -433,7 +468,7 @@ class ScanFrontActivity : AppCompatActivity() {
             // Get the current time
             val currentTime = System.currentTimeMillis()
             // Check if 350 milliseconds have passed since the last processing
-            if (currentTime - lastProcessedTime >= 350) {
+            if (currentTime - lastProcessedTime >= 200) {
                 lastProcessedTime = currentTime
                 // Convert YUV to Bitmap
                 val bitmap = imageProxy.toBitmap()
@@ -450,10 +485,9 @@ class ScanFrontActivity : AppCompatActivity() {
                     // println(outputArray)
                     val maxIndex = outputArray.indices.maxByOrNull { outputArray[it] } ?: -1
 
-                    // Check for the condition "พบบัตร" (Found the card)
                     if (maxIndex == 0) {
                         // เริ่มจับเวลา 1.5 วินาทีโดยใข้ตัวแปร Local
-                        cameraViewModel.updateGuideText("พบบัตร")
+                        cameraViewModel.updateGuideText("ถือค้างไว้")
                         isFound = true
                     } else {
                         // รีเซ็ตตัวจับเวลา
