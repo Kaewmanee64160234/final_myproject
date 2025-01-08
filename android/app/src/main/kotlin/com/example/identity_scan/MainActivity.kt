@@ -86,6 +86,18 @@ class MainActivity : FlutterActivity() {
             val result = data?.getStringExtra("result") // รับค่าที่ส่งกลับจาก ScanFronActivity
             println("Result From ScanFront Activity")
             println(result)
+
+            try {
+                // Send the result back to Flutter using the MethodChannel
+                MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function").invokeMethod("onCameraResult", result)
+
+                // Print success status if method invocation is successful
+                println("Result sent to Flutter successfully: $result")
+            } catch (e: Exception) {
+                // Print error status if there was an exception during the method invocation
+                println("Error sending result to Flutter: ${e.message}")
+            }
+
         }
     }
 }

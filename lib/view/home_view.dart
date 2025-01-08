@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:identity_scan/view/db_view.dart';
 import 'package:identity_scan/view/image_view.dart';
+import 'package:identity_scan/view/loading/loading_view.dart';
 
 class HomeView extends StatefulWidget {
   HomeView({super.key});
@@ -13,8 +14,8 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   static const platform = MethodChannel('native_function');
-
-  static const cameraMethod = MethodChannel('camera');
+  static String pickImageOk = 'ok';
+  // static const cameraMethod = MethodChannel('camera');
   // late Uint8List imageDataList;
 
   late Uint8List imageDataList = Uint8List(0); // Initialize with empty data
@@ -25,12 +26,17 @@ class _HomeViewState extends State<HomeView> {
     super.initState();
 
     platform.setMethodCallHandler((call) async {
-      if (call.method == "receiveDataFromKotlin") {
-        setState(() {
-          receivedData = call.arguments;
-        });
-        print("Received");
-        print(receivedData.toString());
+      if (call.method == "onCameraResult") {
+          setState(() {
+            receivedData = call.arguments;
+          });
+          // print("Received");
+          // print(receivedData.toString());
+
+          // ถ้า Received Data = ok ให้ไปที่ หน้า Api และเริ่มการ OCR
+          if(receivedData.toString() == pickImageOk){
+            Get.to(LoadingView());
+          }
       }
     });
   }
