@@ -10,7 +10,6 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.util.Size
 import androidx.activity.compose.setContent
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -18,8 +17,6 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
-import androidx.camera.core.resolutionselector.ResolutionSelector
-import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.LinearEasing
@@ -65,7 +62,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import coil.compose.rememberImagePainter
-import coil.decode.DecodeUtils.calculateInSampleSize
 import com.example.identity_scan.ml.ModelUnquant
 import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
@@ -74,7 +70,6 @@ import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -83,7 +78,6 @@ import org.opencv.core.Core
 import org.opencv.core.Mat
 import org.opencv.core.MatOfDouble
 import org.opencv.core.MatOfPoint
-import org.opencv.core.Rect
 import org.opencv.imgproc.Imgproc
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
@@ -380,7 +374,6 @@ class OpenCVActivity : AppCompatActivity() {
                                                                 val (sharpestPath, maxVariance) = findSharpestImage(imagePathList)
                                                                 sharpestPath?.let {
                                                                     sharpestImagePath = it
-                                                                    statusMessage.value = "Sharpest Image: $it\nVariance: $maxVariance"
                                                                 }
                                                             }
                                                             captureComplete = true
@@ -469,8 +462,20 @@ class OpenCVActivity : AppCompatActivity() {
                                     captureComplete = true // Mark capture as complete
                                     withContext(Dispatchers.Main) {
                                         val (sharpestPath, maxVariance) = findSharpestImage(imagePathList)
+
                                         sharpestPath?.let {
-                                            Log.d("Sharpest Image", "Path: $it, Variance: $maxVariance")
+                                            val bitmap = BitmapFactory.decodeFile(sharpestPath)
+                                            val mat = bitmapToMat(bitmap)
+                                            val contestValue = calculateContrast(mat)
+                                            val snrValue = calculateSNR(mat)
+                                            val resolutionValue = calculateResolution(mat)
+
+
+
+                                            Log.d("Sharpest Image", "Variance: $maxVariance")
+                                            Log.d("contestValue", " Variance: $contestValue")
+                                            Log.d("snrValue", "Variance: $snrValue")
+                                            Log.d("resolutionValue", "Variance: $resolutionValue")
                                         }
                                         onComplete()
                                     }
@@ -590,16 +595,7 @@ class OpenCVActivity : AppCompatActivity() {
         return Bitmap.createScaledBitmap(bitmap, 224, 224, true)
     }
 
-    @Composable
-    fun RectangleOverlay(
-        modifier: Modifier = Modifier
-    ) {
-        Box(
-            modifier = modifier
-                .size(300.dp, 200.dp) // Set rectangle dimensions
-                .border(3.dp, Color.Red, RoundedCornerShape(8.dp)) // Styled border
-        )
-    }
+
 
     // function for preprocssing
     private fun checkAndRequestCameraPermission() {
@@ -665,6 +661,29 @@ class OpenCVActivity : AppCompatActivity() {
         return mean.`val`[0]
     }
 
+    private fun calculateContrast(mat: Mat): Double {
+        val grayMat = Mat()
+        Imgproc.cvtColor(mat, grayMat, Imgproc.COLOR_BGR2GRAY)
+        val minMaxLoc = Core.minMaxLoc(grayMat)
+        grayMat.release()
+        return minMaxLoc.maxVal - minMaxLoc.minVal
+    }
+
+    private fun calculateSNR(mat: Mat): Double {
+        val grayMat = Mat()
+        Imgproc.cvtColor(mat, grayMat, Imgproc.COLOR_BGR2GRAY)
+        val meanStdDev = MatOfDouble()
+        val stdDev = MatOfDouble()
+        Core.meanStdDev(grayMat, meanStdDev, stdDev)
+        grayMat.release()
+        val mean = meanStdDev.toArray().firstOrNull() ?: 0.0
+        val std = stdDev.toArray().firstOrNull() ?: 1.0 // Avoid division by zero
+        return mean / std
+    }
+
+    private fun calculateResolution(mat: Mat): String {
+        return "${mat.cols()}x${mat.rows()}"
+    }
 
 
 
