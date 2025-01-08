@@ -456,7 +456,7 @@ class OpenCVActivity : AppCompatActivity() {
                     ContextCompat.getMainExecutor(this@OpenCVActivity),
                     object : ImageCapture.OnImageSavedCallback {
                         override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                            GlobalScope.launch(Dispatchers.IO) {
+                            lifecycleScope.launch(Dispatchers.IO) {
                                 // Save path
                                 imagePathList.add(photoFile.absolutePath)
                                 Log.d("Burst", "Image saved: ${photoFile.absolutePath}")
