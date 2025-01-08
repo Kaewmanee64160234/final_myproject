@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import coil.compose.rememberImagePainter
 import coil.decode.DecodeUtils.calculateInSampleSize
 import com.example.identity_scan.ml.ModelUnquant
@@ -173,7 +174,7 @@ class OpenCVActivity : AppCompatActivity() {
                                         if (sampledBitmap != null) {
                                             val mat = bitmapToMat(sampledBitmap)
                                             val variance = mat?.let { calculateLaplacianVariance(it) } ?: 0.0
-                                            mat?.release()
+                                            mat.release()
 
                                             Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
                                                 // Show the image (Coil can handle sampling too)
@@ -184,11 +185,7 @@ class OpenCVActivity : AppCompatActivity() {
                                                         .fillMaxWidth()
                                                         .height(200.dp)
                                                 )
-                                                androidx.compose.material.Text(
-                                                    text = "Laplacian Variance: $variance",
-                                                    color = Color.Black,
-                                                    fontSize = 14.sp
-                                                )
+
                                             }
                                         } else {
                                             androidx.compose.material.Text(
@@ -274,6 +271,7 @@ class OpenCVActivity : AppCompatActivity() {
 
         // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false
+
         return BitmapFactory.decodeFile(path, options)
     }
     private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
@@ -330,8 +328,8 @@ class OpenCVActivity : AppCompatActivity() {
                             imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
                                 if (!captureComplete) {
                                     val currentTime = System.currentTimeMillis()
-                                    if (currentTime - lastAnalysisTime >= 1000) { // Throttle to 1 second
-                                        lastAnalysisTime = currentTime
+                                    if (System.currentTimeMillis() - lastAnalysisTime > 1000) {
+                                        lastAnalysisTime = System.currentTimeMillis()
 
                                         try {
                                             // Convert ImageProxy to Bitmap
@@ -406,6 +404,7 @@ class OpenCVActivity : AppCompatActivity() {
                                         }
                                     } else {
                                         imageProxy.close()
+
                                     }
                                 }
                             }
@@ -448,7 +447,7 @@ class OpenCVActivity : AppCompatActivity() {
             Log.d("PhotoFiles", "File Path: ${file.absolutePath}")
         }
 
-        GlobalScope.launch(Dispatchers.Main) {
+        lifecycleScope.launch(Dispatchers.Main) {
             photoFiles.forEach { photoFile ->
                 val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
@@ -512,6 +511,8 @@ class OpenCVActivity : AppCompatActivity() {
                     sharpestPath = path
                 }
                 mat.release()
+
+
             }
         }
 
@@ -520,6 +521,7 @@ class OpenCVActivity : AppCompatActivity() {
     private fun bitmapToMat(bitmap: Bitmap): Mat {
         val mat = Mat() // Create an empty Mat
         Utils.bitmapToMat(bitmap, mat) // Convert Bitmap to Mat
+
         return mat
     }
 
