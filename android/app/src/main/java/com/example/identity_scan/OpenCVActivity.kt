@@ -255,7 +255,7 @@ class OpenCVActivity : AppCompatActivity() {
                                 .build()
 
                             imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
-                                if (!captureComplete){
+                                if (!captureComplete) {
                                     val currentTime = System.currentTimeMillis()
                                     if (currentTime - lastAnalysisTime >= 1000) { // Throttle to 1 second
                                         lastAnalysisTime = currentTime
@@ -268,12 +268,17 @@ class OpenCVActivity : AppCompatActivity() {
                                             // Convert Bitmap to ByteBuffer for TensorFlow Lite
                                             val inputByteBuffer = convertBitmapToByteBuffer(resizedBitmap)
 
-                                            val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 224, 224, 3), DataType.FLOAT32)
+                                            val inputFeature0 = TensorBuffer.createFixedSize(
+                                                intArrayOf(1, 224, 224, 3),
+                                                DataType.FLOAT32
+                                            )
                                             inputFeature0.loadBuffer(inputByteBuffer)
                                             val outputs = model.process(inputFeature0)
                                             val outputFeature0 = outputs.outputFeature0AsTensorBuffer
 
-                                            val predictedClass = outputFeature0.floatArray.indices.maxByOrNull { outputFeature0.floatArray[it] } ?: -1
+                                            val predictedClass = outputFeature0.floatArray.indices.maxByOrNull {
+                                                outputFeature0.floatArray[it]
+                                            } ?: -1
                                             Log.w("Model Prediction", predictedClass.toString())
 
                                             if (predictedClass == 0) { // Optimal conditions
@@ -299,12 +304,13 @@ class OpenCVActivity : AppCompatActivity() {
                                                     if (isOptimal) {
                                                         delay(2000) // Wait for 2 seconds
                                                         if (statusMessage.value == "Lighting conditions are optimal.") {
+
                                                             captureBurstImages(imageCapture, 5) {
                                                                 Log.d("Burst Capture", "All images captured successfully.")
-                                                                captureComplete = true
-                                                                statusMessage.value = "captured!!!!"
-                                                                
+                                                                statusMessage.value = "Captured!"
                                                             }
+                                                            captureComplete = true
+
                                                         }
                                                     }
                                                 }
@@ -326,7 +332,6 @@ class OpenCVActivity : AppCompatActivity() {
                                         imageProxy.close()
                                     }
                                 }
-
                             }
 
                             // Bind use cases to lifecycle
@@ -340,7 +345,6 @@ class OpenCVActivity : AppCompatActivity() {
 
                             preview.setSurfaceProvider(previewView.surfaceProvider)
                         }, ContextCompat.getMainExecutor(ctx))
-
 
                         previewView
                     },
@@ -357,16 +361,17 @@ class OpenCVActivity : AppCompatActivity() {
         totalCaptures: Int = 5,
         onComplete: () -> Unit
     ) {
+        if (captureComplete) return // Stop if capture is already complete
+
         var remainingCaptures = totalCaptures
         val photoFiles = List(totalCaptures) { index ->
             File(externalMediaDirs.firstOrNull(), "IMG_${System.currentTimeMillis()}_$index.jpg")
-
         }
 
         photoFiles.forEach { file ->
             Log.d("PhotoFiles", "File Path: ${file.absolutePath}")
-            println("File Path: ${file.absolutePath}")
         }
+
         GlobalScope.launch(Dispatchers.Main) {
             photoFiles.forEach { photoFile ->
                 val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
@@ -386,6 +391,7 @@ class OpenCVActivity : AppCompatActivity() {
 
                                 // If all captures are done, invoke onComplete
                                 if (remainingCaptures == 0) {
+                                    captureComplete = true // Mark capture as complete
                                     withContext(Dispatchers.Main) {
                                         onComplete()
                                     }
@@ -397,6 +403,7 @@ class OpenCVActivity : AppCompatActivity() {
                             Log.e("Burst", "Error capturing image: ${exception.message}")
                             remainingCaptures--
                             if (remainingCaptures == 0) {
+                                captureComplete = true // Mark capture as complete
                                 onComplete()
                             }
                         }
@@ -405,6 +412,7 @@ class OpenCVActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun bitmapToMat(bitmap: Bitmap): Mat {
         val mat = Mat() // Create an empty Mat
         Utils.bitmapToMat(bitmap, mat) // Convert Bitmap to Mat
