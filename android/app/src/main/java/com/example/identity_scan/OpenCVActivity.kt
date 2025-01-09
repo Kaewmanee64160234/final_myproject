@@ -2,6 +2,10 @@ package com.example.identity_scan
 
 import android.Manifest
 import android.content.pm.PackageManager
+import org.opencv.core.*
+import org.opencv.core.CvType
+import org.opencv.imgcodecs.Imgcodecs
+import java.util.Base64
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageFormat
@@ -76,6 +80,7 @@ import kotlinx.coroutines.withContext
 import org.opencv.android.Utils
 import org.opencv.core.Core
 import org.opencv.core.Mat
+import org.opencv.core.MatOfByte
 import org.opencv.core.MatOfDouble
 import org.opencv.core.MatOfPoint
 import org.opencv.imgproc.Imgproc
@@ -88,6 +93,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.pow
 
 class OpenCVActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
@@ -436,10 +442,6 @@ class OpenCVActivity : AppCompatActivity() {
             File(externalMediaDirs.firstOrNull(), "IMG_${System.currentTimeMillis()}_$index.jpg")
         }
 
-        photoFiles.forEach { file ->
-            Log.d("PhotoFiles", "File Path: ${file.absolutePath}")
-        }
-
         lifecycleScope.launch(Dispatchers.Main) {
             photoFiles.forEach { photoFile ->
                 val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
@@ -457,7 +459,6 @@ class OpenCVActivity : AppCompatActivity() {
                                 // Decrement remaining count
                                 remainingCaptures--
 
-                                // If all captures are done, invoke onComplete
                                 if (remainingCaptures == 0) {
                                     captureComplete = true // Mark capture as complete
                                     withContext(Dispatchers.Main) {
@@ -466,16 +467,18 @@ class OpenCVActivity : AppCompatActivity() {
                                         sharpestPath?.let {
                                             val bitmap = BitmapFactory.decodeFile(sharpestPath)
                                             val mat = bitmapToMat(bitmap)
-                                            val contestValue = calculateContrast(mat)
+
+                                            // Calculate image quality metrics
+                                            val contrastValue = calculateContrast(mat)
                                             val snrValue = calculateSNR(mat)
                                             val resolutionValue = calculateResolution(mat)
 
+                                            // Preprocess the sharpest image
+                                            val processedMat = preprocessing(snrValue, contrastValue, resolutionValue, mat)
 
-
-                                            Log.d("Sharpest Image", "Variance: $maxVariance")
-                                            Log.d("contestValue", " Variance: $contestValue")
-                                            Log.d("snrValue", "Variance: $snrValue")
-                                            Log.d("resolutionValue", "Variance: $resolutionValue")
+                                            // Save the preprocessed image
+                                            val processedImagePath = savePreprocessedImage(processedMat, photoFile)
+                                            Log.d("Processed Image", "Saved at: $processedImagePath")
                                         }
                                         onComplete()
                                     }
@@ -487,11 +490,7 @@ class OpenCVActivity : AppCompatActivity() {
                             Log.e("Burst", "Error capturing image: ${exception.message}")
                             remainingCaptures--
                             if (remainingCaptures == 0) {
-                                captureComplete = true // Mark capture as complete
-                                val (sharpestPath, maxVariance) = findSharpestImage(imagePathList)
-                                sharpestPath?.let {
-                                    Log.d("Sharpest Image", "Path: $it, Variance: $maxVariance")
-                                }
+                                captureComplete = true
                                 onComplete()
                             }
                         }
@@ -500,6 +499,17 @@ class OpenCVActivity : AppCompatActivity() {
             }
         }
     }
+
+    private fun savePreprocessedImage(processedMat: Mat, originalFile: File): String {
+        val processedFolder = File(originalFile.parentFile, "processed")
+        if (!processedFolder.exists()) {
+            processedFolder.mkdirs()
+        }
+        val processedFile = File(processedFolder, "processed_${System.currentTimeMillis()}.png")
+        Imgcodecs.imwrite(processedFile.absolutePath, processedMat)
+        return processedFile.absolutePath
+    }
+
 
     private fun findSharpestImage(imagePaths: List<String>): Pair<String?, Double> {
         var sharpestPath: String? = null
@@ -550,20 +560,6 @@ class OpenCVActivity : AppCompatActivity() {
         return byteBuffer
     }
 
-    private fun saveFrame(rgbMat: Mat) {
-        // Convert Mat to Bitmap
-        val bitmap = Bitmap.createBitmap(rgbMat.width(), rgbMat.height(), Bitmap.Config.ARGB_8888)
-        Utils.matToBitmap(rgbMat, bitmap)
-
-        // Save Bitmap to file (example implementation)
-        val file = File(this.filesDir, "captured_frame.jpg")
-        FileOutputStream(file).use { out ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
-        }
-
-        Log.d("SaveFrame", "Frame saved to ${file.absolutePath}")
-    }
-
     private fun imageProxyToBitmap(imageProxy: ImageProxy): Bitmap {
         val yBuffer = imageProxy.planes[0].buffer // Y plane
         val uBuffer = imageProxy.planes[1].buffer // U plane
@@ -590,12 +586,9 @@ class OpenCVActivity : AppCompatActivity() {
         return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
     }
 
-
     private fun resizeBitmapTo224x224(bitmap: Bitmap): Bitmap {
         return Bitmap.createScaledBitmap(bitmap, 224, 224, true)
     }
-
-
 
     // function for preprocssing
     private fun checkAndRequestCameraPermission() {
@@ -684,6 +677,96 @@ class OpenCVActivity : AppCompatActivity() {
     private fun calculateResolution(mat: Mat): String {
         return "${mat.cols()}x${mat.rows()}"
     }
+
+
+    private fun preprocessing(snr: Double, contrast: Double, resolution: String, inputMat: Mat): Mat {
+        val (width, height) = resolution.split("x").map { it.toInt() }
+        val minResolution = 500 // Minimum acceptable resolution for OCR
+        val snrThreshold = 10.0 // Minimum SNR threshold
+        val contrastThreshold = 50.0 // Minimum contrast threshold
+
+        if (width < minResolution || height < minResolution) {
+            println("Image resolution is too low ($resolution). Skipping preprocessing.")
+            return inputMat // Return the original image if resolution is insufficient
+        }
+
+        return if (snr < snrThreshold || contrast < contrastThreshold) {
+            println("Image quality is medium (SNR: $snr, Contrast: $contrast). Applying preprocessing...")
+
+            // Clone the original Mat to avoid modifying it directly
+            var processedMat = inputMat.clone()
+
+            // Ensure the input is in the correct color format
+            if (processedMat.type() != CvType.CV_8UC3) {
+                Imgproc.cvtColor(processedMat, processedMat, Imgproc.COLOR_RGBA2BGR)
+            }
+
+            // Step 1: Adjust gamma for luminance enhancement
+            processedMat = applyGammaCorrection(processedMat, gamma = 1.8)
+
+            // Step 2: Apply bilateral filter for noise reduction while preserving edges
+            processedMat = reduceNoiseWithBilateral(processedMat)
+
+            // Step 3: Apply median filter for further noise reduction
+            processedMat = reduceNoiseWithMedian(processedMat)
+
+            // Step 4: Apply unsharp mask to enhance sharpness without affecting colors
+            processedMat = enhanceSharpenUnsharpMask(processedMat)
+
+            println("Preprocessing completed.")
+            processedMat
+        } else {
+            println("Image quality is sufficient (SNR: $snr, Contrast: $contrast). Skipping preprocessing.")
+            inputMat // Return the original image if quality is sufficient
+        }
+    }
+
+
+
+    // Gamma Correction
+    fun applyGammaCorrection(image: Mat, gamma: Double = 1.8): Mat {
+        // Calculate the inverse of gamma
+        val invGamma = 1.0 / gamma
+
+        // Create a lookup table for gamma correction
+        val lut = Mat(1, 256, CvType.CV_8U)
+        for (i in 0..255) {
+            lut.put(0, i, ((i / 255.0).toDouble().pow(invGamma) * 255).toInt().toDouble())
+        }
+
+        // Apply the gamma correction using LUT
+        val correctedImage = Mat()
+        Core.LUT(image, lut, correctedImage)
+
+        // Return the corrected image
+        return correctedImage
+    }
+
+
+
+    // Supporting preprocessing functions
+    fun reduceNoiseWithBilateral(mat: Mat, d: Int = 9, sigmaColor: Double = 75.0, sigmaSpace: Double = 75.0): Mat {
+        val output = Mat()
+        Imgproc.bilateralFilter(mat, output, d, sigmaColor, sigmaSpace)
+        return output
+    }
+
+
+    fun reduceNoiseWithMedian(mat: Mat, kernelSize: Int = 5): Mat {
+        val output = Mat()
+        Imgproc.medianBlur(mat, output, kernelSize)
+        return output
+    }
+
+    fun enhanceSharpenUnsharpMask(mat: Mat, strength: Double = 1.5, blurKernel: Size = Size(5.0, 5.0)): Mat {
+        val blurred = Mat()
+        Imgproc.GaussianBlur(mat, blurred, blurKernel, 0.0)
+        val sharpened = Mat()
+        Core.addWeighted(mat, 1.0 + strength, blurred, -strength, 0.0, sharpened)
+        return sharpened
+    }
+
+
 
 
 
