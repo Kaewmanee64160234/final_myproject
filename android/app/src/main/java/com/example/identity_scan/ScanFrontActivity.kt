@@ -118,10 +118,9 @@ class ScanFrontActivity : AppCompatActivity() {
     private lateinit var methodChannel: MethodChannel
     private val CHANNEL = "camera"
     private val dbHelper = DatabaseHelper(this)
-
-
-
     private var isTiming = false
+    // นับภาพที่ Capture จาก 1
+    private var captureCount = 1
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -258,6 +257,8 @@ class ScanFrontActivity : AppCompatActivity() {
 
                          imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
                              if (isShutter) {
+
+
 //                                 println("Converting to Bitmap")
                                  bitmapToShow = imageProxy.toBitmap()
 
@@ -275,7 +276,12 @@ class ScanFrontActivity : AppCompatActivity() {
                                      true // Apply smooth transformation
                                  )
 
-                                 bitmapToJpg(bitmapToShow!!,context,"image.jpg")
+                                 if (captureCount <5 ){
+
+
+                                     bitmapToJpg(bitmapToShow!!,context,"image${captureCount}.jpg")
+                                     captureCount++
+                                 }
 
                                  showDialog = true
                                  isShutter = false
@@ -336,7 +342,9 @@ class ScanFrontActivity : AppCompatActivity() {
         // Show Dialog
         if (showDialog && bitmapToShow != null) {
             ShowImageDialog(bitmap = bitmapToShow!!) {
-                showDialog = false // Close dialog on dismissal
+                showDialog = false
+                // รีเซ็ตการนับการจับภาพให้กลับมาเป็น 0 หลังจากปิด Dialog
+                captureCount = 0
             }
         }
     }

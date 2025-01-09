@@ -37,7 +37,7 @@ class _DbViewState extends State<DbView> {
                 // var imgMemory = base64Decode(cleanedBase64);
                 Get.to(ImageView(
                   imagePath:
-                      '/data/user/0/com.example.identity_scan/app_Images/image.jpg',
+                      '/data/user/0/com.example.identity_scan/app_Images/image3.jpg',
                 ));
               } catch (e) {
                 print("Error decoding Base64 string: $e");
