@@ -124,6 +124,7 @@ class ScanFrontActivity : AppCompatActivity() {
     // นับภาพที่ Capture จาก 1
     // จัดเก็บ Bitmap ของรูปภาพทั้ง 5
     private val bitmapList: MutableList<Bitmap> = mutableListOf()
+    private var sharPestImageIndex = 0
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -282,8 +283,12 @@ class ScanFrontActivity : AppCompatActivity() {
                                      bitmapToJpg(bitmapToShow!!,context,"image${bitmapList.size.toString()}.jpg")
                                      if(bitmapList.size == 5){
                                          // ถ้าครบ 5 รูปแล้วให้หารูปที่คมชัดที่สุด จาก Bitmap List
-                                         val sharPestImage = findSharpestImage()
+                                         var sharPestImage = findSharpestImage()
                                          println("Sharpest Image Index is: ${sharPestImage.first}, Variance: ${sharPestImage.second}")
+
+                                         // บันทึก Index ของภาพที่ชัดที่สุด ไว้ในตัวแปร
+                                         sharPestImageIndex = sharPestImage.first!!
+
                                          // เสร็จแล้วแสดงภาพที่ชัดที่สุดออกมา
                                          showDialog = true
                                          isShutter = false
@@ -481,10 +486,9 @@ class ScanFrontActivity : AppCompatActivity() {
                             Button(
                                 onClick = {
                                     val resultIntent = Intent()
-                                    resultIntent.putExtra("result", "ok") // Pass result data
-                                    println("Intent before setResult: ${resultIntent.extras}") // Debugging log
-                                    setResult(RESULT_OK, resultIntent) // Return result to the caller
-                                    finish() // Close activity
+                                    resultIntent.putExtra("result", sharPestImageIndex.toString())
+                                    setResult(RESULT_OK, resultIntent)
+                                    finish()
                                 }
                             ) {
                                 Text(
