@@ -6,6 +6,7 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.graphics.Rect
 import android.os.Build
@@ -78,8 +79,12 @@ import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material3.ButtonDefaults
+import org.opencv.android.Utils
+import org.opencv.core.Core
+import org.opencv.core.Mat
+import org.opencv.core.MatOfDouble
+import org.opencv.imgproc.Imgproc
 import java.io.FileOutputStream
 import java.io.OutputStream
 
@@ -107,8 +112,6 @@ class ScanFrontActivity : AppCompatActivity() {
     private val CAMERA_REQUEST_CODE = 2001
     private val cameraViewModel: CameraViewModel by viewModels()
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
-    private val imageCapture = ImageCapture.Builder()
-        .build()
 
     private lateinit var model: ModelFront
     private var isProcessing = false
@@ -130,6 +133,12 @@ class ScanFrontActivity : AppCompatActivity() {
         checkAndRequestCameraPermission()
         model = ModelFront.newInstance(this)
 
+        if (!org.opencv.android.OpenCVLoader.initDebug()) {
+            Log.e("OpenCV", "OpenCV initialization failed")
+        } else {
+            Log.d("OpenCV", "OpenCV initialization successful")
+        }
+
         // Initialize FlutterEngine manually
         flutterEngine = FlutterEngine(this)
         flutterEngine.dartExecutor.executeDartEntrypoint(
@@ -137,15 +146,15 @@ class ScanFrontActivity : AppCompatActivity() {
         )
         methodChannel = MethodChannel(flutterEngine.dartExecutor, CHANNEL)
 
-        // Set up the MethodChannel
-        MethodChannel(flutterEngine.dartExecutor, CHANNEL).setMethodCallHandler { call, result ->
-            if (call.method == "captureImage") {
-//                isShutter = true
-                result.success("Image Captured Successfully")
-            } else {
-                result.notImplemented()
-            }
-        }
+//        // Set up the MethodChannel
+//        MethodChannel(flutterEngine.dartExecutor, CHANNEL).setMethodCallHandler { call, result ->
+//            if (call.method == "captureImage") {
+////                isShutter = true
+//                result.success("Image Captured Successfully")
+//            } else {
+//                result.notImplemented()
+//            }
+//        }
 
         setContent {
             Surface(
@@ -208,7 +217,6 @@ class ScanFrontActivity : AppCompatActivity() {
         var bitmapToShow by remember { mutableStateOf<Bitmap?>(null) }
         var isShutter by remember { mutableStateOf(false) }
         var showDialog by remember { mutableStateOf(false) }
-        var base64Image2 by remember { mutableStateOf("No Value") }
 
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
@@ -256,10 +264,8 @@ class ScanFrontActivity : AppCompatActivity() {
                             .build()
 
                          imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
+                             // ถ้ามีคำสั่งให้ถ่ายรูป
                              if (isShutter) {
-
-
-//                                 println("Converting to Bitmap")
                                  bitmapToShow = imageProxy.toBitmap()
 
                                  // Update รูปภาพ ที่นี่
@@ -277,14 +283,20 @@ class ScanFrontActivity : AppCompatActivity() {
                                  )
 
                                  if (captureCount <5 ){
-
-
-                                     bitmapToJpg(bitmapToShow!!,context,"image${captureCount}.jpg")
+                                     bitmapToJpg(bitmapToShow!!,context,"image${captureCount.toString()}.jpg")
                                      captureCount++
+                                     if(captureCount == 5){
+                                         val sharPestImage = findSharpestImage()
+                                         println("Sharpest Image Path is: ${sharPestImage.first}, Variance: ${sharPestImage.second}")
+                                         
+                                         showDialog = true
+                                         isShutter = false
+                                     }
                                  }
 
-                                 showDialog = true
-                                 isShutter = false
+
+
+
 
 //                                val imageWidth = imageProxy.width
 //                                val imageHeight = imageProxy.height
@@ -354,7 +366,7 @@ class ScanFrontActivity : AppCompatActivity() {
         val wrapper = ContextWrapper(context)
 
         // Get the app's private directory for storing images
-        var fileDir = wrapper.getDir("Images", Context.MODE_PRIVATE)
+        val fileDir = wrapper.getDir("Images", Context.MODE_PRIVATE)
         println("Image Directory")
         println(fileDir)
         // Create a file in the directory with the given name
@@ -369,9 +381,56 @@ class ScanFrontActivity : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-
         return file
     }
+
+    private fun calculateLaplacianVariance(mat: Mat): Double {
+        val laplacian = Mat()
+        Imgproc.Laplacian(mat, laplacian, mat.depth())
+
+        val mean = MatOfDouble()
+        val stddev = MatOfDouble()
+
+        // Correct call to Core.meanStdDev
+        Core.meanStdDev(laplacian, mean, stddev)
+
+        val variance = stddev[0, 0][0] * stddev[0, 0][0] // Variance = (StdDev)^2
+        laplacian.release()
+
+        return variance
+    }
+
+    private fun bitmapToMat(bitmap: Bitmap): Mat {
+        val mat = Mat() // Create an empty Mat
+        Utils.bitmapToMat(bitmap, mat) // Convert Bitmap to Mat
+
+        return mat
+    }
+
+    private fun findSharpestImage(): Pair<String?, Double> {
+        val basePath = "/data/user/0/com.example.identity_scan/app_Images/"
+        var sharpestPath: String? = null
+        var maxVariance = 0.0
+
+        // Assuming you want to evaluate files named image0.jpg to image4.jpg
+        for (i in 0 until 5) {
+            val path = "${basePath}image${i}.jpg"
+            val bitmap = BitmapFactory.decodeFile(path) ?: continue
+            val mat = bitmapToMat(bitmap) ?: continue
+
+            if (!mat.empty()) {
+                val variance = calculateLaplacianVariance(mat)
+                if (variance > maxVariance) {
+                    maxVariance = variance
+                    sharpestPath = path
+                }
+                mat.release()
+            }
+        }
+        return Pair(sharpestPath, maxVariance)
+    }
+
+
 
     @Composable
     fun ShowImageDialog(bitmap: Bitmap, onDismiss: () -> Unit) {
@@ -436,9 +495,6 @@ class ScanFrontActivity : AppCompatActivity() {
         }
     }
 
-
-
-
     private fun updateImageData(newImageData: String) {
         try {
             val db = dbHelper.writableDatabase
@@ -467,8 +523,6 @@ class ScanFrontActivity : AppCompatActivity() {
         return byteArrayOutputStream.toByteArray()
     }
 
-    // อะไรไม่รู้
-    // @SuppressLint("UnsafeOptInUsageError")
     private fun processImageProxy(imageProxy: ImageProxy) {
         // Crop Image to square before processing further
         isProcessing = true
@@ -517,14 +571,6 @@ class ScanFrontActivity : AppCompatActivity() {
 
     private fun processImage(imageBytes: Bitmap): TensorBuffer? {
         try {
-//            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-
-            // Check if the bitmap is null
-//            if (imageBytes == null) {
-//                println("Error: Failed to decode image bytes into Bitmap. ByteArray might be invalid or unsupported format.")
-//                return null
-//            }
-
             // Resize the image to the required input size for the model (224x224)
             val height = 224
             val width = 224
@@ -569,8 +615,6 @@ class ScanFrontActivity : AppCompatActivity() {
             return null // Return null if an error occurs
         }
     }
-
-
 
     private fun rotateBitmap(bitmap: Bitmap, rotationDegrees: Float): Bitmap {
         val matrix = Matrix()
