@@ -122,7 +122,6 @@ class ScanFrontActivity : AppCompatActivity() {
     private val dbHelper = DatabaseHelper(this)
     private var isTiming = false
     // นับภาพที่ Capture จาก 1
-//    private var captureCount = 0
     // จัดเก็บ Bitmap ของรูปภาพทั้ง 5
     private val bitmapList: MutableList<Bitmap> = mutableListOf()
 
@@ -146,16 +145,6 @@ class ScanFrontActivity : AppCompatActivity() {
             DartExecutor.DartEntrypoint.createDefault()
         )
         methodChannel = MethodChannel(flutterEngine.dartExecutor, CHANNEL)
-
-//        // Set up the MethodChannel
-//        MethodChannel(flutterEngine.dartExecutor, CHANNEL).setMethodCallHandler { call, result ->
-//            if (call.method == "captureImage") {
-////                isShutter = true
-//                result.success("Image Captured Successfully")
-//            } else {
-//                result.notImplemented()
-//            }
-//        }
 
         setContent {
             Surface(
@@ -267,6 +256,10 @@ class ScanFrontActivity : AppCompatActivity() {
                          imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
                              // ถ้ามีคำสั่งให้ถ่ายรูป ค่าเริ่มต้นปกติคือ false ดังนั้นโปรแกรมจะวิ่งไปที่ Else ก่อนเสมอ
                              if (isShutter) {
+
+                                 //bitmapToShow = cropToCreditCardAspectRatio()
+
+
                                  bitmapToShow = imageProxy.toBitmap()
 
                                  // Update รูปภาพ ที่นี่
@@ -296,7 +289,7 @@ class ScanFrontActivity : AppCompatActivity() {
                                          isShutter = false
                                      }
                                  }
-
+//                                การ Print ขนาดของ Image Proxy
 //                                val imageWidth = imageProxy.width
 //                                val imageHeight = imageProxy.height
 //                                println("Image Resolution: $imageWidth x $imageHeight")
@@ -315,7 +308,7 @@ class ScanFrontActivity : AppCompatActivity() {
                                  processImageProxy(imageProxy)
                              }
 
-                             //Ensure to close the imageProxy after processing
+                             // ปิด Image Proxy หลัง Process เสร็จ
                              imageProxy.close()
                          }
 
