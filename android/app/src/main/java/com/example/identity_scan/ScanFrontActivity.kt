@@ -112,7 +112,6 @@ class ScanFrontActivity : AppCompatActivity() {
     private val CAMERA_REQUEST_CODE = 2001
     private val cameraViewModel: CameraViewModel by viewModels()
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
-
     private lateinit var model: ModelFront
     private var isProcessing = false
     private var lastProcessedTime: Long = 0
@@ -124,6 +123,8 @@ class ScanFrontActivity : AppCompatActivity() {
     private var isTiming = false
     // นับภาพที่ Capture จาก 1
     private var captureCount = 1
+    // จัดเก็บ Bitmap ของรูปภาพทั้ง 5
+    private val bitmapList: MutableList<Bitmap> = mutableListOf()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -264,7 +265,7 @@ class ScanFrontActivity : AppCompatActivity() {
                             .build()
 
                          imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
-                             // ถ้ามีคำสั่งให้ถ่ายรูป
+                             // ถ้ามีคำสั่งให้ถ่ายรูป ค่าเริ่มต้นปกติคือ false ดังนั้นโปรแกรมจะวิ่งไปที่ Else ก่อนเสมอ
                              if (isShutter) {
                                  bitmapToShow = imageProxy.toBitmap()
 
@@ -283,20 +284,20 @@ class ScanFrontActivity : AppCompatActivity() {
                                  )
 
                                  if (captureCount <5 ){
+                                     // เพิ่มรูป Bitmap เข้า List จนกว่าจะครบ 5 รูป
+                                     bitmapList.add(captureCount-1,bitmapToShow!!)
                                      bitmapToJpg(bitmapToShow!!,context,"image${captureCount.toString()}.jpg")
                                      captureCount++
                                      if(captureCount == 5){
+                                         // ถ้าครบ 5 รูปแล้วให้หารูปที่คมชัดที่สุด จากไฟล์ที่บันทึกไป ไม่ได้ใช้ Bitmap ที่ save ไว้
                                          val sharPestImage = findSharpestImage()
                                          println("Sharpest Image Path is: ${sharPestImage.first}, Variance: ${sharPestImage.second}")
-                                         
+
+                                         // เสร็จแล้วแสดงภาพที่ชัดที่สุดออกมา
                                          showDialog = true
                                          isShutter = false
                                      }
                                  }
-
-
-
-
 
 //                                val imageWidth = imageProxy.width
 //                                val imageHeight = imageProxy.height
@@ -339,24 +340,14 @@ class ScanFrontActivity : AppCompatActivity() {
             )
         }
 
-//        Button(
-//            onClick = {
-//                //ถ่ายรูปที่นี่
-//                isShutter = true
-//            },
-//            modifier = Modifier
-//
-//                .padding(16.dp)
-//        ) {
-//            Text("Capture Image")
-//        }
-        
         // Show Dialog
         if (showDialog && bitmapToShow != null) {
             ShowImageDialog(bitmap = bitmapToShow!!) {
                 showDialog = false
                 // รีเซ็ตการนับการจับภาพให้กลับมาเป็น 0 หลังจากปิด Dialog
-                captureCount = 0
+                captureCount = 1
+                // Clear Bitmap List หลังจากปิด Dialog
+                bitmapList.clear()
             }
         }
     }
@@ -408,6 +399,7 @@ class ScanFrontActivity : AppCompatActivity() {
     }
 
     private fun findSharpestImage(): Pair<String?, Double> {
+        // เดิมใช้ Image Path
         val basePath = "/data/user/0/com.example.identity_scan/app_Images/"
         var sharpestPath: String? = null
         var maxVariance = 0.0
