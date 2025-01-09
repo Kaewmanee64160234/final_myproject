@@ -39,46 +39,108 @@ class _FrontResultViewState extends State<FrontResultView> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (profilePicString.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: SizedBox(
-                  height: 200,
-                  child: decodeBase64ToImage(profilePicString),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (profilePicString.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: SizedBox(
+                    height: 200,
+                    child: decodeBase64ToImage(profilePicString),
+                  ),
                 ),
+              Text(
+                "รหัสประจำตัว: ${widget.idCard.idNumber}",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-            Text(
-              "รหัสประจำตัว: ${widget.idCard.idNumber}",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            TextField(
-              controller:
-                  TextEditingController(text: widget.idCard.th.fullName),
-              decoration: InputDecoration(
-                labelText: "ชื่อ - สกุล",
-                filled: true,
-                fillColor: Colors.grey[200],
-                border: OutlineInputBorder(),
+              SizedBox(height: 16),
+              TextField(
+                controller:
+                    TextEditingController(text: widget.idCard.th.fullName),
+                decoration: InputDecoration(
+                  labelText: "ชื่อ - สกุล",
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(),
+                ),
+                readOnly: false,
               ),
-              readOnly: false,
-            ),
-            SizedBox(height: 16),
-            TextField(
-              controller:
-                  TextEditingController(text: widget.idCard.th.address.full),
-              decoration: InputDecoration(
-                labelText: "Address",
-                filled: true,
-                fillColor: Colors.grey[200],
-                border: OutlineInputBorder(),
+               SizedBox(height: 16),
+              TextField(
+                controller:
+                    TextEditingController(text: widget.idCard.th.dateOfBirth),
+                decoration: InputDecoration(
+                  labelText: "วัน เดือน ปีเกิด",
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(),
+                ),
+                readOnly: false,
               ),
-              readOnly: false,
-            ),
-          ],
+               SizedBox(height: 16),
+              TextField(
+                controller:
+                    TextEditingController(text: widget.idCard.th.dateOfIssue),
+                decoration: InputDecoration(
+                  labelText: "วันออกบัตร",
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(),
+                ),
+                readOnly: false,
+              ),
+               SizedBox(height: 16),
+              TextField(
+                controller:
+                    TextEditingController(text: widget.idCard.th.dateOfExpiry),
+                decoration: InputDecoration(
+                  labelText: "วันหมดอายุ",
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(),
+                ),
+                readOnly: false,
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller:
+                    TextEditingController(text: widget.idCard.th.address.full),
+                decoration: InputDecoration(
+                  labelText: "ที่อยู่",
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(),
+                ),
+                readOnly: false,
+              ),
+              SizedBox(height: 16),
+               TextField(
+                controller:
+                    TextEditingController(text: widget.idCard.en.name + " " +  widget.idCard.en.lastName),
+                decoration: InputDecoration(
+                  labelText: "Full Name",
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(),
+                ),
+                readOnly: false,
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller:
+                    TextEditingController(text: widget.idCard.en.address.firstPart + widget.idCard.en.address.subdistrict),
+                decoration: InputDecoration(
+                  labelText: "Address",
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(),
+                ),
+                readOnly: false,
+              ),
+            ],
+          ),
         ),
       ),
     );
