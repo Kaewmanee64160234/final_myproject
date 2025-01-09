@@ -1,6 +1,7 @@
 package com.example.identity_scan
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import org.opencv.core.*
 import org.opencv.core.CvType
@@ -101,7 +102,6 @@ class OpenCVActivity : AppCompatActivity() {
     private lateinit var model: ModelUnquant
     private lateinit var flutterEngine: FlutterEngine
     private lateinit var methodChannel: MethodChannel
-    private val CHANNEL = "camera"
     private var statusMessage = mutableStateOf("Lighting conditions are optimal.")
     private var imagePathList = mutableStateListOf<String>()
     private lateinit var imageCapture: ImageCapture
@@ -120,7 +120,7 @@ class OpenCVActivity : AppCompatActivity() {
         flutterEngine.dartExecutor.executeDartEntrypoint(
             DartExecutor.DartEntrypoint.createDefault()
         )
-        methodChannel = MethodChannel(flutterEngine.dartExecutor, CHANNEL)
+
 
         // install open cv
         if (!org.opencv.android.OpenCVLoader.initDebug()) {
@@ -508,6 +508,10 @@ class OpenCVActivity : AppCompatActivity() {
         val processedFile = File(processedFolder, "processed_${System.currentTimeMillis()}.png")
         Imgcodecs.imwrite(processedFile.absolutePath, processedMat)
         // send path to flutter
+        val resultIntent = Intent()
+        resultIntent.putExtra("processedFile", processedFile.absolutePath) // Pass result data
+        setResult(RESULT_OK, resultIntent) // Return result to the caller
+        finish()
         return processedFile.absolutePath
     }
 

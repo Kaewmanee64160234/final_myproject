@@ -27,9 +27,11 @@ class MainActivity : FlutterActivity() {
                     openCaptureView()
                 } "openDbView" -> {
                     openDbView()
-                }"openOpenCVView" -> {
+                }"openCvView" -> {
                     openOpenCVView()
                 }
+
+                
                 else -> {
                     result.notImplemented()
                 }
@@ -67,7 +69,8 @@ class MainActivity : FlutterActivity() {
 
     private fun openOpenCVView() {
         val intent = Intent(this@MainActivity, OpenCVActivity::class.java)
-        startActivity(intent)
+        startActivityForResult(intent, 2)
+
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -77,11 +80,25 @@ class MainActivity : FlutterActivity() {
             val result = data?.getStringExtra("key") // รับค่าที่ส่งกลับจาก AnimaActivity
             // ใช้ผลลัพธ์ที่ได้ที่นี่
             println(result)
-        }else if (requestCode == 2 && resultCode == RESULT_OK) {
-            // ได้รับผลลัพธ์จาก AnimaActivity
-            val result = data?.getStringExtra("key") // รับค่าที่ส่งกลับจาก AnimaActivity
-            // ใช้ผลลัพธ์ที่ได้ที่นี่
-            println(result)
+        }   else if (requestCode == 2 && resultCode == RESULT_OK) {
+            // Get the processed file path
+            val processedFilePath = data?.getStringExtra("processedFile")
+
+            if (!processedFilePath.isNullOrEmpty()) {
+                println("Processed file path received: $processedFilePath")
+
+                try {
+                    // Send the processed file path back to Flutter
+                    MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function")
+                        .invokeMethod("onPreProcessingResult", processedFilePath)
+
+                    println("Processed file path sent to Flutter: $processedFilePath")
+                } catch (e: Exception) {
+                    println("Error sending processed file path to Flutter: ${e.message}")
+                }
+            } else {
+                println("Processed file path is null or empty.")
+            }
         }else if (requestCode == REQUEST_CODE_SCAN){
             val result = data?.getStringExtra("result") // รับค่าที่ส่งกลับจาก ScanFronActivity
             println("Result From ScanFront Activity")
@@ -90,7 +107,7 @@ class MainActivity : FlutterActivity() {
             try {
                 // Send the result back to Flutter using the MethodChannel
                 MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function").invokeMethod("onCameraResult", result)
-
+                MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function").invokeMethod("onPreProcessingResult", result)
                 // Print success status if method invocation is successful
                 println("Result sent to Flutter successfully: $result")
             } catch (e: Exception) {
