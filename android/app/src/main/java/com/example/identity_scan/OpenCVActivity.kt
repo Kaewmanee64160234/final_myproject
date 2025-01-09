@@ -507,6 +507,7 @@ class OpenCVActivity : AppCompatActivity() {
         }
         val processedFile = File(processedFolder, "processed_${System.currentTimeMillis()}.png")
         Imgcodecs.imwrite(processedFile.absolutePath, processedMat)
+        // send path to flutter
         return processedFile.absolutePath
     }
 
@@ -720,8 +721,6 @@ class OpenCVActivity : AppCompatActivity() {
             inputMat // Return the original image if quality is sufficient
         }
     }
-
-
 
     // Gamma Correction
     fun applyGammaCorrection(image: Mat, gamma: Double = 1.8): Mat {
