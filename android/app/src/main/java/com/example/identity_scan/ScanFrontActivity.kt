@@ -122,7 +122,7 @@ class ScanFrontActivity : AppCompatActivity() {
     private val dbHelper = DatabaseHelper(this)
     private var isTiming = false
     // นับภาพที่ Capture จาก 1
-    private var captureCount = 1
+//    private var captureCount = 0
     // จัดเก็บ Bitmap ของรูปภาพทั้ง 5
     private val bitmapList: MutableList<Bitmap> = mutableListOf()
 
@@ -282,17 +282,15 @@ class ScanFrontActivity : AppCompatActivity() {
                                      matrix, // The rotation matrix
                                      true // Apply smooth transformation
                                  )
-
-                                 if (captureCount <5 ){
+                                 // ถ้าภาพยังไม่ครบ 5 ภาพ
+                                 if (bitmapList.size < 5 ){
                                      // เพิ่มรูป Bitmap เข้า List จนกว่าจะครบ 5 รูป
-                                     bitmapList.add(captureCount-1,bitmapToShow!!)
-                                     bitmapToJpg(bitmapToShow!!,context,"image${captureCount.toString()}.jpg")
-                                     captureCount++
-                                     if(captureCount == 5){
-                                         // ถ้าครบ 5 รูปแล้วให้หารูปที่คมชัดที่สุด จากไฟล์ที่บันทึกไป ไม่ได้ใช้ Bitmap ที่ save ไว้
+                                     bitmapList.add(bitmapList.size,bitmapToShow!!)
+                                     bitmapToJpg(bitmapToShow!!,context,"image${bitmapList.size.toString()}.jpg")
+                                     if(bitmapList.size == 5){
+                                         // ถ้าครบ 5 รูปแล้วให้หารูปที่คมชัดที่สุด จาก Bitmap List
                                          val sharPestImage = findSharpestImage()
-                                         println("Sharpest Image Path is: ${sharPestImage.first}, Variance: ${sharPestImage.second}")
-
+                                         println("Sharpest Image Index is: ${sharPestImage.first}, Variance: ${sharPestImage.second}")
                                          // เสร็จแล้วแสดงภาพที่ชัดที่สุดออกมา
                                          showDialog = true
                                          isShutter = false
@@ -344,8 +342,6 @@ class ScanFrontActivity : AppCompatActivity() {
         if (showDialog && bitmapToShow != null) {
             ShowImageDialog(bitmap = bitmapToShow!!) {
                 showDialog = false
-                // รีเซ็ตการนับการจับภาพให้กลับมาเป็น 0 หลังจากปิด Dialog
-                captureCount = 1
                 // Clear Bitmap List หลังจากปิด Dialog
                 bitmapList.clear()
             }
@@ -397,30 +393,52 @@ class ScanFrontActivity : AppCompatActivity() {
 
         return mat
     }
+//
+//    private fun findSharpestImage(): Pair<String?, Double> {
+//        // เดิมใช้ Image Path
+//        val basePath = "/data/user/0/com.example.identity_scan/app_Images/"
+//        var sharpestPath: String? = null
+//        var maxVariance = 0.0
+//
+//        // Assuming you want to evaluate files named image0.jpg to image4.jpg
+//        for (i in 0 until 5) {
+//            val path = "${basePath}image${i}.jpg"
+//            val bitmap = BitmapFactory.decodeFile(path) ?: continue
+//            val mat = bitmapToMat(bitmap) ?: continue
+//
+//            if (!mat.empty()) {
+//                val variance = calculateLaplacianVariance(mat)
+//                if (variance > maxVariance) {
+//                    maxVariance = variance
+//                    sharpestPath = path
+//                }
+//                mat.release()
+//            }
+//        }
+//        return Pair(sharpestPath, maxVariance)
+//    }
 
-    private fun findSharpestImage(): Pair<String?, Double> {
-        // เดิมใช้ Image Path
-        val basePath = "/data/user/0/com.example.identity_scan/app_Images/"
-        var sharpestPath: String? = null
+    private fun findSharpestImage(): Pair<Int?, Double> {
+        var sharpestIndex: Int? = null
         var maxVariance = 0.0
 
-        // Assuming you want to evaluate files named image0.jpg to image4.jpg
-        for (i in 0 until 5) {
-            val path = "${basePath}image${i}.jpg"
-            val bitmap = BitmapFactory.decodeFile(path) ?: continue
+        for (i in bitmapList.indices) {
+            val bitmap = bitmapList[i]
             val mat = bitmapToMat(bitmap) ?: continue
 
             if (!mat.empty()) {
                 val variance = calculateLaplacianVariance(mat)
                 if (variance > maxVariance) {
                     maxVariance = variance
-                    sharpestPath = path
+                    sharpestIndex = i
                 }
                 mat.release()
             }
         }
-        return Pair(sharpestPath, maxVariance)
+
+        return Pair(sharpestIndex, maxVariance)
     }
+
 
 
 
