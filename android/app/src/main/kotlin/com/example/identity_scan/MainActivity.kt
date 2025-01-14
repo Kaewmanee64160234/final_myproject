@@ -85,12 +85,14 @@ class MainActivity : FlutterActivity() {
             val brightness = data?.getDoubleExtra("brightness", -1.0)
             val snr = data?.getDoubleExtra("snr", -1.0)
             val resolution = data?.getStringExtra("resolution")
+            val typeofCard = data?.getStringExtra("typeofCard")
+
 
             if (processedFilePath != null && originalSharpenedPath != null) {
                 println("Processed file: $processedFilePath")
                 println("Sharpened file: $originalSharpenedPath")
                 println("Brightness: $brightness, SNR: $snr, Resolution: $resolution")
-
+                println("typeofCard: $typeofCard");
                 try {
                     // Prepare the map to send back to Flutter
                     val resultData = mapOf(
@@ -98,7 +100,8 @@ class MainActivity : FlutterActivity() {
                         "originalSharpenedPath" to originalSharpenedPath,
                         "brightness" to brightness,
                         "snr" to snr,
-                        "resolution" to resolution
+                        "resolution" to resolution,
+                        "typeofCard" to typeofCard
                     )
 
                     // Send data to Flutter

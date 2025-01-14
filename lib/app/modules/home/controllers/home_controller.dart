@@ -15,6 +15,8 @@ class HomeController extends GetxController {
   final processedImageBase64 = "".obs; // Base64-encoded processed image
   final originalImageBase64 = "".obs; // Base64-encoded original sharpened image
   final ApiOcrCreditCardService apiOcrCreditCardService = Get.find();
+  var laserCodeOriginal = ''.obs;
+  var laserCode = ''.obs;
 
   final card = ID_CARD(
     idNumber: '',
@@ -130,6 +132,8 @@ class HomeController extends GetxController {
             final brightness = receivedArguments['brightness'];
             final snr = receivedArguments['snr'];
             final resolution = receivedArguments['resolution'];
+            final typeofCard = receivedArguments['typeofCard'];
+            print('typeofCard: $typeofCard');
 
             // Update the observable `receivedData`
             receivedData.value = {
@@ -138,14 +142,20 @@ class HomeController extends GetxController {
               'brightness': brightness,
               'snr': snr,
               'resolution': resolution,
+              'typeofCard': typeofCard,
             };
 
             print("Updated receivedData: $receivedData");
 
             // Optionally, trigger additional processing or UI updates
             statusMessage.value = "Image preprocessing completed.";
-            await sendToOcr();
-            await sendToOcrOriginal();
+            if (typeofCard == '1') {
+              await sendToOcr('processedFile');
+              await sendToOcr('originalSharpenedPath');
+            } else {
+              await sendToOcrBackCard('processedFile');
+              await sendToOcrBackCard('originalSharpenedPath');
+            }
           } else {
             print("Error: Received incomplete data.");
             statusMessage.value = "Error: Received incomplete data.";
@@ -160,23 +170,28 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<void> sendToOcr() async {
+  Future<void> sendToOcr(String valueType) async {
     try {
       isLoading.value = true; // Set loading state to true
 
-      if (receivedData.value['processedFile'] != null) {
-        final File processedImage = File(receivedData['processedFile']);
+      if (receivedData.value[valueType] != null) {
+        final File processedImage = File(receivedData[valueType]);
 
         if (await processedImage.exists()) {
           // Convert the file to Base64
           final bytes = await processedImage.readAsBytes();
           processedImageBase64.value = base64Encode(bytes);
-
-          // Send the image to the OCR service
-          card.value = (await apiOcrCreditCardService
-              .uploadBase64Image(processedImageBase64.value))!;
-          print("OCR Processed Image Success: ${card.value.idNumber}");
-
+          if (valueType == 'processedFile') {
+            // Send the image to the OCR service
+            card.value = (await apiOcrCreditCardService
+                .uploadBase64Image(processedImageBase64.value))!;
+            print("OCR Processed Image Success: ${card.value.idNumber}");
+          } else {
+            cardOriginal.value = (await apiOcrCreditCardService
+                .uploadBase64Image(processedImageBase64.value))!;
+            print(
+                "OCR Original Sharpened Image Success: ${card.value.idNumber}");
+          }
           Get.snackbar("Success", "OCR for processed image completed.");
         } else {
           print("Error: Processed image file does not exist.");
@@ -194,38 +209,39 @@ class HomeController extends GetxController {
     }
   }
 
-  /// Sends the original sharpened image to the OCR service
-  Future<void> sendToOcrOriginal() async {
+  Future<void> sendToOcrBackCard(String valueType) async {
     try {
       isLoading.value = true; // Set loading state to true
 
-      if (receivedData.value['originalSharpenedPath'] != null) {
-        final File originalSharpenedImage =
-            File(receivedData['originalSharpenedPath']);
+      if (receivedData.value[valueType] != null) {
+        final File processedImage = File(receivedData[valueType]);
+        // Convert the file to Base64
 
-        if (await originalSharpenedImage.exists()) {
-          // Convert the file to Base64
-          final bytes = await originalSharpenedImage.readAsBytes();
-          originalImageBase64.value = base64Encode(bytes);
-
-          // Send the image to the OCR service
-          cardOriginal.value = (await apiOcrCreditCardService
-              .uploadBase64Image(originalImageBase64.value))!;
-          print("OCR Original Sharpened Image Success: ${card.value.idNumber}");
-
-          Get.snackbar(
-              "Success", "OCR for original sharpened image completed.");
+        if (await processedImage.exists()) {
+          final bytes = await processedImage.readAsBytes();
+          processedImageBase64.value = base64Encode(bytes);
+          if (valueType == 'processedFile') {
+            // Send the image to the OCR service
+            laserCode.value = (await apiOcrCreditCardService
+                .uploadBase64ImageBack(processedImageBase64.value))!;
+          } else {
+            laserCodeOriginal.value = (await apiOcrCreditCardService
+                .uploadBase64ImageBack(processedImageBase64.value))!;
+            print(
+                "OCR Original Sharpened Image Success: ${card.value.idNumber}");
+          }
+          Get.snackbar("Success", "OCR for processed image completed.");
         } else {
-          print("Error: Original sharpened image file does not exist.");
-          Get.snackbar("Error", "Original sharpened image file not found.");
+          print("Error: Processed image file does not exist.");
+          Get.snackbar("Error", "Processed image file not found.");
         }
       } else {
-        Get.snackbar("Error", "No original sharpened image path received.");
-        print("Error: No original sharpened image path received.");
+        Get.snackbar("Error", "No processed image path received.");
+        print("Error: No processed image path received.");
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to send original image to OCR: $e");
-      print("Error: Failed to send original image to OCR: $e");
+      Get.snackbar("Error", "Failed to send processed image to OCR: $e");
+      print("Error: Failed to send processed image to OCR: $e");
     } finally {
       isLoading.value = false; // Reset loading state
     }

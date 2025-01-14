@@ -104,6 +104,7 @@ class OpenCVActivity : AppCompatActivity() {
     private lateinit var imageCapture: ImageCapture
     private var captureComplete = false
     private var sharpestImagePath = ""
+    private  var typeCard = 1
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -469,16 +470,16 @@ class OpenCVActivity : AppCompatActivity() {
                                             val contrastValue = calculateContrast(mat)
                                             val snrValue = calculateSNR(mat)
                                             val resolutionValue = calculateResolution(mat)
-
+val brightness = calculateBrightness(mat)
                                             // Preprocess the sharpest image
                                             val processedMat = preprocessing(snrValue, contrastValue, resolutionValue, mat)
 
                                             // Save the preprocessed image
                                             val processedImagePath = savePreprocessedImage(
                                                 processedMat,
-                                                mat,
+                                                sharpestPath,
                                                 photoFile,
-                                                contrastValue,
+                                                brightness,
                                                 snrValue,
                                                 resolutionValue
                                             )
@@ -507,7 +508,7 @@ class OpenCVActivity : AppCompatActivity() {
 
     private fun savePreprocessedImage(
         processedMat: Mat,
-        originalSharpenedMat: Mat,
+        originalSharpenedPath:String,
         originalFile: File,
         brightness: Double,
         snr: Double,
@@ -523,17 +524,16 @@ class OpenCVActivity : AppCompatActivity() {
         val processedFile = File(processedFolder, "processed_${System.currentTimeMillis()}.png")
         Imgcodecs.imwrite(processedFile.absolutePath, processedMat)
 
-        // Save the original sharpened image
-        val originalSharpenedFile = File(processedFolder, "sharpened_${System.currentTimeMillis()}.png")
-        Imgcodecs.imwrite(originalSharpenedFile.absolutePath, originalSharpenedMat)
+
 
         // Prepare the result data to send back to Flutter
         val resultIntent = Intent().apply {
             putExtra("processedFile", processedFile.absolutePath) // Path of processed image
-            putExtra("originalSharpenedPath", originalSharpenedFile.absolutePath) // Path of sharpened image
+            putExtra("originalSharpenedPath", originalSharpenedPath) // Path of sharpened image
             putExtra("brightness", brightness) // Brightness value
             putExtra("snr", snr) // SNR value
             putExtra("resolution", resolution) // Resolution value
+            putExtra("typeofCard", "1") // typeCrard
         }
 
         setResult(RESULT_OK, resultIntent)
