@@ -80,8 +80,6 @@ import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.ButtonDefaults
-import com.example.identity_scan.ml.ModelFlare
-import com.example.identity_scan.ml.ModelFrontWithFlare
 import org.opencv.android.Utils
 import org.opencv.core.Core
 import org.opencv.core.Mat
