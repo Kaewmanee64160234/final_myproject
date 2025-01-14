@@ -375,12 +375,15 @@ class OpenCVActivity : AppCompatActivity() {
                                                         delay(2000) // Wait for 2 seconds
                                                         if (statusMessage.value == "สภาพแสงเหมาะสม") {
                                                             statusMessage.value = "เริ่มถ่ายภาพ!!!"
+                                                            val startTime = System.nanoTime() // Start time
                                                             captureBurstImages(imageCapture, 5) {
                                                                 val (sharpestPath, maxVariance) = findSharpestImage(imagePathList)
                                                                 sharpestPath?.let {
                                                                     sharpestImagePath = it
                                                                 }
                                                             }
+                                                            val endTime = System.nanoTime() // End time
+                                                            println("captureBurstImages runtime: ${(endTime - startTime) / 1_000_000.0} ms") // Convert to milliseconds
                                                             captureComplete = true
                                                         }
                                                     }
@@ -478,6 +481,7 @@ class OpenCVActivity : AppCompatActivity() {
                                             val resolutionValue = calculateResolution(mat)
 val brightness = calculateBrightness(mat)
                                             // Preprocess the sharpest image
+
                                             val processedMat = preprocessing(snrValue, contrastValue, resolutionValue, mat)
 
                                             // Save the preprocessed image
@@ -719,6 +723,8 @@ val brightness = calculateBrightness(mat)
 
 
     private fun preprocessing(snr: Double, contrast: Double, resolution: String, inputMat: Mat): Mat {
+        val startTime = System.nanoTime() // Start time
+
         val (width, height) = resolution.split("x").map { it.toInt() }
         val minResolution = 500 // Minimum acceptable resolution for OCR
         val snrThreshold = 10.0 // Minimum SNR threshold
@@ -751,13 +757,16 @@ val brightness = calculateBrightness(mat)
 
             // Step 4: Apply unsharp mask to enhance sharpness without affecting colors
             processedMat = enhanceSharpenUnsharpMask(processedMat)
-
+            val endTime = System.nanoTime() // End time
+            println("preprocessing runtime: ${(endTime - startTime) / 1_000_000.0} ms") // Convert to milliseconds
             println("Preprocessing completed.")
             processedMat
+
         } else {
             println("Image quality is sufficient (SNR: $snr, Contrast: $contrast). Skipping preprocessing.")
             inputMat // Return the original image if quality is sufficient
         }
+
     }
 
     // Gamma Correction
