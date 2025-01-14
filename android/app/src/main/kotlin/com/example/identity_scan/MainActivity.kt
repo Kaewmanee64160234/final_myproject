@@ -29,6 +29,8 @@ class MainActivity : FlutterActivity() {
                     openDbView()
                 }"openCvView" -> {
                     openOpenCVView()
+                }"openScanFace" ->{
+                openScanFace()
                 }
 
                 
@@ -72,7 +74,11 @@ class MainActivity : FlutterActivity() {
         startActivityForResult(intent, 2)
 
     }
+    private fun openScanFace() {
+        val intent = Intent(this@MainActivity, ScanFace::class.java)
+        startActivity(intent)
 
+    }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 

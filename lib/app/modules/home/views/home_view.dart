@@ -43,6 +43,25 @@ class HomeView extends GetView<HomeController> {
                   ),
                 ),
               ),
+              // gusture detector for openScanFace
+              GestureDetector(
+                onTap: () {
+                  // Call the native method to open OpenCV view
+                  controller.openScanFace();
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  margin: const EdgeInsets.all(10),
+                  decoration: const BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
+                  child: const Text(
+                    'Open Scan Face',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
               const SizedBox(height: 20),
               if (controller.receivedData['typeofCard'] == '1')
 

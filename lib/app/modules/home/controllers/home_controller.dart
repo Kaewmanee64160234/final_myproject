@@ -116,6 +116,17 @@ class HomeController extends GetxController {
     }
   }
 
+  // openScanFace
+  void openScanFace() async {
+    try {
+      final result = await platform.invokeMethod('openScanFace');
+      print("Result from OpenCV: $result");
+    } catch (e) {
+      print("Error opening OpenCV view: $e");
+      Get.snackbar("Error", "Failed to open OpenCV view.");
+    }
+  }
+
   Future<void> listenForPreprocessingResult() async {
     try {
       platform.setMethodCallHandler((call) async {
