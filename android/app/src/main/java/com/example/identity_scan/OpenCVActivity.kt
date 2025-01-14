@@ -567,13 +567,11 @@ val brightness = calculateBrightness(mat)
                     sharpestPath = path
                 }
                 mat.release()
-
-
             }
         }
-
         return Pair(sharpestPath, maxVariance)
     }
+
     private fun bitmapToMat(bitmap: Bitmap): Mat {
         val mat = Mat() // Create an empty Mat
         Utils.bitmapToMat(bitmap, mat) // Convert Bitmap to Mat
