@@ -80,10 +80,13 @@ import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.ButtonDefaults
+import com.example.identity_scan.ml.ModelFlare
+import com.example.identity_scan.ml.ModelFrontWithFlare
 import org.opencv.android.Utils
 import org.opencv.core.Core
 import org.opencv.core.Mat
 import org.opencv.core.MatOfDouble
+import org.opencv.core.MatOfPoint
 import org.opencv.imgproc.Imgproc
 import java.io.FileOutputStream
 import java.io.OutputStream
@@ -101,9 +104,23 @@ class CameraViewModel : ViewModel() {
     var guideText by mutableStateOf("กรุณาวางบัตรในกรอบ")
         private set
 
+    var brightnessValueText by mutableStateOf("0")
+        private set
+
+    var glareValueText by mutableStateOf("0")
+        private set
+
     // Function to update the guide text
     fun updateGuideText(newText: String) {
         guideText = newText
+    }
+
+    fun updateBrightnessValueText(newValue: String) {
+        brightnessValueText = newValue
+    }
+
+    fun updateGlareValueText(newValue: String) {
+        glareValueText = newValue
     }
 }
 
@@ -126,12 +143,12 @@ class ScanFrontActivity : AppCompatActivity() {
     private val bitmapList: MutableList<Bitmap> = mutableListOf()
     private var sharPestImageIndex = 0
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         cameraExecutor = Executors.newSingleThreadExecutor()
         checkPermissions()
         checkAndRequestCameraPermission()
+//        model = ModelFront.newInstance(this)
         model = ModelFront.newInstance(this)
 
         if (!org.opencv.android.OpenCVLoader.initDebug()) {
@@ -276,13 +293,14 @@ class ScanFrontActivity : AppCompatActivity() {
                                      matrix, // The rotation matrix
                                      true // Apply smooth transformation
                                  )
-                                 // ถ้าภาพยังไม่ครบ 5 ภาพ
-                                 if (bitmapList.size < 5 ){
-                                     // เพิ่มรูป Bitmap เข้า List จนกว่าจะครบ 5 รูป
+
+                                 // ถ้าภาพยังไม่ครบ 3 ภาพ
+                                 if (bitmapList.size < 3 ){
+                                     // เพิ่มรูป Bitmap เข้า List จนกว่าจะครบ 3 รูป
                                      bitmapList.add(bitmapList.size,bitmapToShow!!)
                                      bitmapToJpg(bitmapToShow!!,context,"image${bitmapList.size.toString()}.jpg")
-                                     if(bitmapList.size == 5){
-                                         // ถ้าครบ 5 รูปแล้วให้หารูปที่คมชัดที่สุด จาก Bitmap List
+                                     if(bitmapList.size == 3){
+                                         // ถ้าครบ 3 รูปแล้วให้หารูปที่คมชัดที่สุด จาก Bitmap List
                                          var sharPestImage = findSharpestImage()
                                          println("Sharpest Image Index is: ${sharPestImage.first}, Variance: ${sharPestImage.second}")
 
@@ -295,9 +313,9 @@ class ScanFrontActivity : AppCompatActivity() {
                                      }
                                  }
 //                                การ Print ขนาดของ Image Proxy
-//                                val imageWidth = imageProxy.width
-//                                val imageHeight = imageProxy.height
-//                                println("Image Resolution: $imageWidth x $imageHeight")
+//                               val imageWidth = imageProxy.width
+//                               val imageHeight = imageProxy.height
+//                               println("Image Resolution: $imageWidth x $imageHeight")
                              }else{
                                  if (isFound){
                                      if (!isTiming){
@@ -385,37 +403,6 @@ class ScanFrontActivity : AppCompatActivity() {
         return variance
     }
 
-    private fun bitmapToMat(bitmap: Bitmap): Mat {
-        val mat = Mat() // Create an empty Mat
-        Utils.bitmapToMat(bitmap, mat) // Convert Bitmap to Mat
-
-        return mat
-    }
-//
-//    private fun findSharpestImage(): Pair<String?, Double> {
-//        // เดิมใช้ Image Path
-//        val basePath = "/data/user/0/com.example.identity_scan/app_Images/"
-//        var sharpestPath: String? = null
-//        var maxVariance = 0.0
-//
-//        // Assuming you want to evaluate files named image0.jpg to image4.jpg
-//        for (i in 0 until 5) {
-//            val path = "${basePath}image${i}.jpg"
-//            val bitmap = BitmapFactory.decodeFile(path) ?: continue
-//            val mat = bitmapToMat(bitmap) ?: continue
-//
-//            if (!mat.empty()) {
-//                val variance = calculateLaplacianVariance(mat)
-//                if (variance > maxVariance) {
-//                    maxVariance = variance
-//                    sharpestPath = path
-//                }
-//                mat.release()
-//            }
-//        }
-//        return Pair(sharpestPath, maxVariance)
-//    }
-
     private fun findSharpestImage(): Pair<Int?, Double> {
         var sharpestIndex: Int? = null
         var maxVariance = 0.0
@@ -436,9 +423,6 @@ class ScanFrontActivity : AppCompatActivity() {
 
         return Pair(sharpestIndex, maxVariance)
     }
-
-
-
 
     @Composable
     fun ShowImageDialog(bitmap: Bitmap, onDismiss: () -> Unit) {
@@ -524,20 +508,17 @@ class ScanFrontActivity : AppCompatActivity() {
         }
     }
 
-    private fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
-        return byteArrayOutputStream.toByteArray()
-    }
-
     private fun processImageProxy(imageProxy: ImageProxy) {
         // Crop Image to square before processing further
+
         isProcessing = true
         try {
             // Get the current time
             val currentTime = System.currentTimeMillis()
             // Check if 350 milliseconds have passed since the last processing
             if (currentTime - lastProcessedTime >= 200) {
+                // เริ่มจับเวลาทดสอบการประมวลผล
+//                val startTime = System.currentTimeMillis()
                 lastProcessedTime = currentTime
                 // Convert YUV to Bitmap
                 val bitmap = imageProxy.toBitmap()
@@ -547,23 +528,47 @@ class ScanFrontActivity : AppCompatActivity() {
                 // ตัดภาพตามสัดส่วนบัตรเครดิต
                 val croppedBitmap = cropToCreditCardAspectRatio(rotatedBitmap)
                 // แก้ให้ไม่ต้องแปลงเป็น ByteArray แต่ให้เป็น Bitmap เลย
-                val outputBuffer = processImage(croppedBitmap)
+                val outputBuffer = predictClasss(croppedBitmap)
 
                 if (outputBuffer != null) {
                     val outputArray = outputBuffer.floatArray
                     // println(outputArray)
                     val maxIndex = outputArray.indices.maxByOrNull { outputArray[it] } ?: -1
 
+                    // จัดการวัดค่า brightness และ Glare
+                    val matrix =  bitmapToMat(croppedBitmap)
+                    val brightness = calculateBrightness(matrix)
+                    val glare = calculateGlare(matrix)
+
+                    // อัพเดทค่าบน UI
+                    cameraViewModel.updateBrightnessValueText(brightness.toString())
+                    cameraViewModel.updateGlareValueText(glare.toString())
+
+                    // 0 ต้องเท่ากับ บัตรปกติ
                     if (maxIndex == 0) {
-                        // เริ่มจับเวลา 1.5 วินาทีโดยใข้ตัวแปร Local
-                        cameraViewModel.updateGuideText("ถือค้างไว้")
-                        isFound = true
-                    } else {
-                        // รีเซ็ตตัวจับเวลา
+                        isFound = if (glare >= 10000){
+                            cameraViewModel.updateGuideText("หลีกเลี่ยงแสงสะท้อน")
+                            false
+                        }else{
+                            cameraViewModel.updateGuideText("ถือค้างไว้")
+                            true
+                        }
+                        
+                    // 1 = บัตรสว่างเกินไป
+                    } else if(maxIndex == 1) {
                         cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
 //                        foundCardTimer = 0
                         isFound = false
                     }
+
+//                    else{
+//                        isFound = false
+//                    }
+//                    val endTime = System.currentTimeMillis()
+//                    val elapsedTime = endTime - startTime
+                    // พิมพ์เวลาที่ใช้ในการประมวลผล
+//                    println("Processing time: $elapsedTime ms")
+
                 } else {
                     println("Error: Process Fail")
                 }
@@ -571,12 +576,14 @@ class ScanFrontActivity : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
+
+
             isProcessing = false
             imageProxy.close() // Close the image to allow the next frame to be processed
         }
     }
 
-    private fun processImage(imageBytes: Bitmap): TensorBuffer? {
+    private fun predictClasss(imageBytes: Bitmap): TensorBuffer? {
         try {
             // Resize the image to the required input size for the model (224x224)
             val height = 224
@@ -655,6 +662,44 @@ class ScanFrontActivity : AppCompatActivity() {
         )
     }
 
+    private fun bitmapToMat(bitmap: Bitmap): Mat {
+        val mat = Mat() // Create an empty Mat
+        Utils.bitmapToMat(bitmap, mat) // Convert Bitmap to Mat
+        return mat
+    }
+
+    private fun calculateBrightness(mat: Mat): Double {
+        val gray = Mat()
+        Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGR2GRAY)
+        val mean = Core.mean(gray)
+        gray.release()
+        return mean.`val`[0]
+    }
+
+    private fun calculateGlare(mat: Mat): Double {
+        val gray = Mat()
+        Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGR2GRAY)
+
+        val binary = Mat()
+        Imgproc.threshold(gray, binary, 230.0, 255.0, Imgproc.THRESH_BINARY)
+
+        val contours = ArrayList<MatOfPoint>()
+        Imgproc.findContours(binary, contours, Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
+
+        var glareArea = 0.0
+        for (contour in contours) {
+            val area = Imgproc.contourArea(contour)
+            if (area > 500) { // Ignore small noise
+                glareArea += area
+            }
+        }
+
+        gray.release()
+        binary.release()
+
+        return glareArea
+    }
+
     @Composable
     fun CameraWithOverlay(modifier: Modifier = Modifier, guideText: String) {
         Box(modifier = modifier) {
@@ -669,6 +714,26 @@ class ScanFrontActivity : AppCompatActivity() {
                 modifier = Modifier
                     .align(Alignment.Center)
             )
+
+            Text(
+                text = "BrightnessValue ${cameraViewModel.brightnessValueText}",
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+
+
+            Text(
+                text = "GlareValue ${cameraViewModel.glareValueText}",
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(20.dp) // Add 20dp padding
+            )
+
 
             Canvas(modifier = Modifier.fillMaxSize()) {
                 // ขนาดบัตรเครดิตในอัตราส่วน
