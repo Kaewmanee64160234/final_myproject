@@ -533,7 +533,7 @@ val brightness = calculateBrightness(mat)
             putExtra("brightness", brightness) // Brightness value
             putExtra("snr", snr) // SNR value
             putExtra("resolution", resolution) // Resolution value
-            putExtra("typeofCard", "1") // typeCrard
+            putExtra("typeofCard", "2") // typeCrard
         }
 
         setResult(RESULT_OK, resultIntent)

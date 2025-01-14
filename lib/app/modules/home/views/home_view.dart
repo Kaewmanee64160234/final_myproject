@@ -198,9 +198,19 @@ class HomeView extends GetView<HomeController> {
               if (controller.receivedData['typeofCard'] == '2')
                 // show laser card original image and processed image
                 // image
-
                 Text(
-                    'Laser Code Original: ${controller.laserCodeOriginal.value}'),
+                  'Image Path: ${controller.receivedData['processedFile'] ?? "Not available"}',
+                  style: const TextStyle(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+              Text('SNR: ${controller.receivedData['snr'] ?? "N/A"}'),
+              Text(
+                  'Brightness: ${controller.receivedData['brightness'] ?? "N/A"}'),
+              Text(
+                  'Resolution: ${controller.receivedData['resolution'] ?? "N/A"}'),
+              const SizedBox(height: 10),
+              Text(
+                  'Laser Code Original: ${controller.laserCodeOriginal.value}'),
               // show image
               if (controller.receivedData.isNotEmpty)
 
