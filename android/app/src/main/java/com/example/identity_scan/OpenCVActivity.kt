@@ -172,6 +172,7 @@ class OpenCVActivity : AppCompatActivity() {
                                         if (sampledBitmap != null) {
                                             val mat = bitmapToMat(sampledBitmap)
                                             val variance = mat?.let { calculateLaplacianVariance(it) } ?: 0.0
+                                            Log.e("Shapprn image Varain",variance.toString())
                                             mat.release()
 
                                             Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
