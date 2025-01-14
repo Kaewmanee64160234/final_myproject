@@ -66,7 +66,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import coil.compose.rememberImagePainter
-import com.example.identity_scan.ml.ModelUnquant
+import com.example.identity_scan.ml.ModelDetectCard
 import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.FlutterEngine
@@ -96,7 +96,7 @@ import kotlin.math.pow
 class OpenCVActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
     private val CAMERA_REQUEST_CODE = 2001
-    private lateinit var model: ModelUnquant
+    private lateinit var model: ModelDetectCard
     private lateinit var flutterEngine: FlutterEngine
     private lateinit var methodChannel: MethodChannel
     private var statusMessage = mutableStateOf("Lighting conditions are optimal.")
@@ -104,14 +104,14 @@ class OpenCVActivity : AppCompatActivity() {
     private lateinit var imageCapture: ImageCapture
     private var captureComplete = false
     private var sharpestImagePath = ""
-    private  var typeCard = 1
+    private  val typeCard = 2
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         cameraExecutor = Executors.newSingleThreadExecutor()
         checkAndRequestCameraPermission()
-        model = ModelUnquant.newInstance(this)
+        model = ModelDetectCard.newInstance(this)
 
         // Initialize FlutterEngine manually
         flutterEngine = FlutterEngine(this)
@@ -326,8 +326,8 @@ class OpenCVActivity : AppCompatActivity() {
                             imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
                                 if (!captureComplete) {
                                     val currentTime = System.currentTimeMillis()
-                                    if (System.currentTimeMillis() - lastAnalysisTime > 1000) {
-                                        lastAnalysisTime = System.currentTimeMillis()
+                                    if (currentTime - lastAnalysisTime > 1000) {
+                                        lastAnalysisTime = currentTime
 
                                         try {
                                             // Convert ImageProxy to Bitmap
@@ -350,10 +350,11 @@ class OpenCVActivity : AppCompatActivity() {
                                             } ?: -1
                                             Log.w("Model Prediction", predictedClass.toString())
 
-                                            if (predictedClass == 0) { // เงื่อนไขเหมาะสม
+                                            // Adjust conditions for card type and predicted class
+                                            if ((predictedClass == 0 && typeCard == 1) || (predictedClass == 4 && typeCard == 2)) { // Correct card type and class
                                                 val mat = bitmapToMat(bitmap)
 
-                                                // วิเคราะห์ความสว่างและแสงสะท้อน
+                                                // Analyze brightness and glare
                                                 val avgBrightness = calculateBrightness(mat)
                                                 val avgGlare = analyzeBrightRegions(mat)
 
@@ -371,7 +372,7 @@ class OpenCVActivity : AppCompatActivity() {
                                                     }
 
                                                     if (isOptimal) {
-                                                        delay(2000) // รอ 2 วินาที
+                                                        delay(2000) // Wait for 2 seconds
                                                         if (statusMessage.value == "สภาพแสงเหมาะสม") {
                                                             statusMessage.value = "เริ่มถ่ายภาพ!!!"
                                                             captureBurstImages(imageCapture, 5) {
@@ -386,6 +387,12 @@ class OpenCVActivity : AppCompatActivity() {
                                                 }
 
                                                 mat.release()
+                                            } else if (predictedClass == 0 && typeCard == 2) {
+                                                // Class 0 but expecting back of the card
+                                                statusMessage.value = "กรุณาพลิกบัตรให้เห็นหลังบัตร"
+                                            } else if (predictedClass == 4 && typeCard == 1) {
+                                                // Class 4 but expecting front of the card
+                                                statusMessage.value = "กรุณาพลิกบัตรไปทางด้านหน้า"
                                             } else if (predictedClass == 1) {
                                                 statusMessage.value = "กรุณาใช้บัตรประชาชนจริง"
                                             } else if (predictedClass == 2) {
@@ -401,7 +408,6 @@ class OpenCVActivity : AppCompatActivity() {
                                         }
                                     } else {
                                         imageProxy.close()
-
                                     }
                                 }
                             }
@@ -533,7 +539,7 @@ val brightness = calculateBrightness(mat)
             putExtra("brightness", brightness) // Brightness value
             putExtra("snr", snr) // SNR value
             putExtra("resolution", resolution) // Resolution value
-            putExtra("typeofCard", "2") // typeCrard
+            putExtra("typeofCard", typeCard.toString()) // typeCrard
         }
 
         setResult(RESULT_OK, resultIntent)
@@ -737,7 +743,7 @@ val brightness = calculateBrightness(mat)
             }
 
             // Step 1: Adjust gamma for luminance enhancement
-            processedMat = applyGammaCorrection(processedMat, gamma = 1.7)
+            processedMat = applyGammaCorrection(processedMat, gamma = 1.8)
 
             // Step 2: Apply bilateral filter for noise reduction while preserving edges
             processedMat = reduceNoiseWithBilateral(processedMat)
