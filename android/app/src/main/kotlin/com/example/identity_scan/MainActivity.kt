@@ -75,46 +75,55 @@ class MainActivity : FlutterActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 1 && resultCode == RESULT_OK) {
-            // ได้รับผลลัพธ์จาก AnimaActivity
-            val result = data?.getStringExtra("key") // รับค่าที่ส่งกลับจาก AnimaActivity
-            // ใช้ผลลัพธ์ที่ได้ที่นี่
-            println(result)
-        }   else if (requestCode == 2 && resultCode == RESULT_OK) {
-            // Get the processed file path
-            val processedFilePath = data?.getStringExtra("processedFile")
 
-            if (!processedFilePath.isNullOrEmpty()) {
-                println("Processed file path received: $processedFilePath")
+        if (requestCode == 1 && resultCode == RESULT_OK) {
+            val result = data?.getStringExtra("key")
+            println("Result from AnimaActivity: $result")
+        } else if (requestCode == 2 && resultCode == RESULT_OK) {
+            val processedFilePath = data?.getStringExtra("processedFile")
+            val originalSharpenedPath = data?.getStringExtra("originalSharpenedPath")
+            val brightness = data?.getDoubleExtra("brightness", -1.0)
+            val snr = data?.getDoubleExtra("snr", -1.0)
+            val resolution = data?.getStringExtra("resolution")
+
+            if (processedFilePath != null && originalSharpenedPath != null) {
+                println("Processed file: $processedFilePath")
+                println("Sharpened file: $originalSharpenedPath")
+                println("Brightness: $brightness, SNR: $snr, Resolution: $resolution")
 
                 try {
-                    // Send the processed file path back to Flutter
-                    MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function")
-                        .invokeMethod("onPreProcessingResult", processedFilePath)
+                    // Prepare the map to send back to Flutter
+                    val resultData = mapOf(
+                        "processedFile" to processedFilePath,
+                        "originalSharpenedPath" to originalSharpenedPath,
+                        "brightness" to brightness,
+                        "snr" to snr,
+                        "resolution" to resolution
+                    )
 
-                    println("Processed file path sent to Flutter: $processedFilePath")
+                    // Send data to Flutter
+                    MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function")
+                        .invokeMethod("onPreProcessingResult", resultData)
+
+                    println("Data sent to Flutter: $resultData")
                 } catch (e: Exception) {
-                    println("Error sending processed file path to Flutter: ${e.message}")
+                    println("Error sending data to Flutter: ${e.message}")
                 }
             } else {
-                println("Processed file path is null or empty.")
+                println("Error: Missing data in the result intent.")
             }
-        }else if (requestCode == REQUEST_CODE_SCAN){
-            val result = data?.getStringExtra("result") // รับค่าที่ส่งกลับจาก ScanFronActivity
-            println("Result From ScanFront Activity")
-            println(result)
+        } else if (requestCode == REQUEST_CODE_SCAN) {
+            val result = data?.getStringExtra("result")
+            println("Result From ScanFront Activity: $result")
 
             try {
-                // Send the result back to Flutter using the MethodChannel
-                MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function").invokeMethod("onCameraResult", result)
-                MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function").invokeMethod("onPreProcessingResult", result)
-                // Print success status if method invocation is successful
-                println("Result sent to Flutter successfully: $result")
+                MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function")
+                    .invokeMethod("onCameraResult", result)
+                println("Camera result sent to Flutter successfully: $result")
             } catch (e: Exception) {
-                // Print error status if there was an exception during the method invocation
-                println("Error sending result to Flutter: ${e.message}")
+                println("Error sending camera result to Flutter: ${e.message}")
             }
-
         }
     }
+
 }

@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import org.opencv.core.*
 import org.opencv.core.CvType
 import org.opencv.imgcodecs.Imgcodecs
-import java.util.Base64
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageFormat
@@ -81,7 +80,6 @@ import kotlinx.coroutines.withContext
 import org.opencv.android.Utils
 import org.opencv.core.Core
 import org.opencv.core.Mat
-import org.opencv.core.MatOfByte
 import org.opencv.core.MatOfDouble
 import org.opencv.core.MatOfPoint
 import org.opencv.imgproc.Imgproc
@@ -89,7 +87,6 @@ import org.tensorflow.lite.DataType
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.ExecutorService
@@ -352,10 +349,10 @@ class OpenCVActivity : AppCompatActivity() {
                                             } ?: -1
                                             Log.w("Model Prediction", predictedClass.toString())
 
-                                            if (predictedClass == 0) { // Optimal conditions
+                                            if (predictedClass == 0) { // เงื่อนไขเหมาะสม
                                                 val mat = bitmapToMat(bitmap)
 
-                                                // Perform brightness and glare analysis
+                                                // วิเคราะห์ความสว่างและแสงสะท้อน
                                                 val avgBrightness = calculateBrightness(mat)
                                                 val avgGlare = analyzeBrightRegions(mat)
 
@@ -366,16 +363,16 @@ class OpenCVActivity : AppCompatActivity() {
 
                                                 CoroutineScope(Dispatchers.Main).launch {
                                                     statusMessage.value = when {
-                                                        avgBrightness < 70 -> "Brightness too low. Increase lighting."
-                                                        avgBrightness > 155 -> "Brightness too high. Reduce lighting."
-                                                        avgGlare > 20.0 -> "High glare detected. Adjust lighting."
-                                                        else -> "Lighting conditions are optimal."
+                                                        avgBrightness < 70 -> "ความสว่างต่ำเกินไป กรุณาเพิ่มแสง"
+                                                        avgBrightness > 155 -> "ความสว่างสูงเกินไป กรุณาลดแสง"
+                                                        avgGlare > 20.0 -> "พบแสงสะท้อนมากเกินไป กรุณาปรับแสง"
+                                                        else -> "สภาพแสงเหมาะสม"
                                                     }
 
                                                     if (isOptimal) {
-                                                        delay(2000) // Wait for 2 seconds
-                                                        if (statusMessage.value == "Lighting conditions are optimal.") {
-                                                            statusMessage.value = "capture !!!"
+                                                        delay(2000) // รอ 2 วินาที
+                                                        if (statusMessage.value == "สภาพแสงเหมาะสม") {
+                                                            statusMessage.value = "เริ่มถ่ายภาพ!!!"
                                                             captureBurstImages(imageCapture, 5) {
                                                                 val (sharpestPath, maxVariance) = findSharpestImage(imagePathList)
                                                                 sharpestPath?.let {
@@ -383,19 +380,19 @@ class OpenCVActivity : AppCompatActivity() {
                                                                 }
                                                             }
                                                             captureComplete = true
-
                                                         }
                                                     }
                                                 }
 
                                                 mat.release()
                                             } else if (predictedClass == 1) {
-                                                statusMessage.value = "Please use a Real ID Card"
+                                                statusMessage.value = "กรุณาใช้บัตรประชาชนจริง"
                                             } else if (predictedClass == 2) {
-                                                statusMessage.value = "Please move your hand away from the card"
+                                                statusMessage.value = "กรุณาเอามือออกจากบัตรประชาชน"
                                             } else {
-                                                statusMessage.value = "Card not found"
+                                                statusMessage.value = "ไม่พบบัตรประชาชน"
                                             }
+
                                         } catch (e: Exception) {
                                             e.printStackTrace()
                                         } finally {
@@ -477,8 +474,16 @@ class OpenCVActivity : AppCompatActivity() {
                                             val processedMat = preprocessing(snrValue, contrastValue, resolutionValue, mat)
 
                                             // Save the preprocessed image
-                                            val processedImagePath = savePreprocessedImage(processedMat, photoFile)
+                                            val processedImagePath = savePreprocessedImage(
+                                                processedMat,
+                                                mat,
+                                                photoFile,
+                                                contrastValue,
+                                                snrValue,
+                                                resolutionValue
+                                            )
                                             Log.d("Processed Image", "Saved at: $processedImagePath")
+
                                         }
                                         onComplete()
                                     }
@@ -500,20 +505,45 @@ class OpenCVActivity : AppCompatActivity() {
         }
     }
 
-    private fun savePreprocessedImage(processedMat: Mat, originalFile: File): String {
+    private fun savePreprocessedImage(
+        processedMat: Mat,
+        originalSharpenedMat: Mat,
+        originalFile: File,
+        brightness: Double,
+        snr: Double,
+        resolution: String
+    ): String {
+        // Create the processed folder if it doesn't exist
         val processedFolder = File(originalFile.parentFile, "processed")
         if (!processedFolder.exists()) {
             processedFolder.mkdirs()
         }
+
+        // Save the processed image
         val processedFile = File(processedFolder, "processed_${System.currentTimeMillis()}.png")
         Imgcodecs.imwrite(processedFile.absolutePath, processedMat)
-        // send path to flutter
-        val resultIntent = Intent()
-        resultIntent.putExtra("processedFile", processedFile.absolutePath) // Pass result data
-        setResult(RESULT_OK, resultIntent) // Return result to the caller
+
+        // Save the original sharpened image
+        val originalSharpenedFile = File(processedFolder, "sharpened_${System.currentTimeMillis()}.png")
+        Imgcodecs.imwrite(originalSharpenedFile.absolutePath, originalSharpenedMat)
+
+        // Prepare the result data to send back to Flutter
+        val resultIntent = Intent().apply {
+            putExtra("processedFile", processedFile.absolutePath) // Path of processed image
+            putExtra("originalSharpenedPath", originalSharpenedFile.absolutePath) // Path of sharpened image
+            putExtra("brightness", brightness) // Brightness value
+            putExtra("snr", snr) // SNR value
+            putExtra("resolution", resolution) // Resolution value
+        }
+
+        setResult(RESULT_OK, resultIntent)
         finish()
+
+
+        // Return the path of the processed image
         return processedFile.absolutePath
     }
+
 
 
     private fun findSharpestImage(imagePaths: List<String>): Pair<String?, Double> {
@@ -707,7 +737,7 @@ class OpenCVActivity : AppCompatActivity() {
             }
 
             // Step 1: Adjust gamma for luminance enhancement
-            processedMat = applyGammaCorrection(processedMat, gamma = 1.8)
+            processedMat = applyGammaCorrection(processedMat, gamma = 1.7)
 
             // Step 2: Apply bilateral filter for noise reduction while preserving edges
             processedMat = reduceNoiseWithBilateral(processedMat)

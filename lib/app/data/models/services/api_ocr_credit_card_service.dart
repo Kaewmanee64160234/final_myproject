@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:identity_scan/app/data/models/card_type.dart';
 
 class ApiOcrCreditCardService {
@@ -82,6 +82,123 @@ class ApiOcrCreditCardService {
       }
     } catch (e) {
       print('Error during file upload: $e');
+      return ID_CARD(
+          idNumber: '',
+          th: ID_CARD_DETAIL(
+            fullName: '',
+            prefix: '',
+            name: '',
+            lastName: '',
+            dateOfBirth: '',
+            dateOfIssue: '',
+            dateOfExpiry: '',
+            religion: '',
+            address: Address(
+              province: '',
+              district: '',
+              full: '',
+              firstPart: '',
+              subdistrict: '',
+            ),
+          ),
+          en: ID_CARD_DETAIL(
+            fullName: '',
+            prefix: '',
+            name: '',
+            lastName: '',
+            dateOfBirth: '',
+            dateOfIssue: '',
+            dateOfExpiry: '',
+            religion: '',
+            address: Address(
+              province: '',
+              district: '',
+              full: '',
+              firstPart: '',
+              subdistrict: '',
+            ),
+          ),
+          portrait: '');
+    }
+  }
+
+  Future<ID_CARD> uploadBase64Image(String base64Image) async {
+    try {
+      Map<String, dynamic> formData = {
+        'filedata': base64Image,
+      };
+
+      var request = http.MultipartRequest(
+          'POST', Uri.parse('$_baseUrl/api/v1/upload_front_base64'))
+        ..headers.addAll({
+          'Authorization': '66eb9f21-8e1c-8011-97a5-08ddd9b9a7c7',
+        });
+
+      // Add fields to the multipart request
+      formData.forEach((key, value) {
+        if (value is String) {
+          request.fields[key] = value; // Add string fields
+        } else if (value is List<int>) {
+          request.files
+              .add(http.MultipartFile.fromBytes(key, value, filename: key));
+        }
+      });
+
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+
+        var jsonResponse = jsonDecode(responseBody);
+
+        ID_CARD id_card = ID_CARD.fromJson(jsonResponse);
+
+        print(id_card.en.name);
+        print(jsonResponse);
+        return id_card;
+      } else {
+        final responseBody = await response.stream.bytesToString();
+        print('Error: ${response.statusCode}, $responseBody');
+        return ID_CARD(
+            idNumber: '',
+            th: ID_CARD_DETAIL(
+              fullName: '',
+              prefix: '',
+              name: '',
+              lastName: '',
+              dateOfBirth: '',
+              dateOfIssue: '',
+              dateOfExpiry: '',
+              religion: '',
+              address: Address(
+                province: '',
+                district: '',
+                full: '',
+                firstPart: '',
+                subdistrict: '',
+              ),
+            ),
+            en: ID_CARD_DETAIL(
+              fullName: '',
+              prefix: '',
+              name: '',
+              lastName: '',
+              dateOfBirth: '',
+              dateOfIssue: '',
+              dateOfExpiry: '',
+              religion: '',
+              address: Address(
+                province: '',
+                district: '',
+                full: '',
+                firstPart: '',
+                subdistrict: '',
+              ),
+            ),
+            portrait: '');
+      }
+    } catch (e) {
+      print('There was an error: $e');
       return ID_CARD(
           idNumber: '',
           th: ID_CARD_DETAIL(
