@@ -6,11 +6,13 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.os.Environment
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -313,14 +315,28 @@ class ScanFrontActivity : AppCompatActivity() {
                                          // รับ bitmap ภาพที่คมที่สุดเพื่อมา Process
                                           val sharpestBitmapMat = bitmapToMat(bitmapList[sharPestImageIndex])
 
-
                                          // คำนวณเพื่อเตรียม Processing
+//                                       
+//                                         val bitmap = BitmapFactory.decodeFile("/storage/emulated/0/Android/data/com.example.identity_scan/files/images/frontCardOriginal.png")
+
+//                                         val matfromstorage = bitmapToMat(bitmap)
+//                                         val contrastValue = calculateContrast(matfromstorage)
+//                                         val resolutionValue = calculateResolution(matfromstorage)
+//                                         val snrValue = calculateSNR(matfromstorage)
+
                                          val contrastValue = calculateContrast(sharpestBitmapMat)
                                          val resolutionValue = calculateResolution(sharpestBitmapMat)
                                          val snrValue = calculateSNR(sharpestBitmapMat)
 
                                          val processedMat = preprocessing(snrValue, contrastValue, resolutionValue, sharpestBitmapMat)
-//                                         preprocessing(contrastValue,resolutionValue.toDouble(),snrValue.toString(),mat)
+                                         
+                                         // บันทึกรูป Original ลง Storage
+                                         saveMatToStorage(context,sharpestBitmapMat,"frontCardOriginal")
+
+                                         // บันทึกลง Storage
+                                         saveMatToStorage(context,processedMat,"frontCardProcessed")
+
+
                                      }
                                  }
 //                                การ Print ขนาดของ Image Proxy
@@ -564,7 +580,7 @@ class ScanFrontActivity : AppCompatActivity() {
                             cameraViewModel.updateGuideText("ถือค้างไว้")
                             true
                         }
-                        
+
                     // 1 = บัตรสว่างเกินไป
                     } else if(maxIndex == 1) {
                         cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
@@ -711,11 +727,58 @@ class ScanFrontActivity : AppCompatActivity() {
         return glareArea
     }
 
-    private fun preprocessing(snr: Double, contrast: Double, resolution: String, inputMat: Mat): Mat {
-        // Start timing
-        val startTime = System.currentTimeMillis()
 
-        println("StartProcess")
+
+//    private fun preprocessing(snr: Double, contrast: Double, resolution: String, inputMat: Mat): Mat {
+//        val (width, height) = resolution.split("x").map { it.toInt() }
+//        val minResolution = 500 // Minimum acceptable resolution for OCR
+//        val snrThreshold = 10.0 // Minimum SNR threshold
+//        val contrastThreshold = 50.0 // Minimum contrast threshold
+//
+//        if (width < minResolution || height < minResolution) {
+//            println("Image resolution is too low ($resolution). Skipping preprocessing.")
+//            return inputMat // Return the original image if resolution is insufficient
+//        }
+//
+//        return if (snr < snrThreshold || contrast < contrastThreshold) {
+//            println("Image quality is medium (SNR: $snr, Contrast: $contrast). Applying preprocessing...")
+//
+//            // Clone the original Mat to avoid modifying it directly
+//            var processedMat = inputMat.clone()
+//
+//            // Ensure the input is in the correct color format
+//            // ต้องคอมเมนต์ไว้เพราะจะทำให้สีเพื้ยนเมื่อใช้กับ ImageProxy
+////            if (processedMat.type() != CvType.CV_8UC3) {
+////                Imgproc.cvtColor(processedMat, processedMat, Imgproc.COLOR_RGBA2BGR)
+////            }
+//
+//            if (inputMat.type() != CvType.CV_8UC1 && inputMat.type() != CvType.CV_8UC3) {
+//                println("Input Mat type (${inputMat.type()}) is not supported. Converting to CV_8UC3...")
+//                Imgproc.cvtColor(inputMat, inputMat, Imgproc.COLOR_RGBA2BGR)
+//            }
+//
+//            // Step 1: Adjust gamma for luminance enhancement
+//            processedMat = applyGammaCorrection(processedMat, gamma = 1.8)
+//
+//            // Step 2: Apply bilateral filter for noise reduction while preserving edges
+//            processedMat = reduceNoiseWithBilateral(processedMat)
+//
+//            // Step 3: Apply median filter for further noise reduction
+//            processedMat = reduceNoiseWithMedian(processedMat)
+//
+//            // Step 4: Apply unsharp mask to enhance sharpness without affecting colors
+//            processedMat = enhanceSharpenUnsharpMask(processedMat)
+//
+//            println("Preprocessing completed.")
+//            processedMat
+//        } else {
+//            println("Image quality is sufficient (SNR: $snr, Contrast: $contrast). Skipping preprocessing.")
+//            inputMat // Return the original image if quality is sufficient
+//        }
+//    }
+
+    // ฟังก์ชันหลักในการประมวลผลภาพ
+    private fun preprocessing(snr: Double, contrast: Double, resolution: String, inputMat: Mat): Mat {
         val (width, height) = resolution.split("x").map { it.toInt() }
         val minResolution = 500 // Minimum acceptable resolution for OCR
         val snrThreshold = 10.0 // Minimum SNR threshold
@@ -726,46 +789,47 @@ class ScanFrontActivity : AppCompatActivity() {
             return inputMat // Return the original image if resolution is insufficient
         }
 
-        val processedMat: Mat
-
-        processedMat = if (snr < snrThreshold || contrast < contrastThreshold) {
+        return if (snr < snrThreshold || contrast < contrastThreshold) {
             println("Image quality is medium (SNR: $snr, Contrast: $contrast). Applying preprocessing...")
 
             // Clone the original Mat to avoid modifying it directly
-            var tempMat = inputMat.clone()
+            var processedMat = inputMat.clone()
 
             // Ensure the input is in the correct color format
-            if (tempMat.type() != CvType.CV_8UC3) {
-                Imgproc.cvtColor(tempMat, tempMat, Imgproc.COLOR_RGBA2BGR)
+            if (processedMat.type() == CvType.CV_8UC4) {
+                println("Converting from RGBA to BGR")
+                Imgproc.cvtColor(processedMat, processedMat, Imgproc.COLOR_RGBA2BGR)
+            } else if (processedMat.type() == CvType.CV_8UC1) {
+                println("Grayscale image, no need to convert")
+            } else {
+                println("Unexpected Mat type: ${processedMat.type()}")
             }
 
             // Step 1: Adjust gamma for luminance enhancement
-            tempMat = applyGammaCorrection(tempMat, gamma = 1.8)
+            processedMat = applyGammaCorrection(processedMat, gamma = 1.8)
 
             // Step 2: Apply bilateral filter for noise reduction while preserving edges
-            tempMat = reduceNoiseWithBilateral(tempMat)
+            processedMat = reduceNoiseWithBilateral(processedMat)
 
             // Step 3: Apply median filter for further noise reduction
-            tempMat = reduceNoiseWithMedian(tempMat)
+            processedMat = reduceNoiseWithMedian(processedMat)
 
             // Step 4: Apply unsharp mask to enhance sharpness without affecting colors
-            tempMat = enhanceSharpenUnsharpMask(tempMat)
+            processedMat = enhanceSharpenUnsharpMask(processedMat)
+
+            // Convert back from BGR to RGBA if required
+            if (processedMat.type() == CvType.CV_8UC3) {
+                println("Converting from BGR to RGBA")
+                Imgproc.cvtColor(processedMat, processedMat, Imgproc.COLOR_BGR2RGBA)
+            }
 
             println("Preprocessing completed.")
-            tempMat
+            processedMat
         } else {
             println("Image quality is sufficient (SNR: $snr, Contrast: $contrast). Skipping preprocessing.")
             inputMat // Return the original image if quality is sufficient
         }
-
-        // End timing
-        val endTime = System.currentTimeMillis()
-        val elapsedTime = endTime - startTime
-        println("Preprocessing time: $elapsedTime ms")
-
-        return processedMat
     }
-
 
     // Gamma Correction
     fun applyGammaCorrection(image: Mat, gamma: Double = 1.8): Mat {
@@ -836,6 +900,43 @@ class ScanFrontActivity : AppCompatActivity() {
 
     private fun calculateResolution(mat: Mat): String {
         return "${mat.cols()}x${mat.rows()}"
+    }
+
+    fun saveMatToStorage(context: Context, processedMat: Mat, fileName: String): Boolean {
+        return try {
+            // Step 1: Convert Mat to Bitmap
+            val bitmap = Bitmap.createBitmap(processedMat.cols(), processedMat.rows(), Bitmap.Config.ARGB_8888)
+            Utils.matToBitmap(processedMat, bitmap)
+
+            // Step 2: Get app-specific storage directory
+            val storageDir = File(context.getExternalFilesDir(null), "images")
+            if (!storageDir.exists()) {
+                if (storageDir.mkdirs()) {
+                    println("Directory created successfully: ${storageDir.absolutePath}")
+                } else {
+                    println("Failed to create directory: ${storageDir.absolutePath}")
+                    return false // Exit if folder creation fails
+                }
+            }
+
+            // Step 3: Create a file to save the image
+            val file = File(storageDir, "$fileName.png")
+            val outputStream = FileOutputStream(file)
+
+            // Step 4: Compress the Bitmap and write to file
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+
+            // Step 5: Close the stream and return success
+            outputStream.flush()
+            outputStream.close()
+
+            println("Image saved successfully at: ${file.absolutePath}")
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println("Failed to save image: ${e.message}")
+            false
+        }
     }
 
 
