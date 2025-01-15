@@ -724,97 +724,89 @@ val brightness = calculateBrightness(mat)
 
 
     private fun preprocessing(snr: Double, contrast: Double, resolution: String, inputMat: Mat): Mat {
-        val startTime = System.nanoTime() // Start time
+        val startTime = System.nanoTime()
 
         val (width, height) = resolution.split("x").map { it.toInt() }
-        val minResolution = 500 // Minimum acceptable resolution for OCR
-        val snrThreshold = 10.0 // Minimum SNR threshold
-        val contrastThreshold = 50.0 // Minimum contrast threshold
+        val minResolution = 500
+        val snrThreshold = 10.0
+        val contrastThreshold = 50.0
 
         if (width < minResolution || height < minResolution) {
             println("Image resolution is too low ($resolution). Skipping preprocessing.")
-            return inputMat // Return the original image if resolution is insufficient
+            return inputMat
         }
 
         return if (snr < snrThreshold || contrast < contrastThreshold) {
             println("Image quality is medium (SNR: $snr, Contrast: $contrast). Applying preprocessing...")
 
-            // Clone the original Mat to avoid modifying it directly
             var processedMat = inputMat.clone()
 
-            // Ensure the input is in the correct color format
             if (processedMat.type() != CvType.CV_8UC3) {
                 Imgproc.cvtColor(processedMat, processedMat, Imgproc.COLOR_RGBA2BGR)
             }
 
-            // Step 1: Adjust gamma for luminance enhancement
-            processedMat = applyGammaCorrection(processedMat, gamma = 1.8)
+            // Step 1: Mild Gamma Correction for color and brightness balance
+//            processedMat = applyGammaCorrection(processedMat, gamma = 0.5)
 
-            // Step 2: Apply bilateral filter for noise reduction while preserving edges
-            processedMat = reduceNoiseWithBilateral(processedMat)
+            // Step 2: Reduce brightness slightly to prevent overexposure
+            Core.subtract(processedMat, Scalar(15.0, 15.0, 15.0), processedMat)
 
-            // Step 3: Apply median filter for further noise reduction
-            processedMat = reduceNoiseWithMedian(processedMat)
+//            // Step 3: Reduce blue tones for OCR clarity
+//            val channels = ArrayList<Mat>()
+//            Core.split(processedMat, channels)
+//            Core.subtract(channels[0], Scalar(10.0), channels[0]) // Reduce blue channel
+//            Core.merge(channels, processedMat)
 
-            // Step 4: Apply unsharp mask to enhance sharpness without affecting colors
-            processedMat = enhanceSharpenUnsharpMask(processedMat)
-            val endTime = System.nanoTime() // End time
-            println("preprocessing runtime: ${(endTime - startTime) / 1_000_000.0} ms") // Convert to milliseconds
+            // Step 4: Reduce noise with bilateral filter
+            processedMat = reduceNoiseWithBilateral(processedMat, d = 5, sigmaColor = 40.0, sigmaSpace = 40.0)
+
+            // Step 5: Enhance sharpness for text clarity
+            processedMat = enhanceSharpenUnsharpMask(processedMat, strength = 1.3, blurKernel = Size(3.0, 3.0))
+
+            val endTime = System.nanoTime()
+            println("Preprocessing runtime: ${(endTime - startTime) / 1_000_000.0} ms")
             println("Preprocessing completed.")
             processedMat
-
         } else {
             println("Image quality is sufficient (SNR: $snr, Contrast: $contrast). Skipping preprocessing.")
-            inputMat // Return the original image if quality is sufficient
+            inputMat
         }
-
     }
 
     // Gamma Correction
-    fun applyGammaCorrection(image: Mat, gamma: Double = 1.8): Mat {
-        // Calculate the inverse of gamma
+    fun applyGammaCorrection(image: Mat, gamma: Double = 1.2): Mat {
         val invGamma = 1.0 / gamma
-
-        // Create a lookup table for gamma correction
         val lut = Mat(1, 256, CvType.CV_8U)
         for (i in 0..255) {
-            lut.put(0, i, ((i / 255.0).toDouble().pow(invGamma) * 255).toInt().toDouble())
+            lut.put(0, i, ((i / 255.0).pow(invGamma) * 255).toInt().coerceIn(0, 255).toDouble())
         }
-
-        // Apply the gamma correction using LUT
         val correctedImage = Mat()
         Core.LUT(image, lut, correctedImage)
-
-        // Return the corrected image
         return correctedImage
     }
 
 
-
-    // Supporting preprocessing functions
-    fun reduceNoiseWithBilateral(mat: Mat, d: Int = 9, sigmaColor: Double = 75.0, sigmaSpace: Double = 75.0): Mat {
+    fun reduceNoiseWithBilateral(mat: Mat, d: Int = 7, sigmaColor: Double = 50.0, sigmaSpace: Double = 50.0): Mat {
         val output = Mat()
         Imgproc.bilateralFilter(mat, output, d, sigmaColor, sigmaSpace)
         return output
     }
 
 
-    fun reduceNoiseWithMedian(mat: Mat, kernelSize: Int = 5): Mat {
+
+    fun reduceNoiseWithMedian(mat: Mat, kernelSize: Int = 3): Mat {
         val output = Mat()
         Imgproc.medianBlur(mat, output, kernelSize)
         return output
     }
 
-    fun enhanceSharpenUnsharpMask(mat: Mat, strength: Double = 1.5, blurKernel: Size = Size(5.0, 5.0)): Mat {
+    fun enhanceSharpenUnsharpMask(mat: Mat, strength: Double = 1.3, blurKernel: Size = Size(3.0, 3.0)): Mat {
         val blurred = Mat()
         Imgproc.GaussianBlur(mat, blurred, blurKernel, 0.0)
         val sharpened = Mat()
         Core.addWeighted(mat, 1.0 + strength, blurred, -strength, 0.0, sharpened)
         return sharpened
     }
-
-
-
 
 
     override fun onDestroy() {

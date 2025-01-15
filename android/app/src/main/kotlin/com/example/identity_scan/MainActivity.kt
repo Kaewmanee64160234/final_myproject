@@ -79,6 +79,12 @@ class MainActivity : FlutterActivity() {
         startActivity(intent)
 
     }
+    private fun openScanFont() {
+        val intent = Intent(this@MainActivity, ScanFrontActivity::class.java)
+        startActivity(intent)
+
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 

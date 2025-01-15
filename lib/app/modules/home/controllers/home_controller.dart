@@ -127,6 +127,17 @@ class HomeController extends GetxController {
     }
   }
 
+  // openCameraPage
+  void openCameraPage() async {
+    try {
+      final result = await platform.invokeMethod('goToCamera');
+      print("Result from OpenCV: $result");
+    } catch (e) {
+      print("Error opening OpenCV view: $e");
+      Get.snackbar("Error", "Failed to open OpenCV view.");
+    }
+  }
+
   Future<void> listenForPreprocessingResult() async {
     try {
       platform.setMethodCallHandler((call) async {

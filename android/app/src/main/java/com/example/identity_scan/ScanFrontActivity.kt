@@ -806,13 +806,13 @@ class ScanFrontActivity : AppCompatActivity() {
             }
 
             // Step 1: Adjust gamma for luminance enhancement
-            processedMat = applyGammaCorrection(processedMat, gamma = 1.8)
+            processedMat = applyGammaCorrection(processedMat, gamma = 1.2)
 
             // Step 2: Apply bilateral filter for noise reduction while preserving edges
             processedMat = reduceNoiseWithBilateral(processedMat)
 
             // Step 3: Apply median filter for further noise reduction
-            processedMat = reduceNoiseWithMedian(processedMat)
+//            processedMat = reduceNoiseWithMedian(processedMat)
 
             // Step 4: Apply unsharp mask to enhance sharpness without affecting colors
             processedMat = enhanceSharpenUnsharpMask(processedMat)
