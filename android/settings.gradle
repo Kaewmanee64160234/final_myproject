@@ -24,3 +24,5 @@ plugins {
 
 include ":app"
 include ':opencv'
+include ':libfacesdk'
+include ':libfotoapparat'
