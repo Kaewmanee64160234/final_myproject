@@ -139,27 +139,50 @@ class FlowDetactView extends GetView<FlowDetactController> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         ),
         child: Center(
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: () {
-              if (controller.card.value.idNumber.isEmpty) {
-                controller.openCameraPage();
-              } else {
-                controller.openScanFace();
-              }
-            },
-            child: Text(
-              controller.card.value.idNumber.isEmpty ? 'เริ่มต้น' : 'ต่อไป',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+          child: Column(
+            children: [
+              Obx(() {
+                if (controller.card.value.idNumber.length == 0) {
+                  return ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      controller.openCameraPage();
+                    },
+                    child: Text(
+                      'เริ่มต้น',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                } else {
+                  return ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      controller.openScanFace();
+                    },
+                    child: Text(
+                      'ต่อไป',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                }
+              }),
+            ],
           ),
         ),
       )),
