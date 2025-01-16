@@ -128,13 +128,17 @@ class MainActivity : FlutterActivity() {
                 println("Error: Missing data in the result intent.")
             }
         } else if (requestCode == REQUEST_CODE_SCAN) {
-            val result = data?.getStringExtra("result")
-            println("Result From ScanFront Activity: $result")
-
+            val pathFinalFont = data?.getStringExtra("pathFinalFont")
+            val pathFinalBack = data?.getStringExtra("pathFinalBack")
+            println("pathFinalFont file: $pathFinalFont")
+            println("pathFinalBack file: $pathFinalBack")
+            val resultData = mapOf(
+                "font" to pathFinalFont,
+                "back" to pathFinalBack,)
             try {
                 MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function")
-                    .invokeMethod("onCameraResult", result)
-                println("Camera result sent to Flutter successfully: $result")
+                    .invokeMethod("onCameraResult", resultData)
+                println("Camera result sent to Flutter successfully: $resultData")
             } catch (e: Exception) {
                 println("Error sending camera result to Flutter: ${e.message}")
             }

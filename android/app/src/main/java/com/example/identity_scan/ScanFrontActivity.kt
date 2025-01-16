@@ -149,7 +149,9 @@ class ScanFrontActivity : AppCompatActivity() {
     private val bitmapList: MutableList<Bitmap> = mutableListOf()
     private var sharPestImageIndex = 0
     private lateinit var mat: Mat
-    private var pathFinal = ""
+    private var pathFinalFont = ""
+    private var pathFinalBack = ""
+    private var count = 0
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -337,20 +339,25 @@ class ScanFrontActivity : AppCompatActivity() {
                                          val snrValue = calculateSNR(sharpestBitmapMat)
 
                                          val processedMat = preprocessing(snrValue, contrastValue, resolutionValue, sharpestBitmapMat)
-                                         
-                                         // บันทึกรูป Original ลง Storage
-                                         saveMatToStorage(context,sharpestBitmapMat,"frontCardOriginal")
+                                         if(count==0){
+                                             // บันทึกรูป Original ลง Storage
+                                             saveMatToStorage(context,sharpestBitmapMat,"frontCardOriginal")
 
-                                         // บันทึกลง Storage
-                                         saveMatToStorage(context,processedMat,"frontCardProcessed")
+                                             // บันทึกลง Storage
+                                             saveMatToStorage(context,processedMat,"frontCardProcessed")
+                                             count++
 
+                                         }
+                                         if(count ==1){
+                                             saveMatToStorage(context,sharpestBitmapMat,"backCardOriginal")
+
+                                             // บันทึกลง Storage
+                                             saveMatToStorage(context,processedMat,"backCardProcessed")
+                                         }
 
                                      }
                                  }
-//                                การ Print ขนาดของ Image Proxy
-//                               val imageWidth = imageProxy.width
-//                               val imageHeight = imageProxy.height
-//                               println("Image Resolution: $imageWidth x $imageHeight")
+
                              }else{
                                  if (isFound){
                                      if (!isTiming){
@@ -360,7 +367,7 @@ class ScanFrontActivity : AppCompatActivity() {
                                  }else{
                                      timer.cancel()
                                      isTiming = false
-                                     println("Cancelled Timer")
+//                                     println("Cancelled Timer")
                                  }
 
                                  processImageProxy(imageProxy)
@@ -499,17 +506,24 @@ class ScanFrontActivity : AppCompatActivity() {
                                     color = Color.White,
                                     fontSize = 16.sp
                                 )
+                                Log.d("Hello",count.toString())
                             }
 
                             // Default Button: "ใช้ภาพนี้"
                             Button(
                                 onClick = {
-                                    val resultIntent = Intent()
-                                    if(pathFinal.isNotEmpty()){
-                                        resultIntent.putExtra("result", pathFinal.toString())
+
+                                    if(pathFinalFont.isNotEmpty() && pathFinalBack.isNotEmpty() ){
+                                      var  resultIntent = Intent().apply {
+                                            putExtra("pathFinalFont", pathFinalFont.toString()) // Path of processed image
+                                            putExtra("pathFinalBack", pathFinalBack.toString()) // Path of sharpened image
+                                        }
+
                                         setResult(RESULT_OK, resultIntent)
-                                        Log.w("pathFinal",pathFinal.toString())
                                         finish()
+                                    }else{
+                                        isFound = false
+                                        onDismiss()
                                     }
 
                                 }
@@ -938,8 +952,8 @@ class ScanFrontActivity : AppCompatActivity() {
             outputStream.flush()
             outputStream.close()
 //            step 6 send dataa
-            pathFinal = file.absolutePath
-
+            pathFinalFont = file.absolutePath
+            pathFinalBack = file.absolutePath
             println("Image saved successfully at: ${file.absolutePath}")
             true
         } catch (e: Exception) {

@@ -57,6 +57,7 @@ class FlowDetactController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    listenOnCameraResult();
   }
 
   @override
@@ -83,7 +84,9 @@ class FlowDetactController extends GetxController {
   Future<void> listenOnCameraResult() async {
     try {
       platform.setMethodCallHandler((call) async {
+        print("Received method call from flutter ${call.method}");
         if (call.method == "onCameraResult") {
+          print("Received camera result: ${call.arguments}");
           //  output just string result
           final receivedArguments = call.arguments;
           // map to receipve data
