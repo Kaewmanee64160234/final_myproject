@@ -10,6 +10,7 @@ class MainActivity : FlutterActivity() {
     private val channel = "native_function"
     private val REQUEST_CODE_SCAN = 1001
     private val REQUEST_CODE_SCAN_BACK = 1002
+    private val SCAN_FACE = 1003
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -84,7 +85,7 @@ class MainActivity : FlutterActivity() {
     }
     private fun openScanFace() {
         val intent = Intent(this@MainActivity, ScanFace::class.java)
-        startActivity(intent)
+        startActivityForResult(intent, SCAN_FACE)
 
     }
     private fun openScanFont() {

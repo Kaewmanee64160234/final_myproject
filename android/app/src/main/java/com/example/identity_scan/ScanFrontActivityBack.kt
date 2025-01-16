@@ -551,7 +551,7 @@ class ScanFrontActivityBack: AppCompatActivity() {
                     cameraViewModel.updateSnrValueText(snrValue.toString())
 
                     // 0 ต้องเท่ากับ บัตรปกติ
-                    if (maxIndex == 4) {
+                    if (maxIndex == 4 ) {
                         isFound = if (glare >= 10000){
                             cameraViewModel.updateGuideText("หลีกเลี่ยงแสงสะท้อน")
                             false
