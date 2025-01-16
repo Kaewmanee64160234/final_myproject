@@ -62,7 +62,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.identity_scan.ml.ModelFront
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import org.tensorflow.lite.DataType
@@ -79,6 +78,7 @@ import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.ButtonDefaults
+import com.example.identity_scan.ml.ModelDetectCard
 import org.opencv.android.Utils
 import org.opencv.core.Core
 import org.opencv.core.CvType
@@ -100,7 +100,7 @@ class ScanFrontActivityBack: AppCompatActivity() {
     private val CAMERA_REQUEST_CODE = 2001
     private val cameraViewModel: CameraViewModel by viewModels()
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
-    private lateinit var model: ModelFront
+    private lateinit var model: ModelDetectCard
 //    private lateinit var model: ModelBack
     private var isProcessing = false
     private var lastProcessedTime: Long = 0
@@ -124,7 +124,7 @@ class ScanFrontActivityBack: AppCompatActivity() {
         checkPermissions()
         checkAndRequestCameraPermission()
 //        model = ModelBack.newInstance(this)
-        model = ModelFront.newInstance(this)
+        model = ModelDetectCard.newInstance(this)
 
         if (!org.opencv.android.OpenCVLoader.initDebug()) {
             Log.e("OpenCV", "OpenCV initialization failed")
@@ -551,7 +551,7 @@ class ScanFrontActivityBack: AppCompatActivity() {
                     cameraViewModel.updateSnrValueText(snrValue.toString())
 
                     // 0 ต้องเท่ากับ บัตรปกติ
-                    if (maxIndex == 0) {
+                    if (maxIndex == 4) {
                         isFound = if (glare >= 10000){
                             cameraViewModel.updateGuideText("หลีกเลี่ยงแสงสะท้อน")
                             false
@@ -562,8 +562,10 @@ class ScanFrontActivityBack: AppCompatActivity() {
 
                     // 1 = บัตรสว่างเกินไป
                     } else if(maxIndex == 1) {
-                        cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
-//                        foundCardTimer = 0
+                        cameraViewModel.updateGuideText("กรุณาใช้บัตรจริง")
+                        isFound = false
+                    } else if (maxIndex ==2){
+                        cameraViewModel.updateGuideText("กรุณาเอามือออกจากบัตรประชาชน")
                         isFound = false
                     }
 
@@ -784,7 +786,7 @@ class ScanFrontActivityBack: AppCompatActivity() {
                 println("Unexpected Mat type: ${processedMat.type()}")
             }
 
-            processedMat = applyGammaCorrection(processedMat, gamma = 1.0)
+            processedMat = applyGammaCorrection(processedMat, gamma = 1.8)
 
             processedMat = reduceNoiseWithBilateral(processedMat)
 
@@ -839,9 +841,9 @@ class ScanFrontActivityBack: AppCompatActivity() {
         return output
     }
 
-    fun enhanceSharpenUnsharpMask(mat: Mat, strength: Double = 1.0, blurKernel: org.opencv.core.Size = org.opencv.core.Size(
-        3.0,
-        3.0
+    fun enhanceSharpenUnsharpMask(mat: Mat, strength: Double = 1.5, blurKernel: org.opencv.core.Size = org.opencv.core.Size(
+        5.0,
+        5.0
     )
     ): Mat {
         val blurred = Mat()

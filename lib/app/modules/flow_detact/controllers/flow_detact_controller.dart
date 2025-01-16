@@ -51,6 +51,7 @@ class FlowDetactController extends GetxController {
   final ApiOcrCreditCardService apiOcrCreditCardService = Get.find();
   static const platform = MethodChannel('native_function');
   var statusMessage = "Waiting for preprocessing...".obs;
+  var laserCodeOriginal = ''.obs;
   var isLoading = false.obs;
 
   @override
@@ -76,7 +77,17 @@ class FlowDetactController extends GetxController {
     } catch (e) {
       print("Error opening OpenCV view: $e");
       print(e);
-      // Get.snackbar("Error", "Failed to open OpenCV view.");
+    }
+  }
+
+// openScanFace
+  void openScanFace() async {
+    try {
+      final result = await platform.invokeMethod('openScanFace');
+      print("Result from OpenCV: $result");
+    } catch (e) {
+      print("Error opening OpenCV view: $e");
+      Get.snackbar("Error", "Failed to open OpenCV view.");
     }
   }
 
@@ -86,18 +97,14 @@ class FlowDetactController extends GetxController {
         print("Received method call from flutter ${call.method}");
         if (call.method == "onCameraResult") {
           print("Received camera result: ${call.arguments}");
-          //  output just string result
           final receivedArguments = call.arguments;
-          // map to receipve data
           if (receivedArguments != null) {
             sendToOcr(receivedArguments);
           }
         }
         if (call.method == "onCameraResultBack") {
           print("Received camera result back: ${call.arguments}");
-          //  output just string result
           final receivedArguments = call.arguments;
-          // map to receipve data
           if (receivedArguments != null) {
             sendToOcrBackCard(receivedArguments);
           }
@@ -113,18 +120,16 @@ class FlowDetactController extends GetxController {
 
   Future<void> sendToOcr(String path) async {
     try {
-      isLoading.value = true; // Set loading state to true
+      isLoading.value = true;
 
       if (path != null) {
         final File processedImage = File(path);
         print("processedImage: $processedImage");
 
         if (await processedImage.exists()) {
-          // Convert the file to Base64
           final bytes = await processedImage.readAsBytes();
           final imageBase64 = base64Encode(bytes);
 
-          // Send the image to the OCR service
           card.value =
               (await apiOcrCreditCardService.uploadBase64Image(imageBase64))!;
           print("OCR Processed Image Success: ${card.value.idNumber}");
@@ -142,7 +147,7 @@ class FlowDetactController extends GetxController {
       Get.snackbar("Error", "Failed to send processed image to OCR: $e");
       print("Error: Failed to send processed image to OCR: $e");
     } finally {
-      isLoading.value = false; // Reset loading state
+      isLoading.value = false;
     }
   }
 
@@ -152,17 +157,16 @@ class FlowDetactController extends GetxController {
 
       if (path != null) {
         final File processedImage = File(path);
-        // Convert the file to Base64
 
         if (await processedImage.exists()) {
           final bytes = await processedImage.readAsBytes();
           final processedImageBase64 = base64Encode(bytes);
 
-          // Send the image to the OCR service
           final res = await apiOcrCreditCardService
               .uploadBase64ImageBack(processedImageBase64);
           print("OCR Processed Image Success: $res");
           card.value.laserCode = res;
+          laserCodeOriginal.value = res;
 
           Get.snackbar("Success", "OCR for processed image completed.");
         } else {
