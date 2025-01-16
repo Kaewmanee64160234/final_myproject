@@ -52,7 +52,6 @@ class FlowDetactController extends GetxController {
   static const platform = MethodChannel('native_function');
   var statusMessage = "Waiting for preprocessing...".obs;
   var isLoading = false.obs;
-  var receivedData = ReceiveData(type: '', imagePath: '').obs;
 
   @override
   void onInit() {
@@ -90,12 +89,17 @@ class FlowDetactController extends GetxController {
           //  output just string result
           final receivedArguments = call.arguments;
           // map to receipve data
-          receivedData.value = ReceiveData.fromJson(receivedArguments);
-          if (receivedData.value.type == 'font') {
-            sendToOcr(receivedData.value.imagePath);
+          if (receivedArguments != null) {
+            sendToOcr(receivedArguments);
           }
-          if (receivedData.value.type == 'back') {
-            sendToOcr(receivedData.value.imagePath);
+        }
+        if (call.method == "onCameraResultBack") {
+          print("Received camera result back: ${call.arguments}");
+          //  output just string result
+          final receivedArguments = call.arguments;
+          // map to receipve data
+          if (receivedArguments != null) {
+            sendToOcrBackCard(receivedArguments);
           }
         } else {
           print("Unhandled method call: ${call.method}");

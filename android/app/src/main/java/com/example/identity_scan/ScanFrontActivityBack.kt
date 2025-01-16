@@ -91,44 +91,11 @@ import java.io.OutputStream
 import kotlin.math.pow
 
 
-class RectPositionViewModel : ViewModel() {
-    private val _rectPosition = MutableLiveData<Rect>()
-    fun updateRectPosition(left: Float, top: Float, right: Float, bottom: Float) {
-        _rectPosition.value = Rect(left.toInt(), top.toInt(), right.toInt(), bottom.toInt())
-    }
-}
 
-class CameraViewModel : ViewModel() {
-    // Initial Guide Text
-    var guideText by mutableStateOf("กรุณาวางบัตรในกรอบ")
-        private set
 
-    var brightnessValueText by mutableStateOf("0")
-        private set
 
-    var glareValueText by mutableStateOf("0")
-        private set
-    var snrValueText by mutableStateOf("0")
-        private set
 
-    // Function to update the guide text
-    fun updateGuideText(newText: String) {
-        guideText = newText
-    }
-
-    fun updateBrightnessValueText(newValue: String) {
-        brightnessValueText = newValue
-    }
-    fun updateSnrValueText(newValue: String) {
-        snrValueText = newValue
-    }
-
-    fun updateGlareValueText(newValue: String) {
-        glareValueText = newValue
-    }
-}
-
-class ScanFrontActivity : AppCompatActivity() {
+class ScanFrontActivityBack: AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
     private val CAMERA_REQUEST_CODE = 2001
     private val cameraViewModel: CameraViewModel by viewModels()

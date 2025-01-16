@@ -9,6 +9,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
     private val channel = "native_function"
     private val REQUEST_CODE_SCAN = 1001
+    private val REQUEST_CODE_SCAN_BACK = 1002
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -21,7 +22,9 @@ class MainActivity : FlutterActivity() {
                     println(message)
                 } "goToCamera" -> {
                     openCameraPage()
-                } "openAnimationView" -> {
+                }  "goToCameraBack" -> {
+                openCameraPageBack()
+            }"openAnimationView" -> {
                     openAnimationView()
                 } "openCaptureView" -> {
                     openCaptureView()
@@ -52,6 +55,11 @@ class MainActivity : FlutterActivity() {
 
 //        startActivity(intent)
     }
+    private fun openCameraPageBack() {
+        val intent = Intent(this@MainActivity, ScanFrontActivityBack::class.java)
+        startActivityForResult(intent, REQUEST_CODE_SCAN_BACK)
+    }
+
 
     private fun openAnimationView() {
         val intent = Intent(this@MainActivity, AnimaActivity::class.java)
@@ -128,17 +136,25 @@ class MainActivity : FlutterActivity() {
                 println("Error: Missing data in the result intent.")
             }
         } else if (requestCode == REQUEST_CODE_SCAN) {
-            val pathFinalFont = data?.getStringExtra("pathFinalFont")
-            val pathFinalBack = data?.getStringExtra("pathFinalBack")
-            println("pathFinalFont file: $pathFinalFont")
-            println("pathFinalBack file: $pathFinalBack")
-            val resultData = mapOf(
-                "font" to pathFinalFont,
-                "back" to pathFinalBack,)
+            val result = data?.getStringExtra("result")
+            println("Result From ScanFront Activity: $result")
+
             try {
                 MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function")
-                    .invokeMethod("onCameraResult", resultData)
-                println("Camera result sent to Flutter successfully: $resultData")
+                    .invokeMethod("onCameraResult", result)
+                println("Camera result sent to Flutter successfully: $result")
+                openCameraPageBack()
+            } catch (e: Exception) {
+                println("Error sending camera result to Flutter: ${e.message}")
+            }
+        }else if (requestCode == REQUEST_CODE_SCAN_BACK) {
+            val result = data?.getStringExtra("result")
+            println("Result From ScanFront Activity: $result")
+
+            try {
+                MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function")
+                    .invokeMethod("onCameraResultBack", result)
+                println("Camera result sent to Flutter successfully: $result")
             } catch (e: Exception) {
                 println("Error sending camera result to Flutter: ${e.message}")
             }

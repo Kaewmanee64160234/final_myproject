@@ -63,6 +63,10 @@
             android:exported="true"
             android:theme="@style/Theme.IdentityScan" />
         <activity
+            android:name=".ScanFrontActivityBack"
+            android:exported="true"
+            android:theme="@style/Theme.IdentityScan" />
+        <activity
             android:name=".AnimaActivity"
             android:exported="true"
             android:theme="@style/Theme.IdentityScan" />
