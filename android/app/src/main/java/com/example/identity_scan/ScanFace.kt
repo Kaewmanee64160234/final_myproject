@@ -44,6 +44,7 @@ class ScanFace : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         cameraExecutor = Executors.newSingleThreadExecutor()
+        previewView = PreviewView(this)
 
         setContent {
             AndroidTheme {
