@@ -289,4 +289,58 @@ class ApiOcrCreditCardService {
       return '';
     }
   }
+
+  Future<String> mappingFace(String base64Image1, String base64Image2) async {
+    try {
+      // Define form data with updated keys
+      Map<String, dynamic> formData = {
+        'source_image': base64Image1, // Use source_image key
+        'target_image': base64Image2, // Use target_image key
+      };
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$_baseUrl/api/v1/verification/verify'),
+      )..headers.addAll({
+          'Authorization': '66eb9f21-8e1c-8011-97a5-08ddd9b9a7c7',
+        });
+
+      // Add fields to the multipart request
+      formData.forEach((key, value) {
+        if (value is String) {
+          request.fields[key] = value; // Add string fields
+        } else if (value is List<int>) {
+          request.files
+              .add(http.MultipartFile.fromBytes(key, value, filename: key));
+        }
+      });
+
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+
+        var jsonResponse = jsonDecode(responseBody);
+
+        // Extract similarity from the JSON response
+        final similarity =
+            jsonResponse['result']?[0]?['face_matches']?[0]?['similarity'];
+
+        if (similarity != null) {
+          print("Similarity: $similarity");
+          return similarity.toString();
+        } else {
+          print("Similarity not found in response");
+          return '';
+        }
+      } else {
+        final responseBody = await response.stream.bytesToString();
+        print('Error: ${response.statusCode}, $responseBody');
+        return '';
+      }
+    } catch (e) {
+      print('There was an error: $e');
+      return '';
+    }
+  }
 }
