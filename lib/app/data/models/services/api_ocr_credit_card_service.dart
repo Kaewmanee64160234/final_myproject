@@ -143,8 +143,9 @@ class ApiOcrCreditCardService {
               .add(http.MultipartFile.fromBytes(key, value, filename: key));
         }
       });
-
+      print('request: $request');
       var response = await request.send();
+      print('response: $response');
 
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();

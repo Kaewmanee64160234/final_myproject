@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 class ID_CARD {
   final String idNumber;
   final ID_CARD_DETAIL th;
@@ -18,6 +21,11 @@ class ID_CARD {
       en: ID_CARD_DETAIL.fromJson(json['en']),
       portrait: json['portrait'] ?? '',
     );
+  }
+
+  // Decode Base64 portrait string to Uint8List
+  Uint8List getDecodedPortrait() {
+    return base64Decode(portrait);
   }
 }
 

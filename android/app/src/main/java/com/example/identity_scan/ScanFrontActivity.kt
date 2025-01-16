@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -108,6 +109,8 @@ class CameraViewModel : ViewModel() {
 
     var glareValueText by mutableStateOf("0")
         private set
+    var snrValueText by mutableStateOf("0")
+        private set
 
     // Function to update the guide text
     fun updateGuideText(newText: String) {
@@ -116,6 +119,9 @@ class CameraViewModel : ViewModel() {
 
     fun updateBrightnessValueText(newValue: String) {
         brightnessValueText = newValue
+    }
+    fun updateSnrValueText(newValue: String) {
+        snrValueText = newValue
     }
 
     fun updateGlareValueText(newValue: String) {
@@ -143,6 +149,8 @@ class ScanFrontActivity : AppCompatActivity() {
     private val bitmapList: MutableList<Bitmap> = mutableListOf()
     private var sharPestImageIndex = 0
     private lateinit var mat: Mat
+    private var pathFinal = ""
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -497,9 +505,13 @@ class ScanFrontActivity : AppCompatActivity() {
                             Button(
                                 onClick = {
                                     val resultIntent = Intent()
-                                    resultIntent.putExtra("result", sharPestImageIndex.toString())
-                                    setResult(RESULT_OK, resultIntent)
-                                    finish()
+                                    if(pathFinal.isNotEmpty()){
+                                        resultIntent.putExtra("result", pathFinal.toString())
+                                        setResult(RESULT_OK, resultIntent)
+                                        Log.w("pathFinal",pathFinal.toString())
+                                        finish()
+                                    }
+
                                 }
                             ) {
                                 Text(
@@ -566,10 +578,11 @@ class ScanFrontActivity : AppCompatActivity() {
                     mat =  bitmapToMat(croppedBitmap)
                     val brightness = calculateBrightness(mat)
                     val glare = calculateGlare(mat)
-
+                    val snrValue = calculateSNR(mat)
                     // อัพเดทค่าบน UI
                     cameraViewModel.updateBrightnessValueText(brightness.toString())
                     cameraViewModel.updateGlareValueText(glare.toString())
+                    cameraViewModel.updateSnrValueText(snrValue.toString())
 
                     // 0 ต้องเท่ากับ บัตรปกติ
                     if (maxIndex == 0) {
@@ -805,19 +818,13 @@ class ScanFrontActivity : AppCompatActivity() {
                 println("Unexpected Mat type: ${processedMat.type()}")
             }
 
-            // Step 1: Adjust gamma for luminance enhancement
-            processedMat = applyGammaCorrection(processedMat, gamma = 1.2)
+            processedMat = applyGammaCorrection(processedMat, gamma = 1.0)
 
-            // Step 2: Apply bilateral filter for noise reduction while preserving edges
             processedMat = reduceNoiseWithBilateral(processedMat)
 
-            // Step 3: Apply median filter for further noise reduction
-//            processedMat = reduceNoiseWithMedian(processedMat)
 
-            // Step 4: Apply unsharp mask to enhance sharpness without affecting colors
             processedMat = enhanceSharpenUnsharpMask(processedMat)
 
-            // Convert back from BGR to RGBA if required
             if (processedMat.type() == CvType.CV_8UC3) {
                 println("Converting from BGR to RGBA")
                 Imgproc.cvtColor(processedMat, processedMat, Imgproc.COLOR_BGR2RGBA)
@@ -827,7 +834,7 @@ class ScanFrontActivity : AppCompatActivity() {
             processedMat
         } else {
             println("Image quality is sufficient (SNR: $snr, Contrast: $contrast). Skipping preprocessing.")
-            inputMat // Return the original image if quality is sufficient
+            inputMat
         }
     }
 
@@ -866,9 +873,9 @@ class ScanFrontActivity : AppCompatActivity() {
         return output
     }
 
-    fun enhanceSharpenUnsharpMask(mat: Mat, strength: Double = 1.5, blurKernel: org.opencv.core.Size = org.opencv.core.Size(
-        5.0,
-        5.0
+    fun enhanceSharpenUnsharpMask(mat: Mat, strength: Double = 1.0, blurKernel: org.opencv.core.Size = org.opencv.core.Size(
+        3.0,
+        3.0
     )
     ): Mat {
         val blurred = Mat()
@@ -927,8 +934,11 @@ class ScanFrontActivity : AppCompatActivity() {
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
 
             // Step 5: Close the stream and return success
+
             outputStream.flush()
             outputStream.close()
+//            step 6 send dataa
+            pathFinal = file.absolutePath
 
             println("Image saved successfully at: ${file.absolutePath}")
             true
@@ -946,63 +956,66 @@ class ScanFrontActivity : AppCompatActivity() {
             // Camera Preview filling the whole screen
             CameraPreview(modifier = Modifier.fillMaxSize())
 
+            // Centered guide text
             Text(
                 text = guideText,
                 color = Color.White,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .align(Alignment.Center)
+                modifier = Modifier.align(Alignment.Center)
             )
 
-            Text(
-                text = "BrightnessValue ${cameraViewModel.brightnessValueText}",
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
-
-
-            Text(
-                text = "GlareValue ${cameraViewModel.glareValueText}",
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+            // Column for bottom-center text elements
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(20.dp) // Add 20dp padding
-            )
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "BrightnessValue ${cameraViewModel.brightnessValueText}",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "GlareValue ${cameraViewModel.glareValueText}",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "SNRValue ${cameraViewModel.snrValueText}",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
 
-
+            // Canvas with rounded rectangle overlay
             Canvas(modifier = Modifier.fillMaxSize()) {
-                // ขนาดบัตรเครดิตในอัตราส่วน
-                val creditCardAspectRatio = 3.37f / 2.125f // อัตราส่วน 3.37:2.125
-
-                // ใช้ขนาดของหน้าจอในการคำนวณขนาดกรอบ
-                val rectWidth = size.width * 0.7f // ขนาดความกว้างของกรอบเป็น 70% ของความกว้างหน้าจอ
-                val rectHeight = rectWidth / creditCardAspectRatio // คำนวณความสูงจากอัตราส่วนของบัตรเครดิต
-
-                // ทำให้กรอบอยู่ตรงกลาง
+                val creditCardAspectRatio = 3.37f / 2.125f // Aspect ratio for credit card
+                val rectWidth = size.width * 0.7f // Width is 70% of screen width
+                val rectHeight = rectWidth / creditCardAspectRatio // Height based on aspect ratio
                 val rectLeft = (size.width - rectWidth) / 2
                 val rectTop = (size.height - rectHeight) / 2
+                val cornerRadius = 16.dp.toPx() // Rounded corners
 
-                val cornerRadius = 16.dp.toPx() // กำหนดขนาดมุมโค้ง
-
-                // คำนวณค่าของ right และ bottom
                 val rectRight = rectLeft + rectWidth
                 val rectBottom = rectTop + rectHeight
 
-
-                // วาดกรอบด้วยมุมโค้ง
+                // Draw the rounded rectangle
                 drawRoundRect(
                     color = Color.Gray,
                     topLeft = Offset(rectLeft, rectTop),
                     size = Size(rectWidth, rectHeight),
                     cornerRadius = CornerRadius(cornerRadius, cornerRadius),
-                    style = Stroke(width = 4f) // กำหนดความหนาของเส้นขอบ
+                    style = Stroke(width = 4f)
                 )
 
+                // Update rectangle position in the ViewModel
                 rectPositionViewModel.updateRectPosition(rectLeft, rectTop, rectRight, rectBottom)
             }
         }

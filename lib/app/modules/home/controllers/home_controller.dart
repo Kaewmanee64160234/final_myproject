@@ -17,6 +17,7 @@ class HomeController extends GetxController {
   final ApiOcrCreditCardService apiOcrCreditCardService = Get.find();
   var laserCodeOriginal = ''.obs;
   var laserCode = ''.obs;
+  var pathImage = ''.obs;
 
   final card = ID_CARD(
     idNumber: '',
@@ -97,7 +98,47 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    listenForPreprocessingResult(); // Start listening for native callbacks
+    pathImage.value = '';
+    card.value = ID_CARD(
+      idNumber: '',
+      th: ID_CARD_DETAIL(
+        fullName: '',
+        prefix: '',
+        name: '',
+        lastName: '',
+        dateOfBirth: '',
+        dateOfIssue: '',
+        dateOfExpiry: '',
+        religion: '',
+        address: Address(
+          province: '',
+          district: '',
+          full: '',
+          firstPart: '',
+          subdistrict: '',
+        ),
+      ),
+      en: ID_CARD_DETAIL(
+        fullName: '',
+        prefix: '',
+        name: '',
+        lastName: '',
+        dateOfBirth: '',
+        dateOfIssue: '',
+        dateOfExpiry: '',
+        religion: '',
+        address: Address(
+          province: '',
+          district: '',
+          full: '',
+          firstPart: '',
+          subdistrict: '',
+        ),
+      ),
+      portrait: '',
+    );
+    // listenForPreprocessingResult(); // Start listening for native callbacks
+    listenOnCameraResult();
   }
 
   @override
@@ -134,7 +175,8 @@ class HomeController extends GetxController {
       print("Result from OpenCV: $result");
     } catch (e) {
       print("Error opening OpenCV view: $e");
-      Get.snackbar("Error", "Failed to open OpenCV view.");
+      print(e);
+      // Get.snackbar("Error", "Failed to open OpenCV view.");
     }
   }
 
@@ -192,28 +234,44 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<void> sendToOcr(String valueType) async {
+  // listen onCameraResult
+  Future<void> listenOnCameraResult() async {
+    try {
+      platform.setMethodCallHandler((call) async {
+        if (call.method == "onCameraResult") {
+          //  output just string result
+          final receivedArguments = call.arguments;
+          pathImage.value = receivedArguments;
+          print("Received Data from Native: $receivedArguments");
+          await sendToOcrBackCard(pathImage.value);
+        } else {
+          print("Unhandled method call: ${call.method}");
+        }
+      });
+    } catch (e) {
+      print("Error listening for preprocessing result: $e");
+      statusMessage.value = "Error listening for preprocessing result.";
+    }
+  }
+
+  Future<void> sendToOcr(String path) async {
     try {
       isLoading.value = true; // Set loading state to true
 
-      if (receivedData.value[valueType] != null) {
-        final File processedImage = File(receivedData[valueType]);
+      if (path != null) {
+        final File processedImage = File(path);
+        print("processedImage: $processedImage");
 
         if (await processedImage.exists()) {
           // Convert the file to Base64
           final bytes = await processedImage.readAsBytes();
           processedImageBase64.value = base64Encode(bytes);
-          if (valueType == 'processedFile') {
-            // Send the image to the OCR service
-            card.value = (await apiOcrCreditCardService
-                .uploadBase64Image(processedImageBase64.value))!;
-            print("OCR Processed Image Success: ${card.value.idNumber}");
-          } else {
-            cardOriginal.value = (await apiOcrCreditCardService
-                .uploadBase64Image(processedImageBase64.value))!;
-            print(
-                "OCR Original Sharpened Image Success: ${card.value.idNumber}");
-          }
+
+          // Send the image to the OCR service
+          card.value = (await apiOcrCreditCardService
+              .uploadBase64Image(processedImageBase64.value))!;
+          print("OCR Processed Image Success: ${card.value.idNumber}");
+
           Get.snackbar("Success", "OCR for processed image completed.");
         } else {
           print("Error: Processed image file does not exist.");
@@ -231,27 +289,22 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<void> sendToOcrBackCard(String valueType) async {
+  Future<void> sendToOcrBackCard(String path) async {
     try {
       isLoading.value = true; // Set loading state to true
 
-      if (receivedData.value[valueType] != null) {
-        final File processedImage = File(receivedData[valueType]);
+      if (path != null) {
+        final File processedImage = File(path);
         // Convert the file to Base64
 
         if (await processedImage.exists()) {
           final bytes = await processedImage.readAsBytes();
           processedImageBase64.value = base64Encode(bytes);
-          if (valueType == 'processedFile') {
-            // Send the image to the OCR service
-            laserCode.value = (await apiOcrCreditCardService
-                .uploadBase64ImageBack(processedImageBase64.value))!;
-          } else {
-            laserCodeOriginal.value = (await apiOcrCreditCardService
-                .uploadBase64ImageBack(processedImageBase64.value))!;
-            print(
-                "OCR Original Sharpened Image Success: ${card.value.idNumber}");
-          }
+
+          // Send the image to the OCR service
+          laserCode.value = (await apiOcrCreditCardService
+              .uploadBase64ImageBack(processedImageBase64.value))!;
+
           Get.snackbar("Success", "OCR for processed image completed.");
         } else {
           print("Error: Processed image file does not exist.");
