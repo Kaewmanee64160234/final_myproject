@@ -290,7 +290,7 @@ class ApiOcrCreditCardService {
     }
   }
 
-  Future<String> mappingFace(String base64Image1, String base64Image2) async {
+  Future<double> mappingFace(String base64Image1, String base64Image2) async {
     try {
       // Define form data with updated keys
       Map<String, dynamic> formData = {
@@ -328,19 +328,19 @@ class ApiOcrCreditCardService {
 
         if (similarity != null) {
           print("Similarity: $similarity");
-          return similarity.toString();
+          return similarity.toDouble();
         } else {
           print("Similarity not found in response");
-          return '';
+          return 0.0;
         }
       } else {
         final responseBody = await response.stream.bytesToString();
         print('Error: ${response.statusCode}, $responseBody');
-        return '';
+        return 0.0;
       }
     } catch (e) {
       print('There was an error: $e');
-      return '';
+      return 0.0;
     }
   }
 }

@@ -116,6 +116,17 @@ class FlowDetactView extends GetView<FlowDetactController> {
                               controller.card.value.en.religion),
                           _buildInfoRow('Address (EN):',
                               controller.card.value.en.address.full),
+                          Divider()
+                          // show similarity
+                          ,
+                          Text(
+                            'Similarity: ${controller.similarity.value.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blueAccent,
+                            ),
+                          ),
                         ],
                       ),
                     ),

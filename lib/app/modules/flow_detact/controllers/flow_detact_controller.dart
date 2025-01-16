@@ -53,6 +53,7 @@ class FlowDetactController extends GetxController {
   var statusMessage = "Waiting for preprocessing...".obs;
   var laserCodeOriginal = ''.obs;
   var isLoading = false.obs;
+  var similarity = 0.0.obs;
 
   @override
   void onInit() {
@@ -182,6 +183,22 @@ class FlowDetactController extends GetxController {
       print("Error: Failed to send processed image to OCR: $e");
     } finally {
       isLoading.value = false; // Reset loading state
+    }
+  }
+
+// compare misilality
+  void compareSimilarity() async {
+    try {
+      isLoading.value = true;
+      final res = await apiOcrCreditCardService.mappingFace(
+          card.value.laserCode, laserCodeOriginal.value);
+      print("Similarity: $res");
+      similarity.value = res;
+    } catch (e) {
+      Get.snackbar("Error", "Failed to compare similarity: $e");
+      print("Error: Failed to compare similarity: $e");
+    } finally {
+      isLoading.value = false;
     }
   }
 }
