@@ -159,6 +159,17 @@ class MainActivity : FlutterActivity() {
             } catch (e: Exception) {
                 println("Error sending camera result to Flutter: ${e.message}")
             }
+        }else if (requestCode == SCAN_FACE) {
+            val result = data?.getStringExtra("result")
+            println("Result From ScanFront Activity: $result")
+
+            try {
+                MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function")
+                    .invokeMethod("onCameraScan", result)
+                println("Camera result sent to Flutter successfully: $result")
+            } catch (e: Exception) {
+                println("Error sending camera result to Flutter: ${e.message}")
+            }
         }
     }
 

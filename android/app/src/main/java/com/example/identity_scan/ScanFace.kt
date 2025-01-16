@@ -1,6 +1,7 @@
 package com.example.identity_scan
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -128,9 +129,15 @@ class ScanFace : ComponentActivity() {
                     val msg = "Photo capture succeeded: ${photoFile.absolutePath}"
                     Log.d("ScanFace", msg)
                     Toast.makeText(this@ScanFace, msg, Toast.LENGTH_SHORT).show()
+                    val resultIntent = Intent()
+                    resultIntent.putExtra("result", photoFile.absolutePath)
+                    setResult(RESULT_OK, resultIntent)
+                    finish()
+
                 }
             }
         )
+
     }
 
     override fun onDestroy() {

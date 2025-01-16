@@ -109,6 +109,16 @@ class FlowDetactController extends GetxController {
           if (receivedArguments != null) {
             sendToOcrBackCard(receivedArguments);
           }
+        }
+        if (call.method == "onCameraScan") {
+          print("Received camera result back: ${call.arguments}");
+          final receivedArguments = call.arguments;
+          if (receivedArguments != null) {
+            // chnage path to find and convert to base64
+            final bytes = await File(receivedArguments).readAsBytes();
+            final imageBase64 = base64Encode(bytes);
+            compareSimilarity(imageBase64);
+          }
         } else {
           print("Unhandled method call: ${call.method}");
         }
@@ -187,11 +197,11 @@ class FlowDetactController extends GetxController {
   }
 
 // compare misilality
-  void compareSimilarity() async {
+  void compareSimilarity(String base64Image) async {
     try {
       isLoading.value = true;
       final res = await apiOcrCreditCardService.mappingFace(
-          card.value.laserCode, laserCodeOriginal.value);
+          card.value.portrait, base64Image);
       print("Similarity: $res");
       similarity.value = res;
     } catch (e) {

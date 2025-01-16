@@ -568,8 +568,13 @@ class ScanFrontActivityBack: AppCompatActivity() {
                         cameraViewModel.updateGuideText("กรุณาเอามือออกจากบัตรประชาชน")
                         isFound = false
                     }else if(maxIndex == 0 ){
-                        cameraViewModel.updateGuideText("พบหน้าบัตร")
-                        isFound = false
+                        isFound = if (glare >= 10000){
+                            cameraViewModel.updateGuideText("หลีกเลี่ยงแสงสะท้อน")
+                            false
+                        }else{
+                            cameraViewModel.updateGuideText("ถือค้างไว้")
+                            true
+                        }
                     }else if(maxIndex == 3){
                         cameraViewModel.updateGuideText("ไม่พบบัตร")
                         isFound = false
