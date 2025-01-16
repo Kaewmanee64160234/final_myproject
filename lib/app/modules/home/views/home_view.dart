@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:identity_scan/app/routes/app_pages.dart';
 import 'dart:io';
 import '../controllers/home_controller.dart';
 
@@ -79,6 +80,25 @@ class HomeView extends GetView<HomeController> {
                   ),
                   child: const Text(
                     'Open Camera Page',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+              // get to page FlowDeatct
+              GestureDetector(
+                onTap: () {
+                  // Call the native method to open OpenCV view
+                  Get.offNamed(Routes.FLOW_DETACT);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  margin: const EdgeInsets.all(10),
+                  decoration: const BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
+                  child: const Text(
+                    'Open Flow Detect',
                     style: TextStyle(color: Colors.white),
                   ),
                 ),

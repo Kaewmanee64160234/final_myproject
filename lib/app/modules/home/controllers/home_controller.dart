@@ -56,6 +56,7 @@ class HomeController extends GetxController {
       ),
     ),
     portrait: '',
+    laserCode: '',
   ).obs;
   final cardOriginal = ID_CARD(
     idNumber: '',
@@ -94,6 +95,7 @@ class HomeController extends GetxController {
       ),
     ),
     portrait: '',
+    laserCode: '',
   ).obs;
   @override
   void onInit() {
@@ -136,6 +138,7 @@ class HomeController extends GetxController {
         ),
       ),
       portrait: '',
+      laserCode: '',
     );
     // listenForPreprocessingResult(); // Start listening for native callbacks
     listenOnCameraResult();

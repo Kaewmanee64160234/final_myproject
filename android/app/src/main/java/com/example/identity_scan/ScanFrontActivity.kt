@@ -997,7 +997,7 @@ class ScanFrontActivity : AppCompatActivity() {
             // Canvas with rounded rectangle overlay
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val creditCardAspectRatio = 3.37f / 2.125f // Aspect ratio for credit card
-                val rectWidth = size.width * 0.7f // Width is 70% of screen width
+                val rectWidth = size.width * 0.9f // Increase width to 90% of the screen width
                 val rectHeight = rectWidth / creditCardAspectRatio // Height based on aspect ratio
                 val rectLeft = (size.width - rectWidth) / 2
                 val rectTop = (size.height - rectHeight) / 2
@@ -1018,6 +1018,7 @@ class ScanFrontActivity : AppCompatActivity() {
                 // Update rectangle position in the ViewModel
                 rectPositionViewModel.updateRectPosition(rectLeft, rectTop, rectRight, rectBottom)
             }
+
         }
     }
 

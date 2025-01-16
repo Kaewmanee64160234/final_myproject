@@ -6,12 +6,14 @@ class ID_CARD {
   final ID_CARD_DETAIL th;
   final ID_CARD_DETAIL en;
   final String portrait;
+  String laserCode;
 
   ID_CARD({
     required this.idNumber,
     required this.th,
     required this.en,
     required this.portrait,
+    required this.laserCode,
   });
 
   factory ID_CARD.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class ID_CARD {
       th: ID_CARD_DETAIL.fromJson(json['th']),
       en: ID_CARD_DETAIL.fromJson(json['en']),
       portrait: json['portrait'] ?? '',
+      laserCode: json['LaserCode'] ?? '',
     );
   }
 

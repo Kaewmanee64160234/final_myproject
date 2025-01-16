@@ -78,7 +78,8 @@ class ApiOcrCreditCardService {
                 subdistrict: '',
               ),
             ),
-            portrait: '');
+            portrait: '',
+            laserCode: '');
       }
     } catch (e) {
       print('Error during file upload: $e');
@@ -118,7 +119,8 @@ class ApiOcrCreditCardService {
               subdistrict: '',
             ),
           ),
-          portrait: '');
+          portrait: '',
+          laserCode: '');
     }
   }
 
@@ -196,7 +198,9 @@ class ApiOcrCreditCardService {
                 subdistrict: '',
               ),
             ),
-            portrait: '');
+            portrait: '',
+            laserCode: '');
+        ;
       }
     } catch (e) {
       print('There was an error: $e');
@@ -236,7 +240,8 @@ class ApiOcrCreditCardService {
               subdistrict: '',
             ),
           ),
-          portrait: '');
+          portrait: '',
+          laserCode: '');
     }
   }
 
