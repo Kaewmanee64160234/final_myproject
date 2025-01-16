@@ -227,6 +227,12 @@ class ScanFrontActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         cameraExecutor.shutdown()
+
+        // ปลด ModelDetectCard
+        model.close()
+
+        // ปลด FlutterEngine
+        flutterEngine.destroy()
     }
 
     @Composable
