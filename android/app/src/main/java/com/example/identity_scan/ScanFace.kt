@@ -146,7 +146,7 @@ class ScanFace : ComponentActivity() {
 
 @Composable
 fun CameraPreview(onCaptureClick: () -> Unit) {
-    val context = LocalContext.current
+    val context = LocalContext.current as ScanFace // Ensure the context is cast to ScanFace
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Display a PreviewView to show the camera stream
@@ -157,9 +157,8 @@ fun CameraPreview(onCaptureClick: () -> Unit) {
                         android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                         android.view.ViewGroup.LayoutParams.MATCH_PARENT
                     )
-                    context as ScanFace
-                    context.previewView = this
-                    context.startCamera()
+                    context.previewView = this // Assign this PreviewView instance to the class-level property
+                    context.startCamera() // Call startCamera after the PreviewView is assigned
                 }
             },
             modifier = Modifier.fillMaxSize()
@@ -174,6 +173,8 @@ fun CameraPreview(onCaptureClick: () -> Unit) {
         }
     }
 }
+
+
 
 @Preview(showBackground = true)
 @Composable
