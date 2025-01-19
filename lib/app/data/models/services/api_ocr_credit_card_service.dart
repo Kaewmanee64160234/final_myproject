@@ -7,7 +7,9 @@ import 'package:identity_scan/app/data/models/card_type.dart';
 
 class ApiOcrCreditCardService {
   final String _baseUrl = dotenv.env['PATH_API_OCR']!;
+  final _baseUrl2 = dotenv.env['PATH_MAPPING']!;
   final String _apiKey = dotenv.env['HEADER_API_OCR']!;
+  final String _apiKey2 = dotenv.env['HEADER_API_OCR2']!;
   late Map<String, String> _header;
 
   ApiOcrCreditCardService() {
@@ -29,7 +31,7 @@ class ApiOcrCreditCardService {
         'filedata': base64File,
       };
       print('payload: $payload');
-      final Uri uri = Uri.parse('$_baseUrl/api/v1/upload_front_base64');
+      final Uri uri = Uri.parse('$_baseUrl/cardocr/api/v1/upload_front_base64');
       final response = await http.post(
         uri,
         headers: _header,
@@ -131,9 +133,9 @@ class ApiOcrCreditCardService {
       };
 
       var request = http.MultipartRequest(
-          'POST', Uri.parse('$_baseUrl/api/v1/upload_front_base64'))
+          'POST', Uri.parse('$_baseUrl/cardocr/api/v1/upload_front_base64'))
         ..headers.addAll({
-          'Authorization': '66eb9f21-8e1c-8011-97a5-08ddd9b9a7c7',
+          'Authorization': _apiKey,
         });
 
       // Add fields to the multipart request
@@ -253,9 +255,9 @@ class ApiOcrCreditCardService {
       };
 
       var request = http.MultipartRequest(
-          'POST', Uri.parse('$_baseUrl/api/v1/upload_back_base64'))
+          'POST', Uri.parse('$_baseUrl/cardocr/api/v1/upload_back_base64'))
         ..headers.addAll({
-          'Authorization': '66eb9f21-8e1c-8011-97a5-08ddd9b9a7c7',
+          'Authorization': _apiKey,
         });
 
       // Add fields to the multipart request
@@ -297,13 +299,15 @@ class ApiOcrCreditCardService {
         'source_image': base64Image1, // Use source_image key
         'target_image': base64Image2, // Use target_image key
       };
+      print("target_image $base64Image2");
+      print("$_baseUrl2/api/v1/verification/verify");
 
       // Make a POST request
       var response = await http.post(
-        Uri.parse('$_baseUrl/api/v1/verification/verify'),
+        Uri.parse('$_baseUrl2/api/v1/verification/verify'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': '66eb9f21-8e1c-8011-97a5-08ddd9b9a7c7',
+          'x-api-key': _apiKey2,
         },
         body: jsonEncode(jsonPayload), // Encode the payload as JSON
       );

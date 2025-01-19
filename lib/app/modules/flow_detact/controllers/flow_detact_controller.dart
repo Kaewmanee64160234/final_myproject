@@ -99,6 +99,7 @@ class FlowDetactController extends GetxController {
         if (call.method == "onCameraResult") {
           print("Received camera result: ${call.arguments}");
           final receivedArguments = call.arguments;
+          print("receivedArguments: $receivedArguments");
           if (receivedArguments != null) {
             sendToOcr(receivedArguments);
           }
