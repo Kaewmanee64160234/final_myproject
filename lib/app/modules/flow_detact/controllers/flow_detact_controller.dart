@@ -130,6 +130,51 @@ class FlowDetactController extends GetxController {
     }
   }
 
+  // clearDataForNewOCR
+  void clearDataForNewOCR() {
+    card.value = ID_CARD(
+      idNumber: '',
+      th: ID_CARD_DETAIL(
+        fullName: '',
+        prefix: '',
+        name: '',
+        lastName: '',
+        dateOfBirth: '',
+        dateOfIssue: '',
+        dateOfExpiry: '',
+        religion: '',
+        address: Address(
+          province: '',
+          district: '',
+          full: '',
+          firstPart: '',
+          subdistrict: '',
+        ),
+      ),
+      en: ID_CARD_DETAIL(
+        fullName: '',
+        prefix: '',
+        name: '',
+        lastName: '',
+        dateOfBirth: '',
+        dateOfIssue: '',
+        dateOfExpiry: '',
+        religion: '',
+        address: Address(
+          province: '',
+          district: '',
+          full: '',
+          firstPart: '',
+          subdistrict: '',
+        ),
+      ),
+      portrait: '',
+      laserCode: '',
+    );
+    laserCodeOriginal.value = '';
+    similarity.value = 0.0;
+  }
+
   Future<void> sendToOcr(String path) async {
     try {
       isLoading.value = true;

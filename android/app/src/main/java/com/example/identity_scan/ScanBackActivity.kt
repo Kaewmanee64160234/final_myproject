@@ -6,13 +6,10 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.os.Environment
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -60,8 +57,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import org.tensorflow.lite.DataType
@@ -95,7 +90,7 @@ import kotlin.math.pow
 
 
 
-class ScanFrontActivityBack: AppCompatActivity() {
+class ScanBackActivity: AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
     private val CAMERA_REQUEST_CODE = 2001
     private val cameraViewModel: CameraViewModel by viewModels()
@@ -305,10 +300,10 @@ class ScanFrontActivityBack: AppCompatActivity() {
                                          val processedMat = preprocessing(snrValue, contrastValue, resolutionValue, sharpestBitmapMat)
 
                                          // บันทึกรูป Original ลง Storage
-                                         saveMatToStorage(context,sharpestBitmapMat,"frontCardOriginal")
+                                         saveMatToStorage(context,sharpestBitmapMat,"backCardOriginal")
 
                                          // บันทึกลง Storage
-                                         saveMatToStorage(context,processedMat,"frontCardProcessed")
+                                         saveMatToStorage(context,processedMat,"backCardProcessed")
 
 
                                      }

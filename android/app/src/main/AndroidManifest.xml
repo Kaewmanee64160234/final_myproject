@@ -63,7 +63,7 @@
             android:exported="true"
             android:theme="@style/Theme.IdentityScan" />
         <activity
-            android:name=".ScanFrontActivityBack"
+            android:name=".ScanBackActivity"
             android:exported="true"
             android:theme="@style/Theme.IdentityScan" />
         <activity

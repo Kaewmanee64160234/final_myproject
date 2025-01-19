@@ -1,6 +1,5 @@
 package com.example.identity_scan
 
-import android.app.Activity
 import android.content.Intent
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -57,7 +56,7 @@ class MainActivity : FlutterActivity() {
 //        startActivity(intent)
     }
     private fun openCameraPageBack() {
-        val intent = Intent(this@MainActivity, ScanFrontActivityBack::class.java)
+        val intent = Intent(this@MainActivity, ScanBackActivity::class.java)
         startActivityForResult(intent, REQUEST_CODE_SCAN_BACK)
     }
 
