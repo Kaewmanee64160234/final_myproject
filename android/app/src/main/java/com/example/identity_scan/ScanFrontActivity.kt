@@ -598,7 +598,7 @@ class ScanFrontActivity : AppCompatActivity() {
                     cameraViewModel.updateSnrValueText(snrValue.toString())
 
                     // 0 ต้องเท่ากับ บัตรปกติ
-                    if (maxIndex == 0 ) {
+                    if (maxIndex == 1 ) {
                         isFound = if (glare >= 2){
                             cameraViewModel.updateGuideText("หลีกเลี่ยงแสงสะท้อน")
                             false
@@ -614,7 +614,7 @@ class ScanFrontActivity : AppCompatActivity() {
                     } else if (maxIndex ==2){
                         cameraViewModel.updateGuideText("กรุณาเอามือออกจากบัตรประชาชน")
                         isFound = false
-                    } else if (maxIndex ==1){
+                    } else if (maxIndex ==0){
                         cameraViewModel.updateGuideText("กรุณาใช้หน้าบัตร")
                         isFound = false
                     }

@@ -296,7 +296,7 @@ class ApiOcrCreditCardService {
     try {
       // Define the JSON payload
       Map<String, dynamic> jsonPayload = {
-        'source_image': base64Image2, // Use source_image key
+        'source_image': base64Image1, // Use source_image key
         'target_image': base64Image2, // Use target_image key
       };
       print("target_image $base64Image2");
@@ -318,6 +318,8 @@ class ApiOcrCreditCardService {
         },
         body: jsonEncode(jsonPayload), // Encode the payload as JSON
       );
+      print("response.statusCode ${response.statusCode}");
+      print("response.body ${response.body}");
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
