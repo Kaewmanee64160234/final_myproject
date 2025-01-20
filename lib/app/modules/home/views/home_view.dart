@@ -13,412 +13,132 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('HomeView'),
+        title: const Text(
+          'ขั้นตอนการลงทะเบียน',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
         centerTitle: true,
+        backgroundColor: const Color.fromRGBO(45, 56, 146, 1),
       ),
       body: Obx(
-        () => SingleChildScrollView(
-          child: Column(
-            children: [
-              // Display status message dynamically
-              Text(
-                controller.statusMessage.value,
-                style: const TextStyle(fontSize: 18),
+        () => Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  const Image(
+                    image: AssetImage('assets/images/data-protection.png'),
+                    width: 200,
+                    height: 200,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "ขั้นตอนการลงทะเบียนด้วยตนเอง",
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: const [
+                        StepWidget(
+                          step: 1,
+                          text: "ถ่ายภาพหน้บัตรประชาชน",
+                        ),
+                        StepWidget(
+                          step: 2,
+                          text: "ถ่ายภาพหน้าบัตรประชาชน",
+                        ),
+                        StepWidget(
+                          step: 3,
+                          text: "ถ่ายภาพหน้าตัวเอง",
+                        ),
+                        StepWidget(
+                          step: 4,
+                          text: "สร้างรหัส 8 หลัก",
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-
-              // Button to call openCvView
-              GestureDetector(
-                onTap: () {
-                  // Call the native method to open OpenCV view
-                  controller.openOpenCVView();
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  margin: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
-                  child: const Text(
-                    'Open OpenCV View',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-              // gusture detector for openScanFace
-              GestureDetector(
-                onTap: () {
-                  // Call the native method to open OpenCV view
-                  controller.openScanFace();
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  margin: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
-                  child: const Text(
-                    'Open Scan Face',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-              // openCameraPage
-              GestureDetector(
-                onTap: () {
-                  // Call the native method to open OpenCV view
-                  controller.openCameraPage();
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  margin: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
-                  child: const Text(
-                    'Open Camera Page',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-              // get to page FlowDeatct
-              GestureDetector(
+            ),
+            // Button at the bottom
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: GestureDetector(
                 onTap: () {
                   // Call the native method to open OpenCV view
                   Get.offNamed(Routes.FLOW_DETACT);
                 },
                 child: Container(
-                  padding: const EdgeInsets.all(10),
-                  margin: const EdgeInsets.all(10),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(15),
                   decoration: const BoxDecoration(
-                    color: Colors.blue,
+                    color: Color.fromRGBO(45, 56, 146, 1),
                     borderRadius: BorderRadius.all(Radius.circular(10)),
                   ),
                   child: const Text(
-                    'Open Flow Detect',
-                    style: TextStyle(color: Colors.white),
+                    'เริ่มต้น',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              if (controller.pathImage.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Image.file(
-                    File(controller.pathImage.value),
-                    fit: BoxFit.cover,
-                    width: 300,
-                    height: 300,
-                  ),
-                ),
-              Column(
-                children: [
-                  const SizedBox(height: 10),
-                  // Check for valid file path before displaying the image
-                  if (controller.pathImage.isNotEmpty)
-                    // Display image and other details if data is available
-                    Column(
-                      children: [
-                        const SizedBox(height: 10),
-                        // Check for valid file path before displaying the image
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Image.file(
-                            File(controller.pathImage.value),
-                            fit: BoxFit.cover,
-                            width: 300,
-                            height: 300,
-                          ),
-                        ),
-                        Divider(),
-                        // image from base 64 card.prdirtd
-                        if (controller.card.value.idNumber != null)
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Image.memory(
-                              Uint8List.fromList(
-                                  controller.card.value.getDecodedPortrait()),
-                              fit: BoxFit.cover,
-                              width: 300,
-                              height: 300,
-                            ),
-                          ),
-
-                        // layser
-                        Text('LaserCode: ${controller.laserCode}'),
-                        // Display ID card details
-                        Text(
-                            'Card ID: ${controller.card.value.idNumber ?? "N/A"}'),
-                        Text(
-                            'Full Name (TH): ${controller.card.value.th.fullName ?? "N/A"}'),
-                        Text(
-                            'Prefix (TH): ${controller.card.value.th.prefix ?? "N/A"}'),
-                        Text(
-                            'Name (TH): ${controller.card.value.th.name ?? "N/A"}'),
-                        Text(
-                            'Last Name (TH): ${controller.card.value.th.lastName ?? "N/A"}'),
-                        Text(
-                            'Date of Birth (TH): ${controller.card.value.th.dateOfBirth ?? "N/A"}'),
-                        Text(
-                            'Date of Issue (TH): ${controller.card.value.th.dateOfIssue ?? "N/A"}'),
-                        Text(
-                            'Date of Expiry (TH): ${controller.card.value.th.dateOfExpiry ?? "N/A"}'),
-                        Text(
-                            'Religion (TH): ${controller.card.value.th.religion ?? "N/A"}'),
-                        Text(
-                            'Address (TH): ${controller.card.value.th.address.full ?? "N/A"}'),
-                        const Divider(),
-                        Text(
-                            'Full Name (EN): ${controller.card.value.en.fullName ?? "N/A"}'),
-                        Text(
-                            'Prefix (EN): ${controller.card.value.en.prefix ?? "N/A"}'),
-                        Text(
-                            'Name (EN): ${controller.card.value.en.name ?? "N/A"}'),
-                        Text(
-                            'Last Name (EN): ${controller.card.value.en.lastName ?? "N/A"}'),
-                        Text(
-                            'Date of Birth (EN): ${controller.card.value.en.dateOfBirth ?? "N/A"}'),
-                        Text(
-                            'Date of Issue (EN): ${controller.card.value.en.dateOfIssue ?? "N/A"}'),
-                        Text(
-                            'Date of Expiry (EN): ${controller.card.value.en.dateOfExpiry ?? "N/A"}'),
-                        Text(
-                            'Religion (EN): ${controller.card.value.en.religion ?? "N/A"}'),
-                        Text(
-                            'Address (EN): ${controller.card.value.en.address.full ?? "N/A"}'),
-                        Divider(),
-                      ],
-                    )
-                  else
-                    // load
-                    const Text(
-                      'No image captured yet.',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  // cir
-                  CircularProgressIndicator(),
-                ],
-              ),
-
-              // if (controller.receivedData['typeofCard'] == '1')
-
-              //   // Display image and other details if data is available
-              //   if (controller.receivedData.isNotEmpty)
-              //     Column(
-              //       children: [
-              //         const SizedBox(height: 10),
-
-              //         // Check for valid file path before displaying the image
-
-              //         Container(
-              //           padding: const EdgeInsets.all(10),
-              //           decoration: BoxDecoration(
-              //             border: Border.all(color: Colors.grey),
-              //             borderRadius: BorderRadius.circular(8),
-              //           ),
-              //           child: Image.file(
-              //             File(controller.receivedData['processedFile']),
-              //             fit: BoxFit.cover,
-              //             width: 300,
-              //             height: 300,
-              //           ),
-              //         ),
-
-              //         Divider(),
-
-              //         // Display ID card details
-              //         Text(
-              //             'Card ID: ${controller.card.value.idNumber ?? "N/A"}'),
-              //         Text(
-              //             'Full Name (TH): ${controller.card.value.th.fullName ?? "N/A"}'),
-              //         Text(
-              //             'Prefix (TH): ${controller.card.value.th.prefix ?? "N/A"}'),
-              //         Text(
-              //             'Name (TH): ${controller.card.value.th.name ?? "N/A"}'),
-              //         Text(
-              //             'Last Name (TH): ${controller.card.value.th.lastName ?? "N/A"}'),
-              //         Text(
-              //             'Date of Birth (TH): ${controller.card.value.th.dateOfBirth ?? "N/A"}'),
-              //         Text(
-              //             'Date of Issue (TH): ${controller.card.value.th.dateOfIssue ?? "N/A"}'),
-              //         Text(
-              //             'Date of Expiry (TH): ${controller.card.value.th.dateOfExpiry ?? "N/A"}'),
-              //         Text(
-              //             'Religion (TH): ${controller.card.value.th.religion ?? "N/A"}'),
-              //         Text(
-              //             'Address (TH): ${controller.card.value.th.address.full ?? "N/A"}'),
-              //         const Divider(),
-              //         Text(
-              //             'Full Name (EN): ${controller.card.value.en.fullName ?? "N/A"}'),
-              //         Text(
-              //             'Prefix (EN): ${controller.card.value.en.prefix ?? "N/A"}'),
-              //         Text(
-              //             'Name (EN): ${controller.card.value.en.name ?? "N/A"}'),
-              //         Text(
-              //             'Last Name (EN): ${controller.card.value.en.lastName ?? "N/A"}'),
-              //         Text(
-              //             'Date of Birth (EN): ${controller.card.value.en.dateOfBirth ?? "N/A"}'),
-              //         Text(
-              //             'Date of Issue (EN): ${controller.card.value.en.dateOfIssue ?? "N/A"}'),
-              //         Text(
-              //             'Date of Expiry (EN): ${controller.card.value.en.dateOfExpiry ?? "N/A"}'),
-              //         Text(
-              //             'Religion (EN): ${controller.card.value.en.religion ?? "N/A"}'),
-              //         Text(
-              //             'Address (EN): ${controller.card.value.en.address.full ?? "N/A"}'),
-              //         Divider(),
-              //         // divider for orginal image
-              //         Text('Original Image'),
-              //         if (controller.receivedData['originalFile'] != null &&
-              //             File(controller.receivedData['originalFile'])
-              //                 .existsSync())
-              //           Container(
-              //             padding: const EdgeInsets.all(10),
-              //             decoration: BoxDecoration(
-              //               border: Border.all(color: Colors.grey),
-              //               borderRadius: BorderRadius.circular(8),
-              //             ),
-              //             child: Image.file(
-              //               File(controller
-              //                   .receivedData['originalSharpenedPath']),
-              //               fit: BoxFit.cover,
-              //               width: 300,
-              //               height: 300,
-              //             ),
-              //           ),
-              //         // cardOriginal
-              //         // Display ID card details
-              //         Text(
-              //             'Card ID: ${controller.cardOriginal.value.idNumber ?? "N/A"}'),
-              //         Text(
-              //             'Full Name (TH): ${controller.cardOriginal.value.th.fullName ?? "N/A"}'),
-              //         Text(
-              //             'Prefix (TH): ${controller.cardOriginal.value.th.prefix ?? "N/A"}'),
-              //         Text(
-              //             'Name (TH): ${controller.cardOriginal.value.th.name ?? "N/A"}'),
-              //         Text(
-              //             'Last Name (TH): ${controller.cardOriginal.value.th.lastName ?? "N/A"}'),
-
-              //         Text(
-              //             'Date of Birth (TH): ${controller.cardOriginal.value.th.dateOfBirth ?? "N/A"}'),
-              //         Text(
-              //             'Date of Issue (TH): ${controller.cardOriginal.value.th.dateOfIssue ?? "N/A"}'),
-              //         Text(
-              //             'Date of Expiry (TH): ${controller.cardOriginal.value.th.dateOfExpiry ?? "N/A"}'),
-              //         Text(
-              //             'Religion (TH): ${controller.cardOriginal.value.th.religion ?? "N/A"}'),
-              //         Text(
-              //             'Address (TH): ${controller.cardOriginal.value.th.address.full ?? "N/A"}'),
-              //         const Divider(),
-              //         Text(
-              //             'Full Name (EN): ${controller.cardOriginal.value.en.fullName ?? "N/A"}'),
-              //         Text(
-              //             'Prefix (EN): ${controller.cardOriginal.value.en.prefix ?? "N/A"}'),
-              //         Text(
-              //             'Name (EN): ${controller.cardOriginal.value.en.name ?? "N/A"}'),
-              //         Text(
-              //             'Last Name (EN): ${controller.cardOriginal.value.en.lastName ?? "N/A"}'),
-              //         Text(
-              //             'Date of Birth (EN): ${controller.cardOriginal.value.en.dateOfBirth ?? "N/A"}'),
-              //         Text(
-              //             'Date of Issue (EN): ${controller.cardOriginal.value.en.dateOfIssue ?? "N/A"}'),
-              //         Text(
-              //             'Date of Expiry (EN): ${controller.cardOriginal.value.en.dateOfExpiry ?? "N/A"}'),
-              //         Text(
-              //             'Religion (EN): ${controller.cardOriginal.value.en.religion ?? "N/A"}'),
-              //         Text(
-              //             'Address (EN): ${controller.cardOriginal.value.en.address.full ?? "N/A"}'),
-              //       ],
-              //     )
-              //   else
-              //     const Text(
-              //       'No image captured yet.',
-              //       style: TextStyle(fontSize: 16),
-              //     ),
-              // if (controller.receivedData['typeofCard'] == '2')
-              //   // show laser card original image and processed image
-              //   // image
-              //   Text(
-              //     'Image Path: ${controller.receivedData['processedFile'] ?? "Not available"}',
-              //     style: const TextStyle(fontSize: 16),
-              //     textAlign: TextAlign.center,
-              //   ),
-              // Text('SNR: ${controller.receivedData['snr'] ?? "N/A"}'),
-              // Text(
-              //     'Brightness: ${controller.receivedData['brightness'] ?? "N/A"}'),
-              // Text(
-              //     'Resolution: ${controller.receivedData['resolution'] ?? "N/A"}'),
-              // const SizedBox(height: 10),
-              // Text(
-              //     'Laser Code Original: ${controller.laserCodeOriginal.value}'),
-              // // show image
-              // if (controller.receivedData.isNotEmpty)
-
-              //   // Check for valid file path before displaying the image
-              //   if (controller.receivedData['processedFile'] != null &&
-              //       File(controller.receivedData['processedFile']).existsSync())
-              //     Container(
-              //       padding: const EdgeInsets.all(10),
-              //       decoration: BoxDecoration(
-              //         border: Border.all(color: Colors.grey),
-              //         borderRadius: BorderRadius.circular(8),
-              //       ),
-              //       child: Image.file(
-              //         File(controller.receivedData['processedFile']),
-              //         fit: BoxFit.cover,
-              //         width: 300,
-              //         height: 300,
-              //       ),
-              //     )
-              //   else
-              //     const Text(
-              //       'Image file not found.',
-              //       style: TextStyle(fontSize: 16),
-              //     ),
-              // Divider(),
-              // Text('Laser Code: ${controller.laserCode.value}'),
-              // // show processed image
-              // if (controller.receivedData.isNotEmpty)
-
-              //   // Check for valid file path before displaying the image
-              //   if (controller.receivedData['processedFile'] != null &&
-              //       File(controller.receivedData['processedFile']).existsSync())
-              //     Container(
-              //       padding: const EdgeInsets.all(10),
-              //       decoration: BoxDecoration(
-              //         border: Border.all(color: Colors.grey),
-              //         borderRadius: BorderRadius.circular(8),
-              //       ),
-              //       child: Image.file(
-              //         File(controller.receivedData['processedFile']),
-              //         fit: BoxFit.cover,
-              //         width: 300,
-              //         height: 300,
-              //       ),
-              //     )
-              //   else
-              //     const Text(
-              //       'Image file not found.',
-              //       style: TextStyle(fontSize: 16),
-              //     ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class StepWidget extends StatelessWidget {
+  final int step;
+  final String text;
+
+  const StepWidget({
+    Key? key,
+    required this.step,
+    required this.text,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Circle for the step number
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: const Color.fromRGBO(45, 56, 146, 1),
+            child: Text(
+              '$step',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12), // Spacing between circle and text
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
