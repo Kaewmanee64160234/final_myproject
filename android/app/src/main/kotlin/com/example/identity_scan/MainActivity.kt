@@ -7,7 +7,7 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val channel = "native_function"
-    private val REQUEST_CODE_SCAN = 1001
+    private val REQUEST_CODE_SCAN_FRONT = 1001
     private val REQUEST_CODE_SCAN_BACK = 1002
     private val SCAN_FACE = 1003
 
@@ -51,7 +51,7 @@ class MainActivity : FlutterActivity() {
 
     private fun openCameraPage() {
         val intent = Intent(this@MainActivity, ScanFrontActivity::class.java)
-        startActivityForResult(intent, REQUEST_CODE_SCAN)
+        startActivityForResult(intent, REQUEST_CODE_SCAN_FRONT)
 
 //        startActivity(intent)
     }
@@ -135,29 +135,34 @@ class MainActivity : FlutterActivity() {
             } else {
                 println("Error: Missing data in the result intent.")
             }
-        } else if (requestCode == REQUEST_CODE_SCAN) {
+        } else if (requestCode == REQUEST_CODE_SCAN_FRONT) {
             val result = data?.getStringExtra("result")
             println("Result From ScanFront Activity: $result")
-
-            try {
+            if (resultCode == RESULT_OK) {
+                try {
                 MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function")
                     .invokeMethod("onCameraResult", result)
                 println("Camera result sent to Flutter successfully: $result")
                 openCameraPageBack()
-            } catch (e: Exception) {
-                println("Error sending camera result to Flutter: ${e.message}")
+                    } catch (e: Exception) {
+                        println("Error sending camera result to Flutter: ${e.message}")
+                    }
             }
+
         }else if (requestCode == REQUEST_CODE_SCAN_BACK) {
             val result = data?.getStringExtra("result")
             println("Result From ScanFront Activity: $result")
 
-            try {
-                MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function")
-                    .invokeMethod("onCameraResultBack", result)
-                println("Camera result sent to Flutter successfully: $result")
-            } catch (e: Exception) {
-                println("Error sending camera result to Flutter: ${e.message}")
+            if (resultCode == RESULT_OK) {
+                try {
+                    MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function")
+                        .invokeMethod("onCameraResultBack", result)
+                    println("Camera result sent to Flutter successfully: $result")
+                } catch (e: Exception) {
+                    println("Error sending camera result to Flutter: ${e.message}")
+                }
             }
+           
         }else if (requestCode == SCAN_FACE) {
             val result = data?.getStringExtra("result")
             println("Result From ScanFront Activity: $result")

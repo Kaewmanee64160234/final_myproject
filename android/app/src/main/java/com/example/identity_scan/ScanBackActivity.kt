@@ -148,7 +148,7 @@ class ScanBackActivity: AppCompatActivity() {
                         Text( modifier = Modifier
                             .height(80.dp)
                             .padding(top = 40.dp),
-                            text = "สแกนหน้าบัตร",
+                            text = "สแกนหลังบัตร",
                             color = Color.White,
                             style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
                         )
@@ -168,7 +168,10 @@ class ScanBackActivity: AppCompatActivity() {
                                 .wrapContentSize(Alignment.Center)
                         ) {
                             Button(
-                                onClick = { finish() },
+                                onClick = {
+                                    val resultIntent = Intent()
+                                    setResult(RESULT_CANCELED, resultIntent)
+                                    finish() },
                                 colors = ButtonDefaults.buttonColors(Color.Red)
                             ) {
                                 Text(
@@ -187,6 +190,12 @@ class ScanBackActivity: AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         cameraExecutor.shutdown()
+
+        // ปลด ModelDetectCard
+        model.close()
+
+        // ปลด FlutterEngine
+        flutterEngine.destroy()
     }
 
     @Composable
@@ -321,7 +330,7 @@ class ScanBackActivity: AppCompatActivity() {
                                  }else{
                                      timer.cancel()
                                      isTiming = false
-                                     println("Cancelled Timer")
+//                                     println("Cancelled Timer")
                                  }
 
                                  processImageProxy(imageProxy)
@@ -463,16 +472,31 @@ class ScanBackActivity: AppCompatActivity() {
                             }
 
                             // Default Button: "ใช้ภาพนี้"
+//                            Button(
+//                                onClick = {
+//                                    val resultIntent = Intent()
+//                                    if(pathFinal.isNotEmpty()){
+//                                        resultIntent.putExtra("result", pathFinal.toString())
+//                                        setResult(RESULT_OK, resultIntent)
+////                                        Log.w("pathFinal",pathFinal.toString())
+//                                        finish()
+//                                    }
+//
+//                                }
+//                            ) {
+//                                Text(
+//                                    text = "ใช้ภาพนี้",
+//                                    fontSize = 16.sp
+//                                )
+//                            }
+
+                        if (pathFinal.isNotEmpty()) {
                             Button(
                                 onClick = {
                                     val resultIntent = Intent()
-                                    if(pathFinal.isNotEmpty()){
-                                        resultIntent.putExtra("result", pathFinal.toString())
-                                        setResult(RESULT_OK, resultIntent)
-                                        Log.w("pathFinal",pathFinal.toString())
-                                        finish()
-                                    }
-
+                                    resultIntent.putExtra("result", pathFinal.toString())
+                                    setResult(RESULT_OK, resultIntent)
+                                    finish()
                                 }
                             ) {
                                 Text(
@@ -480,6 +504,8 @@ class ScanBackActivity: AppCompatActivity() {
                                     fontSize = 16.sp
                                 )
                             }
+                        }
+
                     }
                 }
             }
@@ -535,6 +561,8 @@ class ScanBackActivity: AppCompatActivity() {
                     // println(outputArray)
                     val maxIndex = outputArray.indices.maxByOrNull { outputArray[it] } ?: -1
 
+                    print(outputArray)
+
                     // จัดการวัดค่า brightness และ Glare
                     mat =  bitmapToMat(croppedBitmap)
                     val brightness = calculateBrightness(mat)
@@ -584,10 +612,7 @@ class ScanBackActivity: AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
-
-
             isProcessing = false
-            imageProxy.close() // Close the image to allow the next frame to be processed
         }
     }
 
@@ -702,10 +727,16 @@ class ScanBackActivity: AppCompatActivity() {
             }
         }
 
+        // คำนวณพื้นที่รวมของภาพ
+        val totalArea = mat.width() * mat.height()
+
+        // คำนวณเปอร์เซ็นต์ของ Glare Area
+        val glarePercentage = (glareArea / totalArea) * 100
+
         gray.release()
         binary.release()
 
-        return glareArea
+        return glarePercentage
     }
 
 
@@ -933,33 +964,33 @@ class ScanBackActivity: AppCompatActivity() {
                     .align(Alignment.Center)
             )
 
-            Text(
-                text = "BrightnessValue ${cameraViewModel.brightnessValueText}",
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
-
-
-            Text(
-                text = "GlareValue ${cameraViewModel.glareValueText}",
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(20.dp) // Add 20dp padding
-            )
-            Text(
-                text = "GlareValue ${cameraViewModel.snrValueText}",
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(20.dp) // Add 20dp padding
-            )
+//            Text(
+//                text = "BrightnessValue ${cameraViewModel.brightnessValueText}",
+//                color = Color.White,
+//                fontSize = 24.sp,
+//                fontWeight = FontWeight.Bold,
+//                modifier = Modifier.align(Alignment.BottomCenter)
+//            )
+//
+//
+//            Text(
+//                text = "GlareValue ${cameraViewModel.glareValueText}",
+//                color = Color.White,
+//                fontSize = 24.sp,
+//                fontWeight = FontWeight.Bold,
+//                modifier = Modifier
+//                    .align(Alignment.BottomCenter)
+//                    .padding(20.dp) // Add 20dp padding
+//            )
+//            Text(
+//                text = "GlareValue ${cameraViewModel.snrValueText}",
+//                color = Color.White,
+//                fontSize = 24.sp,
+//                fontWeight = FontWeight.Bold,
+//                modifier = Modifier
+//                    .align(Alignment.BottomCenter)
+//                    .padding(20.dp) // Add 20dp padding
+//            )
 
 
             Canvas(modifier = Modifier.fillMaxSize()) {
