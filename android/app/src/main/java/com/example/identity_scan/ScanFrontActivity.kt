@@ -79,7 +79,7 @@ import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.ButtonDefaults
-import com.example.identity_scan.ml.ModelDetectCard
+import com.example.identity_scan.ml.ModelUnquant
 import org.opencv.android.Utils
 import org.opencv.core.Core
 import org.opencv.core.CvType
@@ -135,7 +135,7 @@ class ScanFrontActivity : AppCompatActivity() {
     private val CAMERA_REQUEST_CODE = 2001
     private val cameraViewModel: CameraViewModel by viewModels()
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
-    private lateinit var model: ModelDetectCard
+    private lateinit var model: ModelUnquant
 //    private lateinit var model: ModelBack
     private var isProcessing = false
     private var lastProcessedTime: Long = 0
@@ -159,7 +159,7 @@ class ScanFrontActivity : AppCompatActivity() {
         checkPermissions()
         checkAndRequestCameraPermission()
 //        model = ModelBack.newInstance(this)
-        model = ModelDetectCard.newInstance(this)
+        model = ModelUnquant.newInstance(this)
 
         if (!org.opencv.android.OpenCVLoader.initDebug()) {
             Log.e("OpenCV", "OpenCV initialization failed")
@@ -592,7 +592,7 @@ class ScanFrontActivity : AppCompatActivity() {
                     cameraViewModel.updateSnrValueText(snrValue.toString())
 
                     // 0 ต้องเท่ากับ บัตรปกติ
-                    if (maxIndex == 0 ) {
+                    if (maxIndex == 1 ) {
                         isFound = if (glare >= 10000){
                             cameraViewModel.updateGuideText("หลีกเลี่ยงแสงสะท้อน")
                             false
@@ -602,20 +602,20 @@ class ScanFrontActivity : AppCompatActivity() {
                         }
 
                     // 1 = บัตรสว่างเกินไป
-                    } else if(maxIndex == 1) {
+                    } else if(maxIndex == 4) {
                         cameraViewModel.updateGuideText("กรุณาใช้บัตรจริง")
                         isFound = false
                     } else if (maxIndex ==2){
                         cameraViewModel.updateGuideText("กรุณาเอามือออกจากบัตรประชาชน")
                         isFound = false
-                    } else if (maxIndex ==4){
+                    } else if (maxIndex ==0){
                         cameraViewModel.updateGuideText("กรุณาใช้หน้าบัตร")
                         isFound = false
                     }
-
-//                    else{
-//                        isFound = false
-//                    }
+                    else if(maxIndex == 3){
+                        cameraViewModel.updateGuideText("ไม่พบบัตร")
+                        isFound = false
+                    }
 //                    val endTime = System.currentTimeMillis()
 //                    val elapsedTime = endTime - startTime
                     // พิมพ์เวลาที่ใช้ในการประมวลผล
