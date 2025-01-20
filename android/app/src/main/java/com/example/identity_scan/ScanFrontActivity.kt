@@ -614,7 +614,7 @@ class ScanFrontActivity : AppCompatActivity() {
                     } else if (maxIndex ==2){
                         cameraViewModel.updateGuideText("กรุณาเอามือออกจากบัตรประชาชน")
                         isFound = false
-                    } else if (maxIndex ==0){
+                    } else if (maxIndex ==1){
                         cameraViewModel.updateGuideText("กรุณาใช้หน้าบัตร")
                         isFound = false
                     }

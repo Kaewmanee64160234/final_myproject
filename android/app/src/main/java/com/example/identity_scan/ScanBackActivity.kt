@@ -584,13 +584,13 @@ class ScanBackActivity: AppCompatActivity() {
                         }
 
                     // 1 = บัตรสว่างเกินไป
-                    } else if(maxIndex == 0) {
+                    } else if(maxIndex == 4) {
                         cameraViewModel.updateGuideText("กรุณาใช้บัตรจริง")
                         isFound = false
                     } else if (maxIndex ==2){
                         cameraViewModel.updateGuideText("กรุณาเอามือออกจากบัตรประชาชน")
                         isFound = false
-                    }else if(maxIndex == 1 ){
+                    }else if(maxIndex == 0 ){
                         cameraViewModel.updateGuideText("กรุณาใช้หลังบัตร")
                     }else if(maxIndex == 3){
                         cameraViewModel.updateGuideText("ไม่พบบัตร")
