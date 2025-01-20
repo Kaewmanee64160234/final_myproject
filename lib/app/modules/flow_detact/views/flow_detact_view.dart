@@ -129,7 +129,10 @@ class FlowDetactView extends GetView<FlowDetactController> {
                   onPressed: controller.openCameraPage,
                   child: const Text(
                     'เริ่มต้น',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                 )
               : Row(
