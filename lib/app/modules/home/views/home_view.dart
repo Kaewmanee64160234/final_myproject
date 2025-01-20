@@ -14,7 +14,7 @@ class HomeView extends GetView<HomeController> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'ขั้นตอนการลงทะเบียน',
+          'ช่องทางการลงทะเบียน',
           style: TextStyle(
             color: Colors.white,
           ),
@@ -22,77 +22,151 @@ class HomeView extends GetView<HomeController> {
         centerTitle: true,
         backgroundColor: const Color.fromRGBO(45, 56, 146, 1),
       ),
-      body: Obx(
-        () => Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            SingleChildScrollView(
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  const Image(
-                    image: AssetImage('assets/images/data-protection.png'),
-                    width: 200,
-                    height: 200,
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    "ขั้นตอนการลงทะเบียนด้วยตนเอง",
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: const [
-                        StepWidget(
-                          step: 1,
-                          text: "ถ่ายภาพหน้บัตรประชาชน",
-                        ),
-                        StepWidget(
-                          step: 2,
-                          text: "ถ่ายภาพหน้าบัตรประชาชน",
-                        ),
-                        StepWidget(
-                          step: 3,
-                          text: "ถ่ายภาพหน้าตัวเอง",
-                        ),
-                        StepWidget(
-                          step: 4,
-                          text: "สร้างรหัส 8 หลัก",
-                        ),
-                      ],
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                // ขั้นตอนการลงทะเบียน
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'ขั้นตอนการลงทะเบียน',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ),
-                ],
-              ),
-            ),
-            // Button at the bottom
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: GestureDetector(
-                onTap: () {
-                  // Call the native method to open OpenCV view
-                  Get.offNamed(Routes.FLOW_DETACT);
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(15),
-                  decoration: const BoxDecoration(
-                    color: Color.fromRGBO(45, 56, 146, 1),
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
-                  child: const Text(
-                    'เริ่มต้น',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                    textAlign: TextAlign.center,
+                    textAlign: TextAlign.start,
                   ),
                 ),
-              ),
+                // container show 2 card have image 1. card vertify by ypurself 2. card vertify by system
+                Container(
+                  // wit 80% of screen width and have shadow
+                  width: double.infinity,
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5),
+                        spreadRadius: 1,
+                        blurRadius: 5,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  // have image and text as row
+                  child: Row(
+                    children: [
+                      // image
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          image: const DecorationImage(
+                            image: AssetImage('assets/images/feedback.png'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(
+                          width: 16), // Spacing between image and text
+                      // text
+                      Expanded(
+                        child: GestureDetector(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'ยืนยันตัวตนด้วยตนเอง',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'กรุณายืนยันตัวตนด้วยตนเอง โดยใช้บัตรประชาชน',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            // Call the native method to open camera
+                            Get.toNamed(Routes.FLOW_DETACT);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5),
+                        spreadRadius: 1,
+                        blurRadius: 5,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          image: const DecorationImage(
+                            image: AssetImage(
+                                'assets/images/customer-service.png'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'ยืนยันตัวตนโดยระบบ',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'กรุณายืนยันตัวตนโดยระบบ โดยใช้บัตรประชาชน',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              ],
             ),
-          ],
-        ),
+          ),
+
+          // Button at the bottom
+        ],
       ),
     );
   }
