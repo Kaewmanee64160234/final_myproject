@@ -7,11 +7,7 @@ import 'package:identity_scan/app/data/models/card_type.dart';
 
 class ApiOcrCreditCardService {
   final String _baseUrl = dotenv.env['PATH_API_OCR']!;
-<<<<<<< HEAD
   final _baseUrl2 = dotenv.env['PATH_MAPPING']!;
-=======
-  final String _baseUrlFace = dotenv.env['PATH_API_OCR']!;
->>>>>>> 3f6247be12158cdce45769eb4fe486ea07aaa3c4
   final String _apiKey = dotenv.env['HEADER_API_OCR']!;
   final String _apiKey2 = dotenv.env['HEADER_API_OCR2']!;
   late Map<String, String> _header;
