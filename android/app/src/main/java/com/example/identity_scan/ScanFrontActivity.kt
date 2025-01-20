@@ -208,7 +208,11 @@ class ScanFrontActivity : AppCompatActivity() {
                                 .wrapContentSize(Alignment.Center)
                         ) {
                             Button(
-                                onClick = { finish() },
+                                onClick = {
+                                    val resultIntent = Intent()
+                                    setResult(RESULT_CANCELED, resultIntent)
+                                    finish()
+                                          },
                                 colors = ButtonDefaults.buttonColors(Color.Red)
                             ) {
                                 Text(
@@ -362,7 +366,7 @@ class ScanFrontActivity : AppCompatActivity() {
                                  }else{
                                      timer.cancel()
                                      isTiming = false
-                                     println("Cancelled Timer")
+//                                     println("Cancelled Timer")
                                  }
 
                                  processImageProxy(imageProxy)
@@ -576,8 +580,12 @@ class ScanFrontActivity : AppCompatActivity() {
 
                 if (outputBuffer != null) {
                     val outputArray = outputBuffer.floatArray
-                    // println(outputArray)
-                    val maxIndex = outputArray.indices.maxByOrNull { outputArray[it] } ?: -1
+                    println(outputArray.contentToString())
+                    val maxIndex = outputArray.indices
+                        .filter { outputArray[it] >= 0.8 } // เลือก index ที่ค่า >= 80
+                        .maxByOrNull { outputArray[it] } ?: 4 // หากไม่มี index ที่เข้าเงื่อนไข ให้ใช้ค่า default เป็น 4
+
+//                    val maxIndex = outputArray.indices.maxByOrNull { outputArray[it] } ?: -1
 
                     // จัดการวัดค่า brightness และ Glare
                     mat =  bitmapToMat(croppedBitmap)
@@ -753,55 +761,6 @@ class ScanFrontActivity : AppCompatActivity() {
 
         return glarePercentage
     }
-
-
-//    private fun preprocessing(snr: Double, contrast: Double, resolution: String, inputMat: Mat): Mat {
-//        val (width, height) = resolution.split("x").map { it.toInt() }
-//        val minResolution = 500 // Minimum acceptable resolution for OCR
-//        val snrThreshold = 10.0 // Minimum SNR threshold
-//        val contrastThreshold = 50.0 // Minimum contrast threshold
-//
-//        if (width < minResolution || height < minResolution) {
-//            println("Image resolution is too low ($resolution). Skipping preprocessing.")
-//            return inputMat // Return the original image if resolution is insufficient
-//        }
-//
-//        return if (snr < snrThreshold || contrast < contrastThreshold) {
-//            println("Image quality is medium (SNR: $snr, Contrast: $contrast). Applying preprocessing...")
-//
-//            // Clone the original Mat to avoid modifying it directly
-//            var processedMat = inputMat.clone()
-//
-//            // Ensure the input is in the correct color format
-//            // ต้องคอมเมนต์ไว้เพราะจะทำให้สีเพื้ยนเมื่อใช้กับ ImageProxy
-////            if (processedMat.type() != CvType.CV_8UC3) {
-////                Imgproc.cvtColor(processedMat, processedMat, Imgproc.COLOR_RGBA2BGR)
-////            }
-//
-//            if (inputMat.type() != CvType.CV_8UC1 && inputMat.type() != CvType.CV_8UC3) {
-//                println("Input Mat type (${inputMat.type()}) is not supported. Converting to CV_8UC3...")
-//                Imgproc.cvtColor(inputMat, inputMat, Imgproc.COLOR_RGBA2BGR)
-//            }
-//
-//            // Step 1: Adjust gamma for luminance enhancement
-//            processedMat = applyGammaCorrection(processedMat, gamma = 1.8)
-//
-//            // Step 2: Apply bilateral filter for noise reduction while preserving edges
-//            processedMat = reduceNoiseWithBilateral(processedMat)
-//
-//            // Step 3: Apply median filter for further noise reduction
-//            processedMat = reduceNoiseWithMedian(processedMat)
-//
-//            // Step 4: Apply unsharp mask to enhance sharpness without affecting colors
-//            processedMat = enhanceSharpenUnsharpMask(processedMat)
-//
-//            println("Preprocessing completed.")
-//            processedMat
-//        } else {
-//            println("Image quality is sufficient (SNR: $snr, Contrast: $contrast). Skipping preprocessing.")
-//            inputMat // Return the original image if quality is sufficient
-//        }
-//    }
 
     // ฟังก์ชันหลักในการประมวลผลภาพ
     private fun preprocessing(snr: Double, contrast: Double, resolution: String, inputMat: Mat): Mat {
@@ -987,15 +946,16 @@ class ScanFrontActivity : AppCompatActivity() {
 //            )
 
 
-            Text(
-                text = "GlareValue ${cameraViewModel.glareValueText}",
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(20.dp) // Add 20dp padding
-            )
+//            Text(
+//                text = "GlareValue ${cameraViewModel.glareValueText}",
+//                color = Color.White,
+//                fontSize = 24.sp,
+//                fontWeight = FontWeight.Bold,
+//                modifier = Modifier
+//                    .align(Alignment.BottomCenter)
+//                    .padding(20.dp) // Add 20dp padding
+//            )
+
 //            Text(
 //                text = "GlareValue ${cameraViewModel.snrValueText}",
 //                color = Color.White,
