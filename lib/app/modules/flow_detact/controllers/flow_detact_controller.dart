@@ -117,6 +117,7 @@ class FlowDetactController extends GetxController {
             // chnage path to find and convert to base64
             final bytes = await File(receivedArguments).readAsBytes();
             final imageBase64 = base64Encode(bytes);
+            print(imageBase64);
             compareSimilarity(imageBase64);
           }
         } else {

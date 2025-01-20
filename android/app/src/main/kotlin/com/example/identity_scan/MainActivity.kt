@@ -148,22 +148,22 @@ class MainActivity : FlutterActivity() {
                     } catch (e: Exception) {
                         println("Error sending camera result to Flutter: ${e.message}")
                     }
-            }else{
-                // ถ้า Result Code != Ok ไม่ต้องทำอะไร ปิด Activity ก็พอ
-                println("Do Nothing")
             }
 
         }else if (requestCode == REQUEST_CODE_SCAN_BACK) {
             val result = data?.getStringExtra("result")
             println("Result From ScanFront Activity: $result")
 
-            try {
-                MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function")
-                    .invokeMethod("onCameraResultBack", result)
-                println("Camera result sent to Flutter successfully: $result")
-            } catch (e: Exception) {
-                println("Error sending camera result to Flutter: ${e.message}")
+            if (resultCode == RESULT_OK) {
+                try {
+                    MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function")
+                        .invokeMethod("onCameraResultBack", result)
+                    println("Camera result sent to Flutter successfully: $result")
+                } catch (e: Exception) {
+                    println("Error sending camera result to Flutter: ${e.message}")
+                }
             }
+           
         }else if (requestCode == SCAN_FACE) {
             val result = data?.getStringExtra("result")
             println("Result From ScanFront Activity: $result")

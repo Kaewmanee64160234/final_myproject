@@ -133,7 +133,7 @@ android {
             packagingOptions {
                 doNotStrip '**/*.so'  // controlled by OpenCV CMake scripts
             }
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }

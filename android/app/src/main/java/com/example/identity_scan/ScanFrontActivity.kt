@@ -580,7 +580,7 @@ class ScanFrontActivity : AppCompatActivity() {
 
                 if (outputBuffer != null) {
                     val outputArray = outputBuffer.floatArray
-                    println(outputArray.contentToString())
+                    // println(outputArray.contentToString())
                     val maxIndex = outputArray.indices
                         .filter { outputArray[it] >= 0.8 } // เลือก index ที่ค่า >= 80
                         .maxByOrNull { outputArray[it] } ?: 4 // หากไม่มี index ที่เข้าเงื่อนไข ให้ใช้ค่า default เป็น 4

@@ -7,6 +7,7 @@ import 'package:identity_scan/app/data/models/card_type.dart';
 
 class ApiOcrCreditCardService {
   final String _baseUrl = dotenv.env['PATH_API_OCR']!;
+  final String _baseUrlFace = dotenv.env['PATH_API_OCR']!;
   final String _apiKey = dotenv.env['HEADER_API_OCR']!;
   late Map<String, String> _header;
 
@@ -294,16 +295,24 @@ class ApiOcrCreditCardService {
     try {
       // Define the JSON payload
       Map<String, dynamic> jsonPayload = {
-        'source_image': base64Image1, // Use source_image key
+        'source_image': base64Image2, // Use source_image key
         'target_image': base64Image2, // Use target_image key
       };
 
+      // print("Base64Img1");
+      // print(base64Image1);
+      // print("Base64Img2");
+      // print(base64Image2);
+
+      // print(jsonEncode(jsonPayload));
+
       // Make a POST request
       var response = await http.post(
-        Uri.parse('$_baseUrl/api/v1/verification/verify'),
+        // Uri.parse('$_baseUrlFace/api/v1/verification/verify'),
+        Uri.parse('https://api.controldata.co.th/api/v1/verification/verify'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': '66eb9f21-8e1c-8011-97a5-08ddd9b9a7c7',
+          'x-api-key': '63511347-054c-4dc5-9097-8f24b4d6be40',
         },
         body: jsonEncode(jsonPayload), // Encode the payload as JSON
       );
@@ -323,7 +332,7 @@ class ApiOcrCreditCardService {
           return 0.0;
         }
       } else {
-        print(response.body);
+        // print(response.body);
 
         print('Error: ${response.statusCode}, ${response.body}');
         return 0.0;
