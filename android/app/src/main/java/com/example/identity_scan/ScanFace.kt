@@ -103,6 +103,7 @@ class ScanFace : AppCompatActivity() {
 //    private lateinit var model: ModelUnquant
     private lateinit var model: ModelFace
     private var isProcessing = false
+    private var isPredicting = true
     private var lastProcessedTime: Long = 0
     private var isFound = false
     private lateinit var flutterEngine: FlutterEngine
@@ -213,7 +214,7 @@ class ScanFace : AppCompatActivity() {
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
 
-        val timer = object : CountDownTimer(2000, 800) {
+        val timer = object : CountDownTimer(1000, 800) {
             override fun onTick(millisUntilFinished: Long) {
                 println("Time remaining: ${millisUntilFinished / 800} seconds")
             }
@@ -307,6 +308,9 @@ class ScanFace : AppCompatActivity() {
                                         showDialog = true
                                         isShutter = false
 
+                                        // พักการ Predict
+                                        isPredicting = false
+
                                         // รับ bitmap ภาพที่คมที่สุดเพื่อมา Process
                                         val sharpestBitmapMat = bitmapToMat(bitmapList[sharPestImageIndex])
 
@@ -325,7 +329,9 @@ class ScanFace : AppCompatActivity() {
                                     timer.cancel()
                                     isTiming = false
                                 }
-                                processImageProxy(imageProxy)
+                                if(isPredicting){
+                                    processImageProxy(imageProxy)
+                                }
                             }
                             // ปิด Image Proxy หลัง Process เสร็จ
                             imageProxy.close()
@@ -356,9 +362,10 @@ class ScanFace : AppCompatActivity() {
                 showDialog = false
                 // Clear Bitmap List หลังจากปิด Dialog
                 bitmapList.clear()
-
+                // กลับมา Predict หลังจากปิด Dialog
+                isPredicting = true
                 //รีเซ็ต GuideText เมื่อปิด Dialog (ถ่ายใหม่)
-                cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
+                cameraViewModel.updateGuideText("ปรับหน้าให้อยู่ตรงกลาง")
             }
         }
     }
@@ -739,12 +746,27 @@ class ScanFace : AppCompatActivity() {
                     .align(Alignment.Center)
             )
 
+//            Canvas(modifier = Modifier.fillMaxSize()) {
+//                val centerX = size.width / 2
+//                val centerY = size.height / 2
+//                val radiusX = size.width / 2 // Horizontal radius
+//                val radiusY = size.height / 3 // Vertical radius (adjust as needed)
+//
+//                drawOval(
+//                    color = Color.Gray,
+//                    topLeft = Offset(centerX - radiusX, centerY - radiusY),
+//                    size = Size(radiusX * 2, radiusY * 2),
+//                    style = Stroke(width = 4f) // Set the stroke width as needed
+//                )
+//            }
 
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val centerX = size.width / 2
                 val centerY = size.height / 2
+
+                // เพิ่มความสูงของวงรี (Vertical radius)
                 val radiusX = size.width / 2 // Horizontal radius
-                val radiusY = size.height / 3 // Vertical radius (adjust as needed)
+                val radiusY = size.height / 2.5f // เพิ่ม vertical radius ให้สูงขึ้น (จาก /3 เป็น /2.5)
 
                 drawOval(
                     color = Color.Gray,
@@ -753,6 +775,8 @@ class ScanFace : AppCompatActivity() {
                     style = Stroke(width = 4f) // Set the stroke width as needed
                 )
             }
+
+
 
 
         }

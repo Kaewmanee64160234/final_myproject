@@ -86,6 +86,7 @@ import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.MatOfDouble
 import org.opencv.core.MatOfPoint
+import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 import java.io.FileOutputStream
 import java.io.OutputStream
@@ -253,7 +254,7 @@ class ScanFrontActivity : AppCompatActivity() {
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
 
-         val timer = object : CountDownTimer(2000, 800) {
+         val timer = object : CountDownTimer(1000, 800) {
             override fun onTick(millisUntilFinished: Long) {
                 println("Time remaining: ${millisUntilFinished / 800} seconds")
             }
@@ -407,6 +408,7 @@ class ScanFrontActivity : AppCompatActivity() {
                 showDialog = false
                 // Clear Bitmap List หลังจากปิด Dialog
                 bitmapList.clear()
+                // กลับมา Predict หลังจากปิด Dialog
                 isPredicting = true
                 //รีเซ็ต GuideText เมื่อปิด Dialog (ถ่ายใหม่)
                 cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
@@ -887,38 +889,40 @@ class ScanFrontActivity : AppCompatActivity() {
         return "${mat.cols()}x${mat.rows()}"
     }
 
-    fun saveMatToStorage(context: Context, processedMat: Mat, fileName: String): Boolean {
+    private fun saveMatToStorage(context: Context, processedMat: Mat, fileName: String): Boolean {
+        val startTime = System.currentTimeMillis() // Capture start time
+
         return try {
-            // Step 1: Convert Mat to Bitmap
-            val bitmap = Bitmap.createBitmap(processedMat.cols(), processedMat.rows(), Bitmap.Config.ARGB_8888)
-            Utils.matToBitmap(processedMat, bitmap)
+            // Step 1: Convert BGR to RGB
+            val rgbMat = Mat()
+            Imgproc.cvtColor(processedMat, rgbMat, Imgproc.COLOR_BGR2RGB)
 
             // Step 2: Get app-specific storage directory
             val storageDir = File(context.getExternalFilesDir(null), "images")
             if (!storageDir.exists()) {
-                if (storageDir.mkdirs()) {
-                    println("Directory created successfully: ${storageDir.absolutePath}")
-                } else {
+                if (!storageDir.mkdirs()) {
                     println("Failed to create directory: ${storageDir.absolutePath}")
-                    return false // Exit if folder creation fails
+                    return false
                 }
             }
 
-            // Step 3: Create a file to save the image
-            val file = File(storageDir, "$fileName.png")
-            val outputStream = FileOutputStream(file)
+            // Step 3: Directly use OpenCV imwrite for fast saving
+            val file = File(storageDir, "$fileName.jpg")
+            val success = Imgcodecs.imwrite(file.absolutePath, rgbMat)
 
-            // Step 4: Compress the Bitmap and write to file
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+            if (!success) {
+                println("Failed to save image using OpenCV imwrite")
+                return false
+            }
 
-            // Step 5: Close the stream and return success
-
-            outputStream.flush()
-            outputStream.close()
-//            step 6 send dataa
+            // Step 4: Return success
             pathFinal = file.absolutePath
-
             println("Image saved successfully at: ${file.absolutePath}")
+
+            val endTime = System.currentTimeMillis() // Capture end time
+            val runtime = endTime - startTime // Calculate the difference
+            println("Image saved in $runtime ms")
+
             true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -926,6 +930,47 @@ class ScanFrontActivity : AppCompatActivity() {
             false
         }
     }
+
+//
+//    fun saveMatToStorage(context: Context, processedMat: Mat, fileName: String): Boolean {
+//        return try {
+//            // Step 1: Convert Mat to Bitmap
+//            val bitmap = Bitmap.createBitmap(processedMat.cols(), processedMat.rows(), Bitmap.Config.ARGB_8888)
+//            Utils.matToBitmap(processedMat, bitmap)
+//
+//            // Step 2: Get app-specific storage directory
+//            val storageDir = File(context.getExternalFilesDir(null), "images")
+//            if (!storageDir.exists()) {
+//                if (storageDir.mkdirs()) {
+//                    println("Directory created successfully: ${storageDir.absolutePath}")
+//                } else {
+//                    println("Failed to create directory: ${storageDir.absolutePath}")
+//                    return false // Exit if folder creation fails
+//                }
+//            }
+//
+//            // Step 3: Create a file to save the image
+//            val file = File(storageDir, "$fileName.png")
+//            val outputStream = FileOutputStream(file)
+//
+//            // Step 4: Compress the Bitmap and write to file
+//            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+//
+//            // Step 5: Close the stream and return success
+//
+//            outputStream.flush()
+//            outputStream.close()
+////            step 6 send dataa
+//            pathFinal = file.absolutePath
+//
+//            println("Image saved successfully at: ${file.absolutePath}")
+//            true
+//        } catch (e: Exception) {
+//            e.printStackTrace()
+//            println("Failed to save image: ${e.message}")
+//            false
+//        }
+//    }
 
 
     @Composable
