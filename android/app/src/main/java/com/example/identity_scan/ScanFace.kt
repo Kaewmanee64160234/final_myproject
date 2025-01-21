@@ -746,12 +746,27 @@ class ScanFace : AppCompatActivity() {
                     .align(Alignment.Center)
             )
 
+//            Canvas(modifier = Modifier.fillMaxSize()) {
+//                val centerX = size.width / 2
+//                val centerY = size.height / 2
+//                val radiusX = size.width / 2 // Horizontal radius
+//                val radiusY = size.height / 3 // Vertical radius (adjust as needed)
+//
+//                drawOval(
+//                    color = Color.Gray,
+//                    topLeft = Offset(centerX - radiusX, centerY - radiusY),
+//                    size = Size(radiusX * 2, radiusY * 2),
+//                    style = Stroke(width = 4f) // Set the stroke width as needed
+//                )
+//            }
 
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val centerX = size.width / 2
                 val centerY = size.height / 2
+
+                // เพิ่มความสูงของวงรี (Vertical radius)
                 val radiusX = size.width / 2 // Horizontal radius
-                val radiusY = size.height / 3 // Vertical radius (adjust as needed)
+                val radiusY = size.height / 2.5f // เพิ่ม vertical radius ให้สูงขึ้น (จาก /3 เป็น /2.5)
 
                 drawOval(
                     color = Color.Gray,
@@ -760,6 +775,8 @@ class ScanFace : AppCompatActivity() {
                     style = Stroke(width = 4f) // Set the stroke width as needed
                 )
             }
+
+
 
 
         }

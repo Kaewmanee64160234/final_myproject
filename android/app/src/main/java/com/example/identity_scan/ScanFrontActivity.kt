@@ -254,7 +254,7 @@ class ScanFrontActivity : AppCompatActivity() {
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
 
-         val timer = object : CountDownTimer(2000, 800) {
+         val timer = object : CountDownTimer(1000, 800) {
             override fun onTick(millisUntilFinished: Long) {
                 println("Time remaining: ${millisUntilFinished / 800} seconds")
             }
@@ -408,6 +408,7 @@ class ScanFrontActivity : AppCompatActivity() {
                 showDialog = false
                 // Clear Bitmap List หลังจากปิด Dialog
                 bitmapList.clear()
+                // กลับมา Predict หลังจากปิด Dialog
                 isPredicting = true
                 //รีเซ็ต GuideText เมื่อปิด Dialog (ถ่ายใหม่)
                 cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
