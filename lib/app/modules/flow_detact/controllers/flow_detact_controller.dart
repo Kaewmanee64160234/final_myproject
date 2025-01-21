@@ -178,6 +178,7 @@ class FlowDetactController extends GetxController {
     );
     laserCodeOriginal.value = '';
     similarity.value = 0.0;
+    isLoading.value = false;
   }
 
   // clearDataForNewOCR
