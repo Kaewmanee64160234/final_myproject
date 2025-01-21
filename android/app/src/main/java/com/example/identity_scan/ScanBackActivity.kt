@@ -23,8 +23,17 @@ import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -73,6 +82,7 @@ import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import com.example.identity_scan.ml.ModelUnquant
 import org.opencv.android.Utils
 import org.opencv.core.Core
@@ -88,6 +98,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.text.style.TextAlign
 import org.opencv.imgcodecs.Imgcodecs
 
 
@@ -120,7 +132,7 @@ class ScanBackActivity: AppCompatActivity() {
         cameraExecutor = Executors.newSingleThreadExecutor()
         checkPermissions()
         checkAndRequestCameraPermission()
-//        model = ModelBack.newInstance(this)
+
         model = ModelUnquant.newInstance(this)
 
         if (!org.opencv.android.OpenCVLoader.initDebug()) {
@@ -137,93 +149,139 @@ class ScanBackActivity: AppCompatActivity() {
         methodChannel = MethodChannel(flutterEngine.dartExecutor, CHANNEL)
 
         setContent {
-            var showCancelDialog by remember { mutableStateOf(false) } // State for showing dialog
-
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = Color.Black // Set background color to black
             ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // Title
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            modifier = Modifier
-                                .height(80.dp)
-                                .padding(top = 40.dp),
-                            text = "สแกนหลังบัตร", // "Scan Back of Card"
-                            color = Color.White,
-                            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        )
-                    }
-
-                    // Camera Preview with Overlay
-                    CameraWithOverlay(
-                        modifier = Modifier.weight(1f),
-                        guideText = cameraViewModel.guideText
-                    )
-
-                    // Cancel Button Row
-                    Row(
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
+                            .fillMaxSize()
+                            .padding(16.dp), // Add padding for consistent layout
+                        verticalArrangement = Arrangement.SpaceBetween, // Space out elements vertically
+                        horizontalAlignment = Alignment.CenterHorizontally // Center elements horizontally
                     ) {
-                        Box(
-                            modifier = Modifier.wrapContentSize(Alignment.Center)
+                        // Title
+                        Text(
+                            text = "สแกนหลังบัตร",
+                            color = Color.White,
+                            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .padding(bottom = 16.dp) // Adjust padding below the title
+                                .wrapContentWidth() // Ensure text wraps naturally
+                        )
+
+                        // Camera preview with overlay
+                        CameraWithOverlay(
+                            modifier = Modifier.weight(1f), // Take up available space
+                            cameraViewModel = cameraViewModel,
+                            rectPositionViewModel = rectPositionViewModel
+                        )
+
+                        // Cancel button
+                        Button(
+                            onClick = { cancelProcess() },
+                            colors = ButtonDefaults.buttonColors(Color.Red),
+                            modifier = Modifier.padding(bottom = 16.dp) // Bottom padding for button
                         ) {
-                            Button(
-                                onClick = { showCancelDialog = true }, // Show the confirmation dialog
-                                colors = ButtonDefaults.buttonColors( )
-                            ) {
-                                Text(
-                                    text = "ยกเลิก", // "Cancel"
-                                    color = Color.White,
-                                    fontSize = 16.sp
-                                )
-                            }
+                            Text(
+                                text = "ยกเลิก",
+                                color = Color.White,
+                                fontSize = 16.sp
+                            )
                         }
                     }
-                }
-
-                // Confirmation Dialog
-                if (showCancelDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showCancelDialog = false }, // Close dialog on dismiss
-                        title = {
-                            Text(
-                                text = "ยืนยันการยกเลิก", // "Confirm Cancellation"
-                                style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                            )
-                        },
-                        text = { Text("คุณต้องการยกเลิกและกลับไปหน้าก่อนหน้าหรือไม่?") }, // "Do you want to cancel and go back?"
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    showCancelDialog = false // Close the dialog
-                                    cancelProcess() // Execute cancel process
-                                }
-                            ) {
-                                Text("ใช่") // "Yes"
-                            }
-                        },
-                        dismissButton = {
-                            Button(
-                                onClick = { showCancelDialog = false } // Close the dialog
-                            ) {
-                                Text("ไม่") // "No"
-                            }
-                        }
-                    )
                 }
             }
         }
     }
 
+    @Composable
+    fun CameraWithOverlay(
+        modifier: Modifier = Modifier,
+        cameraViewModel: CameraViewModel,
+        rectPositionViewModel: RectPositionViewModel
+    ) {
+        // Animation states
+        val selectedSize = remember { mutableStateOf(0.8f) } // Default rectangle size
+        val animatedRectWidth = animateFloatAsState(
+            targetValue = selectedSize.value,
+            animationSpec = tween(durationMillis = 500, easing = LinearOutSlowInEasing)
+        )
+
+        val pulseScale = rememberInfiniteTransition().animateFloat(
+            initialValue = 1f,
+            targetValue = 1.1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1000, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            )
+        )
+
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(Color.Black)
+        ) {
+            // Camera preview centered
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center) // Center the preview
+                    .fillMaxSize()
+            ) {
+                CameraPreview(modifier = Modifier.fillMaxSize())
+            }
+
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val creditCardAspectRatio = 3.37f / 2.125f
+                val rectWidth = size.width * animatedRectWidth.value * pulseScale.value
+                val rectHeight = rectWidth / creditCardAspectRatio
+                val rectLeft = (size.width - rectWidth) / 2
+                val rectTop = (size.height - rectHeight) / 2
+                val cornerRadius = 20.dp.toPx()
+
+                drawRect(
+                    color = Color.Black.copy(alpha = 0.6f),
+                    size = size
+                )
+                drawRoundRect(
+                    color = Color.Transparent,
+                    topLeft = Offset(rectLeft, rectTop),
+                    size = Size(rectWidth, rectHeight),
+                    cornerRadius = CornerRadius(cornerRadius, cornerRadius),
+                    blendMode = BlendMode.Clear
+                )
+
+                drawRoundRect(
+                    color = Color.Gray,
+                    topLeft = Offset(rectLeft, rectTop),
+                    size = Size(rectWidth, rectHeight),
+                    cornerRadius = CornerRadius(cornerRadius, cornerRadius),
+                    style = Stroke(width = 6f)
+                )
+
+                rectPositionViewModel.updateRectPosition(
+                    left = rectLeft,
+                    top = rectTop,
+                    right = rectLeft + rectWidth,
+                    bottom = rectTop + rectHeight
+                )
+            }
+
+            // Guide text below the rectangle
+            Text(
+                text = cameraViewModel.guideText,
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(top = 300.dp) // Adjust text position
+            )
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()
