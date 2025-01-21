@@ -90,6 +90,7 @@ import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material3.ButtonDefaults
@@ -176,7 +177,7 @@ class ScanFrontActivity : AppCompatActivity() {
         cameraExecutor = Executors.newSingleThreadExecutor()
         checkPermissions()
         checkAndRequestCameraPermission()
-//        model = ModelBack.newInstance(this)
+
         model = ModelUnquant.newInstance(this)
 
         if (!org.opencv.android.OpenCVLoader.initDebug()) {
@@ -195,80 +196,65 @@ class ScanFrontActivity : AppCompatActivity() {
         setContent {
             Surface(
                 modifier = Modifier.fillMaxSize(),
-                color = Color.Black // Set the background color to black
+                color = Color.Black // Set background color to black
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     Column(
                         modifier = Modifier
-                            .fillMaxSize(),
-                        verticalArrangement = Arrangement.Center, // Center items vertically
-                        horizontalAlignment = Alignment.CenterHorizontally // Center items horizontally
+                            .fillMaxSize()
+                            .padding(16.dp), // Add padding for consistent layout
+                        verticalArrangement = Arrangement.SpaceBetween, // Space out elements vertically
+                        horizontalAlignment = Alignment.CenterHorizontally // Center elements horizontally
                     ) {
                         // Title
                         Text(
-                            modifier = Modifier
-                                .height(80.dp)
-                                .padding(top = 40.dp),
                             text = "สแกนหน้าบัตร",
                             color = Color.White,
                             style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
-                            textAlign = TextAlign.Center // Ensure text alignment is centered
-                        )
-                    
-
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                        // Camera with Overlay
-                        CameraWithOverlay(
+                            textAlign = TextAlign.Center,
                             modifier = Modifier
-                                .fillMaxSize()
-                                .weight(1f), // Allow this component to take available space
-                            guideText = "Align your card within the frame",
+                                .padding(bottom = 16.dp) // Adjust padding below the title
+                                .wrapContentWidth() // Ensure text wraps naturally
+                        )
+
+                        // Camera preview with overlay
+                        CameraWithOverlay(
+                            modifier = Modifier.weight(1f), // Take up available space
+                            cameraViewModel = cameraViewModel,
                             rectPositionViewModel = rectPositionViewModel
                         )
 
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        // Cancel Button Row
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(100.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
+                        // Cancel button
+                        Button(
+                            onClick = { cancelProcess() },
+                            colors = ButtonDefaults.buttonColors(Color.Red),
+                            modifier = Modifier.padding(bottom = 16.dp) // Bottom padding for button
                         ) {
-                            Button(
-                                onClick = { cancelProcess() },
-                                colors = ButtonDefaults.buttonColors(Color.Red)
-                            ) {
-                                Text(
-                                    text = "ยกเลิก",
-                                    color = Color.White,
-                                    fontSize = 16.sp
-                                )
-                            }
+                            Text(
+                                text = "ยกเลิก",
+                                color = Color.White,
+                                fontSize = 16.sp
+                            )
                         }
                     }
                 }
             }
         }
-
     }
+
     @Composable
     fun CameraWithOverlay(
         modifier: Modifier = Modifier,
-        guideText: String,
+        cameraViewModel: CameraViewModel,
         rectPositionViewModel: RectPositionViewModel
     ) {
         // Animation states
         val selectedSize = remember { mutableStateOf(0.8f) } // Default rectangle size
         val animatedRectWidth = animateFloatAsState(
-            targetValue = selectedSize.value, // Use selected size for width
+            targetValue = selectedSize.value,
             animationSpec = tween(durationMillis = 500, easing = LinearOutSlowInEasing)
         )
 
-        // Auto-capture pulse animation
         val pulseScale = rememberInfiniteTransition().animateFloat(
             initialValue = 1f,
             targetValue = 1.1f,
@@ -281,29 +267,27 @@ class ScanFrontActivity : AppCompatActivity() {
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(Color.Black) // Set background to black
+                .background(Color.Black)
         ) {
-            // Full-screen Camera Preview
-            CameraPreview(modifier = Modifier.fillMaxSize())
+            // Camera preview centered
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center) // Center the preview
+                    .fillMaxSize()
+            ) {
+                CameraPreview(modifier = Modifier.fillMaxSize())
+            }
 
-            // Canvas overlay
             Canvas(modifier = Modifier.fillMaxSize()) {
-                // Aspect ratio of a credit card
                 val creditCardAspectRatio = 3.37f / 2.125f
-
-                // Rectangle size calculations
                 val rectWidth = size.width * animatedRectWidth.value * pulseScale.value
                 val rectHeight = rectWidth / creditCardAspectRatio
-
-                // Center the rectangle with a slight upward adjustment
                 val rectLeft = (size.width - rectWidth) / 2
-                val rectTop = (size.height - rectHeight) / 2.5f // Slightly higher
+                val rectTop = (size.height - rectHeight) / 2
+                val cornerRadius = 20.dp.toPx()
 
-                val cornerRadius = 20.dp.toPx() // Rounded corners
-
-                // Draw the overlay outside the rectangle
                 drawRect(
-                    color = Color.Black.copy(alpha = 0.6f), // Black overlay with transparency
+                    color = Color.Black.copy(alpha = 0.6f),
                     size = size
                 )
                 drawRoundRect(
@@ -311,19 +295,17 @@ class ScanFrontActivity : AppCompatActivity() {
                     topLeft = Offset(rectLeft, rectTop),
                     size = Size(rectWidth, rectHeight),
                     cornerRadius = CornerRadius(cornerRadius, cornerRadius),
-                    blendMode = BlendMode.Clear // Clear the area inside the rectangle
+                    blendMode = BlendMode.Clear
                 )
 
-                // Draw the rectangle border
                 drawRoundRect(
                     color = Color.Gray,
                     topLeft = Offset(rectLeft, rectTop),
                     size = Size(rectWidth, rectHeight),
                     cornerRadius = CornerRadius(cornerRadius, cornerRadius),
-                    style = Stroke(width = 6f) // Wider border
+                    style = Stroke(width = 6f)
                 )
 
-                // Update rectangle position in ViewModel
                 rectPositionViewModel.updateRectPosition(
                     left = rectLeft,
                     top = rectTop,
@@ -334,17 +316,17 @@ class ScanFrontActivity : AppCompatActivity() {
 
             // Guide text below the rectangle
             Text(
-                text = guideText,
+                text = cameraViewModel.guideText,
                 color = Color.White,
-                fontSize = 20.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .padding(top = 300.dp) // Adjust padding for alignment below rectangle
+                    .padding(top = 300.dp) // Adjust text position
             )
         }
     }
-
 
 
 
