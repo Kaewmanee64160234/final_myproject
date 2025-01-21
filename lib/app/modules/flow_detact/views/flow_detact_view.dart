@@ -61,12 +61,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
           ),
         ),
       ),
-      bottomNavigationBar: Obx(() => Container(
-            child: _buildBottomNavigationBar(context),
-            color: controller.card.value.idNumber.isNotEmpty
-                ? Colors.white
-                : Colors.blueGrey[100],
-          )),
+      bottomNavigationBar: _buildBottomNavigationBar(context),
     );
   }
 
@@ -150,17 +145,9 @@ class FlowDetactView extends GetView<FlowDetactController> {
           style: TextStyle(fontSize: screenWidth * 0.05),
         ),
         SizedBox(height: screenWidth * 0.05),
-        GridView.count(
-          crossAxisCount: screenWidth > 600 ? 4 : 2, // Responsive columns
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          children: const [
-            StepWidget(step: 1, text: "ถ่ายภาพหน้บัตรประชาชน"),
-            StepWidget(step: 2, text: "ถ่ายภาพหน้าบัตรประชาชน"),
-            StepWidget(step: 3, text: "ถ่ายภาพหน้าตัวเอง"),
-            StepWidget(step: 4, text: "สร้างรหัส 8 หลัก"),
-          ],
-        ),
+        StepWidget(step: 1, text: "ถ่ายภาพหน้บัตรประชาชน"),
+        StepWidget(step: 2, text: "ถ่ายภาพหน้าบัตรประชาชน"),
+        StepWidget(step: 3, text: "ถ่ายภาพหน้าตัวเอง"),
       ],
     );
   }
@@ -169,65 +156,117 @@ class FlowDetactView extends GetView<FlowDetactController> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return BottomAppBar(
-      child: Container(
-        color: Colors.white,
-        padding: EdgeInsets.symmetric(vertical: screenWidth * 0.04),
-        child: Center(
-          child: controller.card.value.idNumber.isEmpty
-              ? ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: controller.openCameraPage,
-                  child: Text(
-                    'เริ่มต้น',
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.05,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: SafeArea(
+        child: SingleChildScrollView(
+          child: Container(
+            color: Colors.white, // Set background to white
+            padding: EdgeInsets.symmetric(vertical: screenWidth * 0.02),
+            child: Obx(() {
+              if (controller.similarity.value != 0) {
+                // Congratulatory message with Clear Data button
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: controller.openScanFace,
-                      child: Text(
-                        'ต่อไป',
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.05,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                    SizedBox(height: screenWidth * 0.02),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.1,
+                            vertical: screenWidth * 0.03), // Dynamic padding
                       ),
-                      onPressed: controller.clearDataForNewOCR,
+                      onPressed: () {
+                        controller.clearDataForNewOCR();
+                        controller.isApiActive.value = true;
+                      },
                       child: Text(
-                        'Clear Data',
+                        'Clear Data for Restart',
                         style: TextStyle(
-                          fontSize: screenWidth * 0.05,
+                          fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
                     ),
                   ],
-                ),
+                );
+              } else if (controller.card.value.idNumber.isEmpty) {
+                // Start button
+                return ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.15,
+                        vertical: screenWidth * 0.03), // Dynamic padding
+                  ),
+                  onPressed: controller.openCameraPage,
+                  child: Text(
+                    'เริ่มต้น', // "Start"
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.04,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                );
+              } else {
+                // Continue and Clear Data buttons
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Flexible(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                              vertical: screenWidth * 0.03),
+                        ),
+                        onPressed: controller.openScanFace,
+                        child: Text(
+                          'ต่อไป', // "Next"
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.04,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: screenWidth * 0.02),
+                    Flexible(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                              vertical: screenWidth * 0.03),
+                        ),
+                        onPressed: controller.clearDataForNewOCR,
+                        child: Text(
+                          'Clear Data',
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.04,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }
+            }),
+          ),
         ),
       ),
     );
