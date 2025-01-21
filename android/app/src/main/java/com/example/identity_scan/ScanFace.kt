@@ -214,7 +214,7 @@ class ScanFace : AppCompatActivity() {
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
 
-        val timer = object : CountDownTimer(2000, 800) {
+        val timer = object : CountDownTimer(1000, 800) {
             override fun onTick(millisUntilFinished: Long) {
                 println("Time remaining: ${millisUntilFinished / 800} seconds")
             }
