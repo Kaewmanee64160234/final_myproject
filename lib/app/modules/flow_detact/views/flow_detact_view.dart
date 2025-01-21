@@ -23,86 +23,60 @@ class FlowDetactView extends GetView<FlowDetactController> {
         centerTitle: true,
         backgroundColor: const Color.fromRGBO(3, 6, 80, 1),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(screenWidth * 0.04), // Dynamic padding
-        child: Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // text shiow isApiActive and loading
-              Text(
-                'API is Active',
-                style: TextStyle(
-                  fontSize: screenWidth * 0.04,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
-                ),
+      body: Obx(() {
+        // ถ้า isLoading เป็น true แสดง loading indicator
+        if (controller.isLoading.value) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+            ),
+          );
+        }
+        // ถ้า isLoading เป็น false แสดง SingleChildScrollView
+        else {
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(screenWidth * 0.04), // Dynamic padding
+            child: Center(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // แสดงรายละเอียดหากไม่มีการโหลด
+                  if (controller.card.value.idNumber.isNotEmpty)
+                    Column(
+                      children: [
+                        CircleAvatar(
+                          radius: screenWidth * 0.15, // Responsive radius
+                          backgroundImage: MemoryImage(
+                            controller.card.value.getDecodedPortrait(),
+                          ),
+                        ),
+                        SizedBox(height: screenWidth * 0.04),
+                        Text(
+                          'LaserCode: ${controller.laserCodeOriginal.value}',
+                          style: TextStyle(
+                            fontSize:
+                                screenWidth * 0.04, // Responsive font size
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blueAccent,
+                          ),
+                        ),
+                        SizedBox(height: screenWidth * 0.04),
+                        _buildCardDetails(context),
+                      ],
+                    )
+                  else
+                    _buildRegistrationSteps(
+                        context), // หากไม่มี card ID ให้แสดงขั้นตอนการลงทะเบียน
+                ],
               ),
-              // Show loading indicator or card details
-
-              Obx(() {
-                if (controller.isLoading.value) {
-                  return Container(
-                    height: MediaQuery.of(context).size.height * 0.7,
-                    decoration: BoxDecoration(
-                      // center loading of screenm
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                      ),
-                    ),
-                  );
-                } else if (controller.card.value.idNumber.isNotEmpty &&
-                    !controller.isLoading.value) {
-                  return Column(
-                    children: [
-                      CircleAvatar(
-                        radius: screenWidth * 0.15, // Responsive radius
-                        backgroundImage: MemoryImage(
-                          controller.card.value.getDecodedPortrait(),
-                        ),
-                      ),
-                      SizedBox(height: screenWidth * 0.04),
-                      Text(
-                        'LaserCode: ${controller.laserCodeOriginal.value}',
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.04, // Responsive font size
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blueAccent,
-                        ),
-                      ),
-                      SizedBox(height: screenWidth * 0.04),
-                      _buildCardDetails(context),
-                    ],
-                  );
-                } else {
-                  return _buildRegistrationSteps(context);
-                }
-              }),
-              // Loading Indicator
-              Obx(() {
-                if (controller.isLoading.value) {
-                  return Container(
-                    color: Colors.black.withOpacity(0.5), // Transparent overlay
-                    alignment: Alignment.center,
-                    child: const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                          Color.fromARGB(255, 204, 0, 0)),
-                    ),
-                  );
-                } else {
-                  return const SizedBox.shrink(); // Do not render anything
-                }
-              }),
-            ],
-          ),
-        ),
-      ),
+            ),
+          );
+        }
+      }),
       bottomNavigationBar: Obx(() {
         if (controller.isLoading.value) {
-          return Container(); // Hide bottom navigation when loading
+          // ใส่เป็น sizedbox แทน Container เพราะใส่ Container แล้วมีปัญหา
+          return SizedBox();
         } else {
           return _buildBottomNavigationBar(context);
         }
