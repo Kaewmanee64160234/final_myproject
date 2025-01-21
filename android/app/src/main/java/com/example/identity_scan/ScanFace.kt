@@ -103,6 +103,7 @@ class ScanFace : AppCompatActivity() {
 //    private lateinit var model: ModelUnquant
     private lateinit var model: ModelFace
     private var isProcessing = false
+    private var isPredicting = true
     private var lastProcessedTime: Long = 0
     private var isFound = false
     private lateinit var flutterEngine: FlutterEngine
@@ -307,6 +308,9 @@ class ScanFace : AppCompatActivity() {
                                         showDialog = true
                                         isShutter = false
 
+                                        // พักการ Predict
+                                        isPredicting = false
+
                                         // รับ bitmap ภาพที่คมที่สุดเพื่อมา Process
                                         val sharpestBitmapMat = bitmapToMat(bitmapList[sharPestImageIndex])
 
@@ -325,7 +329,9 @@ class ScanFace : AppCompatActivity() {
                                     timer.cancel()
                                     isTiming = false
                                 }
-                                processImageProxy(imageProxy)
+                                if(isPredicting){
+                                    processImageProxy(imageProxy)
+                                }
                             }
                             // ปิด Image Proxy หลัง Process เสร็จ
                             imageProxy.close()
@@ -356,9 +362,10 @@ class ScanFace : AppCompatActivity() {
                 showDialog = false
                 // Clear Bitmap List หลังจากปิด Dialog
                 bitmapList.clear()
-
+                // กลับมา Predict หลังจากปิด Dialog
+                isPredicting = true
                 //รีเซ็ต GuideText เมื่อปิด Dialog (ถ่ายใหม่)
-                cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
+                cameraViewModel.updateGuideText("ปรับหน้าให้อยู่ตรงกลาง")
             }
         }
     }
