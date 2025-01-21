@@ -148,6 +148,14 @@ class MainActivity : FlutterActivity() {
                         println("Error sending camera result to Flutter: ${e.message}")
                     }
             }
+            else if( resultCode == RESULT_CANCELED){
+                try {
+                    MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function")
+                    .invokeMethod("cancelApi", null)
+                } catch (e: Exception) {
+                    println("Error sending camera result to Flutter: ${e.message}")
+                }
+            }
 
         }else if (requestCode == REQUEST_CODE_SCAN_BACK) {
             val result = data?.getStringExtra("result")
@@ -157,7 +165,15 @@ class MainActivity : FlutterActivity() {
                 try {
                     MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "native_function")
                         .invokeMethod("onCameraResultBack", result)
+
                     println("Camera result sent to Flutter successfully: $result")
+                } catch (e: Exception) {
+                    println("Error sending camera result to Flutter: ${e.message}")
+                }
+            }
+            else if( resultCode == RESULT_CANCELED){
+                try {
+                    openCameraPage()
                 } catch (e: Exception) {
                     println("Error sending camera result to Flutter: ${e.message}")
                 }

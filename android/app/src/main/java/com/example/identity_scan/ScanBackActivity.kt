@@ -13,6 +13,7 @@ import android.os.CountDownTimer
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -72,7 +73,6 @@ import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material3.ButtonDefaults
 import com.example.identity_scan.ml.ModelUnquant
 import org.opencv.android.Utils
 import org.opencv.core.Core
@@ -84,6 +84,11 @@ import org.opencv.imgproc.Imgproc
 import java.io.FileOutputStream
 import java.io.OutputStream
 import kotlin.math.pow
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+
 
 
 
@@ -135,27 +140,35 @@ class ScanBackActivity: AppCompatActivity() {
         methodChannel = MethodChannel(flutterEngine.dartExecutor, CHANNEL)
 
         setContent {
+            var showCancelDialog by remember { mutableStateOf(false) } // State for showing dialog
+
             Surface(
                 modifier = Modifier.fillMaxSize(),
-//                color = MaterialTheme.colorScheme.background
-                color = Color.Black // Explicitly set the background color to black
+                color = Color.Black // Set background color to black
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
+                    // Title
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        Text( modifier = Modifier
-                            .height(80.dp)
-                            .padding(top = 40.dp),
-                            text = "สแกนหลังบัตร",
+                        Text(
+                            modifier = Modifier
+                                .height(80.dp)
+                                .padding(top = 40.dp),
+                            text = "สแกนหลังบัตร", // "Scan Back of Card"
                             color = Color.White,
                             style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
                         )
                     }
 
-                    CameraWithOverlay(modifier = Modifier.weight(1f), guideText = cameraViewModel.guideText)
+                    // Camera Preview with Overlay
+                    CameraWithOverlay(
+                        modifier = Modifier.weight(1f),
+                        guideText = cameraViewModel.guideText
+                    )
 
+                    // Cancel Button Row
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -164,18 +177,14 @@ class ScanBackActivity: AppCompatActivity() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
-                            modifier = Modifier
-                                .wrapContentSize(Alignment.Center)
+                            modifier = Modifier.wrapContentSize(Alignment.Center)
                         ) {
                             Button(
-                                onClick = {
-                                    val resultIntent = Intent()
-                                    setResult(RESULT_CANCELED, resultIntent)
-                                    finish() },
-                                colors = ButtonDefaults.buttonColors(Color.Red)
+                                onClick = { showCancelDialog = true }, // Show the confirmation dialog
+                                colors = ButtonDefaults.buttonColors( )
                             ) {
                                 Text(
-                                    text = "ยกเลิก",
+                                    text = "ยกเลิก", // "Cancel"
                                     color = Color.White,
                                     fontSize = 16.sp
                                 )
@@ -183,9 +192,41 @@ class ScanBackActivity: AppCompatActivity() {
                         }
                     }
                 }
+
+                // Confirmation Dialog
+                if (showCancelDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showCancelDialog = false }, // Close dialog on dismiss
+                        title = {
+                            Text(
+                                text = "ยืนยันการยกเลิก", // "Confirm Cancellation"
+                                style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            )
+                        },
+                        text = { Text("คุณต้องการยกเลิกและกลับไปหน้าก่อนหน้าหรือไม่?") }, // "Do you want to cancel and go back?"
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    showCancelDialog = false // Close the dialog
+                                    cancelProcess() // Execute cancel process
+                                }
+                            ) {
+                                Text("ใช่") // "Yes"
+                            }
+                        },
+                        dismissButton = {
+                            Button(
+                                onClick = { showCancelDialog = false } // Close the dialog
+                            ) {
+                                Text("ไม่") // "No"
+                            }
+                        }
+                    )
+                }
             }
         }
     }
+
 
     override fun onDestroy() {
         super.onDestroy()
@@ -511,27 +552,26 @@ class ScanBackActivity: AppCompatActivity() {
             }
         }
     }
+    private fun showCancelConfirmationDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Confirmation")
+            .setMessage("Are you sure you want to cancel and go back?")
+            .setPositiveButton("Yes") { _, _ ->
+                // User confirmed; call cancelProcess
+                cancelProcess()
+            }
+            .setNegativeButton("No") { dialog, _ ->
+                // User canceled; dismiss the dialog
+                dialog.dismiss()
+            }
+            .create()
+            .show()
+    }
 
-    private fun updateImageData(newImageData: String) {
-        try {
-            val db = dbHelper.writableDatabase
-            // SQL query to update image_data where id = 1
-            val updateQuery = """
-            UPDATE images
-            SET image_data = ?
-            WHERE id = 1
-        """.trimIndent()
-
-            // Execute the update query with the new image data
-            val statement = db.compileStatement(updateQuery)
-            statement.bindString(1, newImageData)  // Bind the parameter
-            statement.executeUpdateDelete()  // Execute the update query
-
-            println("Database Image data updated successfully.")
-        } catch (e: Exception) {
-            e.printStackTrace()
-            println("DatabaseError Error while updating data: ${e.message}")
-        }
+    private fun cancelProcess(){
+        val resultIntent = Intent()
+        setResult(RESULT_CANCELED, resultIntent)
+        finish() // Closes the current activity
     }
 
     private fun processImageProxy(imageProxy: ImageProxy) {

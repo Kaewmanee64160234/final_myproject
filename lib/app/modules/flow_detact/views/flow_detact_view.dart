@@ -60,7 +60,12 @@ class FlowDetactView extends GetView<FlowDetactController> {
           ),
         ),
       ),
-      bottomNavigationBar: Obx(() => _buildBottomNavigationBar()),
+      bottomNavigationBar: Obx(() => Container(
+            child: _buildBottomNavigationBar(),
+            color: controller.card.value.idNumber.isNotEmpty
+                ? Colors.white
+                : Colors.blueGrey[100],
+          )),
     );
   }
 

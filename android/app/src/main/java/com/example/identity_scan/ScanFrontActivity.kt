@@ -209,9 +209,7 @@ class ScanFrontActivity : AppCompatActivity() {
                         ) {
                             Button(
                                 onClick = {
-                                    val resultIntent = Intent()
-                                    setResult(RESULT_CANCELED, resultIntent)
-                                    finish()
+                                    cancelProcess()
                                           },
                                 colors = ButtonDefaults.buttonColors(Color.Red)
                             ) {
@@ -226,6 +224,11 @@ class ScanFrontActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+    private fun cancelProcess(){
+        val resultIntent = Intent()
+        setResult(RESULT_CANCELED, resultIntent)
+        finish()
     }
 
     override fun onDestroy() {

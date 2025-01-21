@@ -121,6 +121,10 @@ class FlowDetactController extends GetxController {
             print(imageBase64);
             compareSimilarity(imageBase64);
           }
+        }
+        if (call.method == "cancelApi") {
+          print("cancelApi");
+          clearDataForNewOCR();
         } else {
           print("Unhandled method call: ${call.method}");
         }
@@ -131,7 +135,7 @@ class FlowDetactController extends GetxController {
     }
   }
 
-  // clearDataForNewOCR
+  // clear data api
   void clearDataForNewOCR() {
     card.value = ID_CARD(
       idNumber: '',
@@ -175,6 +179,8 @@ class FlowDetactController extends GetxController {
     laserCodeOriginal.value = '';
     similarity.value = 0.0;
   }
+
+  // clearDataForNewOCR
 
   Future<void> sendToOcr(String path) async {
     try {
