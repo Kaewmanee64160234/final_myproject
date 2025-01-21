@@ -100,6 +100,7 @@ class ScanBackActivity: AppCompatActivity() {
     private val CAMERA_REQUEST_CODE = 2001
     private val cameraViewModel: CameraViewModel by viewModels()
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
+    private var isPredicting = true
     private lateinit var model: ModelUnquant
 //    private lateinit var model: ModelBack
     private var isProcessing = false
@@ -330,6 +331,8 @@ class ScanBackActivity: AppCompatActivity() {
                                          // เสร็จแล้วแสดงภาพที่ชัดที่สุดออกมา
                                          showDialog = true
                                          isShutter = false
+                                         // พักการ Predict
+                                         isPredicting = false
 
                                          // รับ bitmap ภาพที่คมที่สุดเพื่อมา Process
                                           val sharpestBitmapMat = bitmapToMat(bitmapList[sharPestImageIndex])
@@ -373,8 +376,9 @@ class ScanBackActivity: AppCompatActivity() {
                                      isTiming = false
 //                                     println("Cancelled Timer")
                                  }
-
-                                 processImageProxy(imageProxy)
+                                 if(isPredicting){
+                                    processImageProxy(imageProxy)
+                                }
                              }
 
                              // ปิด Image Proxy หลัง Process เสร็จ
@@ -405,6 +409,7 @@ class ScanBackActivity: AppCompatActivity() {
             ShowImageDialog(bitmap = bitmapToShow!!) {
                 showDialog = false
                 // Clear Bitmap List หลังจากปิด Dialog
+                isPredicting = true
                 bitmapList.clear()
             }
         }
