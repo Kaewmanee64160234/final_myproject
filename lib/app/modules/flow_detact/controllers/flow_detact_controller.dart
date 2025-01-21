@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:identity_scan/app/data/models/card_type.dart';
 import 'package:identity_scan/app/data/models/receive_data.dart';
 import 'package:identity_scan/app/data/models/services/api_ocr_credit_card_service.dart';
+import 'package:identity_scan/app/routes/app_pages.dart';
 
 class FlowDetactController extends GetxController {
   final count = 0.obs;
@@ -54,8 +55,8 @@ class FlowDetactController extends GetxController {
   var laserCodeOriginal = ''.obs;
   var isLoading = false.obs;
   var similarity = 0.0.obs;
-  // isApiActive
   var isApiActive = false.obs;
+  final imageFromCameraBase64 = "".obs;
 
   @override
   void onInit() {
@@ -120,6 +121,7 @@ class FlowDetactController extends GetxController {
             // chnage path to find and convert to base64
             final bytes = await File(receivedArguments).readAsBytes();
             final imageBase64 = base64Encode(bytes);
+            imageFromCameraBase64.value = imageBase64;
             print(imageBase64);
             compareSimilarity(imageBase64);
           }
@@ -281,6 +283,12 @@ class FlowDetactController extends GetxController {
       print("Error: Failed to compare similarity: $e");
     } finally {
       isLoading.value = false;
+      Get.toNamed(Routes.MAPPING_FACE);
     }
+  }
+
+  // imageFromCameraBase64 as Uint8List
+  getDecodedPortrait() {
+    return base64Decode(imageFromCameraBase64.value);
   }
 }
