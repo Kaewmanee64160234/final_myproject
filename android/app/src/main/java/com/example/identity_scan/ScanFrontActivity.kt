@@ -25,8 +25,17 @@ import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -78,7 +87,10 @@ import com.smarttoolfactory.screenshot.ScreenshotBox
 import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.graphics.BlendMode
 import com.example.identity_scan.ml.ModelUnquant
 import org.opencv.android.Utils
 import org.opencv.core.Core
@@ -196,7 +208,11 @@ class ScanFrontActivity : AppCompatActivity() {
                         )
                     }
 
-                    CameraWithOverlay(modifier = Modifier.weight(1f), guideText = cameraViewModel.guideText)
+                    CameraWithOverlay(
+                        modifier = Modifier.fillMaxSize(),
+                        guideText = "Align your card within the frame",
+                        rectPositionViewModel = rectPositionViewModel
+                    )
 
                     Row(
                         modifier = Modifier
@@ -931,125 +947,93 @@ class ScanFrontActivity : AppCompatActivity() {
         }
     }
 
-//
-//    fun saveMatToStorage(context: Context, processedMat: Mat, fileName: String): Boolean {
-//        return try {
-//            // Step 1: Convert Mat to Bitmap
-//            val bitmap = Bitmap.createBitmap(processedMat.cols(), processedMat.rows(), Bitmap.Config.ARGB_8888)
-//            Utils.matToBitmap(processedMat, bitmap)
-//
-//            // Step 2: Get app-specific storage directory
-//            val storageDir = File(context.getExternalFilesDir(null), "images")
-//            if (!storageDir.exists()) {
-//                if (storageDir.mkdirs()) {
-//                    println("Directory created successfully: ${storageDir.absolutePath}")
-//                } else {
-//                    println("Failed to create directory: ${storageDir.absolutePath}")
-//                    return false // Exit if folder creation fails
-//                }
-//            }
-//
-//            // Step 3: Create a file to save the image
-//            val file = File(storageDir, "$fileName.png")
-//            val outputStream = FileOutputStream(file)
-//
-//            // Step 4: Compress the Bitmap and write to file
-//            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-//
-//            // Step 5: Close the stream and return success
-//
-//            outputStream.flush()
-//            outputStream.close()
-////            step 6 send dataa
-//            pathFinal = file.absolutePath
-//
-//            println("Image saved successfully at: ${file.absolutePath}")
-//            true
-//        } catch (e: Exception) {
-//            e.printStackTrace()
-//            println("Failed to save image: ${e.message}")
-//            false
-//        }
-//    }
-
 
     @Composable
-    fun CameraWithOverlay(modifier: Modifier = Modifier, guideText: String) {
+    fun CameraWithOverlay(
+        modifier: Modifier = Modifier,
+        guideText: String,
+        rectPositionViewModel: RectPositionViewModel
+    ) {
+        // Animation states
+        val isExpanded = remember { mutableStateOf(false) }
+        val selectedSize = remember { mutableStateOf(0.8f) } // Default rectangle size
+        val animatedRectWidth = animateFloatAsState(
+            targetValue = selectedSize.value, // Use selected size for width
+            animationSpec = tween(durationMillis = 500, easing = LinearOutSlowInEasing)
+        )
+
+        // Auto-capture pulse animation
+        val pulseScale = rememberInfiniteTransition().animateFloat(
+            initialValue = 1f,
+            targetValue = 1.1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1000, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            )
+        )
+
         Box(modifier = modifier) {
-            // Camera Preview filling the whole screen
+            // Camera Preview
             CameraPreview(modifier = Modifier.fillMaxSize())
 
-            Text(
-                text = guideText,
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .align(Alignment.Center)
-            )
-
-//            Text(
-//                text = "BrightnessValue ${cameraViewModel.brightnessValueText}",
-//                color = Color.White,
-//                fontSize = 24.sp,
-//                fontWeight = FontWeight.Bold,
-//                modifier = Modifier.align(Alignment.BottomCenter)
-//            )
-
-
-//            Text(
-//                text = "GlareValue ${cameraViewModel.glareValueText}",
-//                color = Color.White,
-//                fontSize = 24.sp,
-//                fontWeight = FontWeight.Bold,
-//                modifier = Modifier
-//                    .align(Alignment.BottomCenter)
-//                    .padding(20.dp) // Add 20dp padding
-//            )
-
-//            Text(
-//                text = "GlareValue ${cameraViewModel.snrValueText}",
-//                color = Color.White,
-//                fontSize = 24.sp,
-//                fontWeight = FontWeight.Bold,
-//                modifier = Modifier
-//                    .align(Alignment.BottomCenter)
-//                    .padding(20.dp) // Add 20dp padding
-//            )
-
-
             Canvas(modifier = Modifier.fillMaxSize()) {
-                // ขนาดบัตรเครดิตในอัตราส่วน
-                val creditCardAspectRatio = 3.37f / 2.125f // อัตราส่วน 3.37:2.125
+                // Aspect ratio of a credit card
+                val creditCardAspectRatio = 3.37f / 2.125f
 
-                // ใช้ขนาดของหน้าจอในการคำนวณขนาดกรอบ
-                val rectWidth = size.width * 0.7f // ขนาดความกว้างของกรอบเป็น 70% ของความกว้างหน้าจอ
-                val rectHeight = rectWidth / creditCardAspectRatio // คำนวณความสูงจากอัตราส่วนของบัตรเครดิต
+                // Rectangle size calculations
+                val rectWidth = size.width * animatedRectWidth.value * pulseScale.value
+                val rectHeight = rectWidth / creditCardAspectRatio
 
-                // ทำให้กรอบอยู่ตรงกลาง
+                // Center the rectangle
                 val rectLeft = (size.width - rectWidth) / 2
-                val rectTop = (size.height - rectHeight) / 2
+                val rectTop = (size.height - rectHeight) / 2 // Center vertically
 
-                val cornerRadius = 16.dp.toPx() // กำหนดขนาดมุมโค้ง
+                val cornerRadius = 20.dp.toPx() // Rounded corners
 
-                // คำนวณค่าของ right และ bottom
-                val rectRight = rectLeft + rectWidth
-                val rectBottom = rectTop + rectHeight
+                // Draw the overlay outside the rectangle
+                drawRect(
+                    color = Color.Black.copy(alpha = 0.6f), // Black overlay with transparency
+                    size = size
+                )
+                drawRoundRect(
+                    color = Color.Transparent,
+                    topLeft = Offset(rectLeft, rectTop),
+                    size = Size(rectWidth, rectHeight),
+                    cornerRadius = CornerRadius(cornerRadius, cornerRadius),
+                    blendMode = BlendMode.Clear // Clear the area inside the rectangle
+                )
 
-
-                // วาดกรอบด้วยมุมโค้ง
+                // Draw the rectangle border
                 drawRoundRect(
                     color = Color.Gray,
                     topLeft = Offset(rectLeft, rectTop),
                     size = Size(rectWidth, rectHeight),
                     cornerRadius = CornerRadius(cornerRadius, cornerRadius),
-                    style = Stroke(width = 4f) // กำหนดความหนาของเส้นขอบ
+                    style = Stroke(width = 6f) // Wider border
                 )
 
-                rectPositionViewModel.updateRectPosition(rectLeft, rectTop, rectRight, rectBottom)
+                // Update rectangle position in ViewModel
+                rectPositionViewModel.updateRectPosition(
+                    left = rectLeft,
+                    top = rectTop,
+                    right = rectLeft + rectWidth,
+                    bottom = rectTop + rectHeight
+                )
             }
+
+            // Guide text below the rectangle
+            Text(
+                text = guideText,
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(top = 250.dp) // Adjust padding to align below rectangle
+            )
         }
     }
+
 
     private fun checkPermissions() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
