@@ -156,11 +156,10 @@ class FlowDetactView extends GetView<FlowDetactController> {
                 'Date of Issue:', controller.card.value.en.dateOfIssue.obs),
             _buildEditableRow(
                 'Date of Expiry:', controller.card.value.en.dateOfExpiry.obs),
-            _buildEditableRow(
-                'Address:', controller.card.value.en.address.full.obs),
             SizedBox(height: screenWidth * 0.04),
             const Divider(),
-            _buildInfoRow('Laser Code:', controller.laserCodeOriginal.value),
+            _buildEditableRow(
+                'Laser Code:', controller.card.value.laserCode.obs),
           ],
         ),
       ),
