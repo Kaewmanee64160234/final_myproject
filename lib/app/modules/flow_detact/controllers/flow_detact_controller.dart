@@ -54,6 +54,8 @@ class FlowDetactController extends GetxController {
   var laserCodeOriginal = ''.obs;
   var isLoading = false.obs;
   var similarity = 0.0.obs;
+  // isApiActive
+  var isApiActive = true.obs;
 
   @override
   void onInit() {
@@ -125,6 +127,7 @@ class FlowDetactController extends GetxController {
         if (call.method == "cancelApi") {
           print("cancelApi");
           clearDataForNewOCR();
+          isApiActive.value = false;
         } else {
           print("Unhandled method call: ${call.method}");
         }
@@ -185,16 +188,21 @@ class FlowDetactController extends GetxController {
 
   Future<void> sendToOcr(String path) async {
     try {
+      if (!isApiActive.value) return;
+
       isLoading.value = true;
 
       if (path != null) {
         final File processedImage = File(path);
+        print("isApiActive: $isApiActive.value");
+
         print("processedImage: $processedImage");
 
         if (await processedImage.exists()) {
           final bytes = await processedImage.readAsBytes();
           final imageBase64 = base64Encode(bytes);
-
+          print("isApiActive: $isApiActive.value");
+          if (!isApiActive.value) return;
           card.value =
               (await apiOcrCreditCardService.uploadBase64Image(imageBase64))!;
           print("OCR Processed Image Success: ${card.value.idNumber}");
@@ -218,6 +226,10 @@ class FlowDetactController extends GetxController {
 
   Future<void> sendToOcrBackCard(String path) async {
     try {
+      print("isApiActive: $isApiActive.value");
+
+      if (!isApiActive.value) return;
+
       isLoading.value = true; // Set loading state to true
 
       if (path != null) {
@@ -230,6 +242,10 @@ class FlowDetactController extends GetxController {
           final res = await apiOcrCreditCardService
               .uploadBase64ImageBack(processedImageBase64);
           print("OCR Processed Image Success: $res");
+          print("isApiActive: $isApiActive.value");
+
+          if (!isApiActive.value) return;
+
           card.value.laserCode = res;
           laserCodeOriginal.value = res;
 
