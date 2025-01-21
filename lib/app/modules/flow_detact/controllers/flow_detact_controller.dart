@@ -55,7 +55,7 @@ class FlowDetactController extends GetxController {
   var isLoading = false.obs;
   var similarity = 0.0.obs;
   // isApiActive
-  var isApiActive = true.obs;
+  var isApiActive = false.obs;
 
   @override
   void onInit() {
@@ -216,6 +216,7 @@ class FlowDetactController extends GetxController {
         Get.snackbar("Error", "No processed image path received.");
         print("Error: No processed image path received.");
       }
+      isLoading.value = false;
     } catch (e) {
       Get.snackbar("Error", "Failed to send processed image to OCR: $e");
       print("Error: Failed to send processed image to OCR: $e");
@@ -258,6 +259,7 @@ class FlowDetactController extends GetxController {
         Get.snackbar("Error", "No processed image path received.");
         print("Error: No processed image path received.");
       }
+      isLoading.value = false; // Reset loading state
     } catch (e) {
       Get.snackbar("Error", "Failed to send processed image to OCR: $e");
       print("Error: Failed to send processed image to OCR: $e");

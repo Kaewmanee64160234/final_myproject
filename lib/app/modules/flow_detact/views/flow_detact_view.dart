@@ -6,6 +6,7 @@ import '../controllers/flow_detact_controller.dart';
 
 class FlowDetactView extends GetView<FlowDetactController> {
   const FlowDetactView({super.key});
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -28,10 +29,33 @@ class FlowDetactView extends GetView<FlowDetactController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // text shiow isApiActive and loading
+              Text(
+                'API is Active',
+                style: TextStyle(
+                  fontSize: screenWidth * 0.04,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+              ),
+              // Show loading indicator or card details
+
               Obx(() {
                 if (controller.isLoading.value) {
-                  return const CircularProgressIndicator();
-                } else if (controller.card.value.idNumber.isNotEmpty) {
+                  return Container(
+                    height: MediaQuery.of(context).size.height * 0.7,
+                    decoration: BoxDecoration(
+                      // center loading of screenm
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: const CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                      ),
+                    ),
+                  );
+                } else if (controller.card.value.idNumber.isNotEmpty &&
+                    !controller.isLoading.value) {
                   return Column(
                     children: [
                       CircleAvatar(
@@ -57,14 +81,28 @@ class FlowDetactView extends GetView<FlowDetactController> {
                   return _buildRegistrationSteps(context);
                 }
               }),
+              // Loading Indicator
+              Obx(() {
+                if (controller.isLoading.value) {
+                  return Container(
+                    color: Colors.black.withOpacity(0.5), // Transparent overlay
+                    alignment: Alignment.center,
+                    child: const CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                          Color.fromARGB(255, 204, 0, 0)),
+                    ),
+                  );
+                } else {
+                  return const SizedBox.shrink(); // Do not render anything
+                }
+              }),
             ],
           ),
         ),
       ),
-      // bottomNavigationBar: _buildBottomNavigationBar(context), if loading not show
       bottomNavigationBar: Obx(() {
         if (controller.isLoading.value) {
-          return Container();
+          return Container(); // Hide bottom navigation when loading
         } else {
           return _buildBottomNavigationBar(context);
         }
@@ -88,49 +126,80 @@ class FlowDetactView extends GetView<FlowDetactController> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const Divider(),
-            _buildInfoRow('Card ID:', controller.card.value.idNumber),
-            _buildInfoRow('Prefix:', controller.card.value.th.prefix),
-            _buildInfoRow('Full Name (TH):', controller.card.value.th.fullName),
-            _buildInfoRow('First Name:', controller.card.value.th.name),
-            _buildInfoRow('Last Name:', controller.card.value.th.lastName),
-            _buildInfoRow(
-                'Date of Birth:', controller.card.value.th.dateOfBirth),
-            _buildInfoRow(
-                'Date of Issue:', controller.card.value.th.dateOfIssue),
-            _buildInfoRow(
-                'Date of Expiry:', controller.card.value.th.dateOfExpiry),
-            _buildInfoRow('Address:', controller.card.value.th.address.full),
+            _buildEditableRow('Card ID:', controller.card.value.idNumber.obs),
+            _buildEditableRow('Prefix:', controller.card.value.th.prefix.obs),
+            _buildEditableRow('First Name:', controller.card.value.th.name.obs),
+            _buildEditableRow(
+                'Last Name:', controller.card.value.th.lastName.obs),
+            _buildEditableRow(
+                'Date of Birth:', controller.card.value.th.dateOfBirth.obs),
+            _buildEditableRow(
+                'Date of Issue:', controller.card.value.th.dateOfIssue.obs),
+            _buildEditableRow(
+                'Date of Expiry:', controller.card.value.th.dateOfExpiry.obs),
+            _buildEditableRow(
+                'Address:', controller.card.value.th.address.full.obs),
             SizedBox(height: screenWidth * 0.04),
             const Text(
               'บัตรประชาชน (EN)',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const Divider(),
-            _buildInfoRow('Card ID:', controller.card.value.idNumber),
-            _buildInfoRow('Prefix:', controller.card.value.en.prefix),
-            _buildInfoRow('Full Name (EN):', controller.card.value.en.fullName),
-            _buildInfoRow('First Name:', controller.card.value.en.name),
-            _buildInfoRow('Last Name:', controller.card.value.en.lastName),
-            _buildInfoRow(
-                'Date of Birth:', controller.card.value.en.dateOfBirth),
-            _buildInfoRow(
-                'Date of Issue:', controller.card.value.en.dateOfIssue),
-            _buildInfoRow(
-                'Date of Expiry:', controller.card.value.en.dateOfExpiry),
-            _buildInfoRow('Address:', controller.card.value.en.address.full),
-            // show similarity
+            _buildEditableRow('Card ID:', controller.card.value.idNumber.obs),
+            _buildEditableRow('Prefix:', controller.card.value.en.prefix.obs),
+            _buildEditableRow('First Name:', controller.card.value.en.name.obs),
+            _buildEditableRow(
+                'Last Name:', controller.card.value.en.lastName.obs),
+            _buildEditableRow(
+                'Date of Birth:', controller.card.value.en.dateOfBirth.obs),
+            _buildEditableRow(
+                'Date of Issue:', controller.card.value.en.dateOfIssue.obs),
+            _buildEditableRow(
+                'Date of Expiry:', controller.card.value.en.dateOfExpiry.obs),
+            _buildEditableRow(
+                'Address:', controller.card.value.en.address.full.obs),
             SizedBox(height: screenWidth * 0.04),
-            const Text(
-              'Similarity',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
             const Divider(),
-            _buildInfoRow(
-              'Similarity:',
-              controller.similarity.value.toStringAsFixed(2),
-            ),
+            _buildInfoRow('Laser Code:', controller.laserCodeOriginal.value),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEditableRow(String label, RxString value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 5,
+            child: Obx(
+              () => TextField(
+                controller: TextEditingController(text: value.value)
+                  ..selection =
+                      TextSelection.collapsed(offset: value.value.length),
+                onChanged: (text) => value.value = text,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -212,7 +281,10 @@ class FlowDetactView extends GetView<FlowDetactController> {
                         horizontal: screenWidth * 0.15,
                         vertical: screenWidth * 0.03), // Dynamic padding
                   ),
-                  onPressed: controller.openCameraPage,
+                  onPressed: () {
+                    controller.openCameraPage();
+                    controller.isApiActive.value = true;
+                  },
                   child: Text(
                     'เริ่มต้น', // "Start"
                     style: TextStyle(
