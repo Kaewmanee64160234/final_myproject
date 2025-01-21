@@ -61,7 +61,14 @@ class FlowDetactView extends GetView<FlowDetactController> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(context),
+      // bottomNavigationBar: _buildBottomNavigationBar(context), if loading not show
+      bottomNavigationBar: Obx(() {
+        if (controller.isLoading.value) {
+          return Container();
+        } else {
+          return _buildBottomNavigationBar(context);
+        }
+      }),
     );
   }
 
