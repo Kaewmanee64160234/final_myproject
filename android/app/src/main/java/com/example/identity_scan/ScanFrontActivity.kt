@@ -35,16 +35,19 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -91,6 +94,7 @@ import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.text.style.TextAlign
 import com.example.identity_scan.ml.ModelUnquant
 import org.opencv.android.Utils
 import org.opencv.core.Core
@@ -191,44 +195,51 @@ class ScanFrontActivity : AppCompatActivity() {
         setContent {
             Surface(
                 modifier = Modifier.fillMaxSize(),
-//                color = MaterialTheme.colorScheme.background
-                color = Color.Black // Explicitly set the background color to black
+                color = Color.Black // Set the background color to black
             ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        verticalArrangement = Arrangement.Center, // Center items vertically
+                        horizontalAlignment = Alignment.CenterHorizontally // Center items horizontally
                     ) {
-                        Text( modifier = Modifier
-                            .height(80.dp)
-                            .padding(top = 40.dp),
+                        // Title
+                        Text(
+                            modifier = Modifier
+                                .height(80.dp)
+                                .padding(top = 40.dp),
                             text = "สแกนหน้าบัตร",
                             color = Color.White,
-                            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                            textAlign = TextAlign.Center // Ensure text alignment is centered
                         )
-                    }
+                    
 
-                    CameraWithOverlay(
-                        modifier = Modifier.fillMaxSize(),
-                        guideText = "Align your card within the frame",
-                        rectPositionViewModel = rectPositionViewModel
-                    )
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                        // Camera with Overlay
+                        CameraWithOverlay(
                             modifier = Modifier
-                                .wrapContentSize(Alignment.Center)
+                                .fillMaxSize()
+                                .weight(1f), // Allow this component to take available space
+                            guideText = "Align your card within the frame",
+                            rectPositionViewModel = rectPositionViewModel
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        // Cancel Button Row
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Button(
-                                onClick = {
-                                    cancelProcess()
-                                          },
+                                onClick = { cancelProcess() },
                                 colors = ButtonDefaults.buttonColors(Color.Red)
                             ) {
                                 Text(
@@ -242,7 +253,101 @@ class ScanFrontActivity : AppCompatActivity() {
                 }
             }
         }
+
     }
+    @Composable
+    fun CameraWithOverlay(
+        modifier: Modifier = Modifier,
+        guideText: String,
+        rectPositionViewModel: RectPositionViewModel
+    ) {
+        // Animation states
+        val selectedSize = remember { mutableStateOf(0.8f) } // Default rectangle size
+        val animatedRectWidth = animateFloatAsState(
+            targetValue = selectedSize.value, // Use selected size for width
+            animationSpec = tween(durationMillis = 500, easing = LinearOutSlowInEasing)
+        )
+
+        // Auto-capture pulse animation
+        val pulseScale = rememberInfiniteTransition().animateFloat(
+            initialValue = 1f,
+            targetValue = 1.1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1000, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            )
+        )
+
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(Color.Black) // Set background to black
+        ) {
+            // Full-screen Camera Preview
+            CameraPreview(modifier = Modifier.fillMaxSize())
+
+            // Canvas overlay
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                // Aspect ratio of a credit card
+                val creditCardAspectRatio = 3.37f / 2.125f
+
+                // Rectangle size calculations
+                val rectWidth = size.width * animatedRectWidth.value * pulseScale.value
+                val rectHeight = rectWidth / creditCardAspectRatio
+
+                // Center the rectangle with a slight upward adjustment
+                val rectLeft = (size.width - rectWidth) / 2
+                val rectTop = (size.height - rectHeight) / 2.5f // Slightly higher
+
+                val cornerRadius = 20.dp.toPx() // Rounded corners
+
+                // Draw the overlay outside the rectangle
+                drawRect(
+                    color = Color.Black.copy(alpha = 0.6f), // Black overlay with transparency
+                    size = size
+                )
+                drawRoundRect(
+                    color = Color.Transparent,
+                    topLeft = Offset(rectLeft, rectTop),
+                    size = Size(rectWidth, rectHeight),
+                    cornerRadius = CornerRadius(cornerRadius, cornerRadius),
+                    blendMode = BlendMode.Clear // Clear the area inside the rectangle
+                )
+
+                // Draw the rectangle border
+                drawRoundRect(
+                    color = Color.Gray,
+                    topLeft = Offset(rectLeft, rectTop),
+                    size = Size(rectWidth, rectHeight),
+                    cornerRadius = CornerRadius(cornerRadius, cornerRadius),
+                    style = Stroke(width = 6f) // Wider border
+                )
+
+                // Update rectangle position in ViewModel
+                rectPositionViewModel.updateRectPosition(
+                    left = rectLeft,
+                    top = rectTop,
+                    right = rectLeft + rectWidth,
+                    bottom = rectTop + rectHeight
+                )
+            }
+
+            // Guide text below the rectangle
+            Text(
+                text = guideText,
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(top = 300.dp) // Adjust padding for alignment below rectangle
+            )
+        }
+    }
+
+
+
+
     private fun cancelProcess(){
         val resultIntent = Intent()
         setResult(RESULT_CANCELED, resultIntent)
@@ -948,91 +1053,6 @@ class ScanFrontActivity : AppCompatActivity() {
     }
 
 
-    @Composable
-    fun CameraWithOverlay(
-        modifier: Modifier = Modifier,
-        guideText: String,
-        rectPositionViewModel: RectPositionViewModel
-    ) {
-        // Animation states
-        val isExpanded = remember { mutableStateOf(false) }
-        val selectedSize = remember { mutableStateOf(0.8f) } // Default rectangle size
-        val animatedRectWidth = animateFloatAsState(
-            targetValue = selectedSize.value, // Use selected size for width
-            animationSpec = tween(durationMillis = 500, easing = LinearOutSlowInEasing)
-        )
-
-        // Auto-capture pulse animation
-        val pulseScale = rememberInfiniteTransition().animateFloat(
-            initialValue = 1f,
-            targetValue = 1.1f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(1000, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse
-            )
-        )
-
-        Box(modifier = modifier) {
-            // Camera Preview
-            CameraPreview(modifier = Modifier.fillMaxSize())
-
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                // Aspect ratio of a credit card
-                val creditCardAspectRatio = 3.37f / 2.125f
-
-                // Rectangle size calculations
-                val rectWidth = size.width * animatedRectWidth.value * pulseScale.value
-                val rectHeight = rectWidth / creditCardAspectRatio
-
-                // Center the rectangle
-                val rectLeft = (size.width - rectWidth) / 2
-                val rectTop = (size.height - rectHeight) / 2 // Center vertically
-
-                val cornerRadius = 20.dp.toPx() // Rounded corners
-
-                // Draw the overlay outside the rectangle
-                drawRect(
-                    color = Color.Black.copy(alpha = 0.6f), // Black overlay with transparency
-                    size = size
-                )
-                drawRoundRect(
-                    color = Color.Transparent,
-                    topLeft = Offset(rectLeft, rectTop),
-                    size = Size(rectWidth, rectHeight),
-                    cornerRadius = CornerRadius(cornerRadius, cornerRadius),
-                    blendMode = BlendMode.Clear // Clear the area inside the rectangle
-                )
-
-                // Draw the rectangle border
-                drawRoundRect(
-                    color = Color.Gray,
-                    topLeft = Offset(rectLeft, rectTop),
-                    size = Size(rectWidth, rectHeight),
-                    cornerRadius = CornerRadius(cornerRadius, cornerRadius),
-                    style = Stroke(width = 6f) // Wider border
-                )
-
-                // Update rectangle position in ViewModel
-                rectPositionViewModel.updateRectPosition(
-                    left = rectLeft,
-                    top = rectTop,
-                    right = rectLeft + rectWidth,
-                    bottom = rectTop + rectHeight
-                )
-            }
-
-            // Guide text below the rectangle
-            Text(
-                text = guideText,
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(top = 250.dp) // Adjust padding to align below rectangle
-            )
-        }
-    }
 
 
     private fun checkPermissions() {
