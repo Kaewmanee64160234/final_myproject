@@ -137,6 +137,7 @@ class ScanFrontActivity : AppCompatActivity() {
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
     private lateinit var model: ModelUnquant
 //    private lateinit var model: ModelBack
+    private var isPredicting = true
     private var isProcessing = false
     private var lastProcessedTime: Long = 0
     private var isFound = false
@@ -302,7 +303,6 @@ class ScanFrontActivity : AppCompatActivity() {
                                 // println("is Shutter")
                                  //bitmapToShow = cropToCreditCardAspectRatio()
 
-
                                  bitmapToShow = imageProxy.toBitmap()
 
                                  // Update รูปภาพ ที่นี่
@@ -319,8 +319,9 @@ class ScanFrontActivity : AppCompatActivity() {
                                      true // Apply smooth transformation
                                  )
 
-                                 // ถ้าภาพยังไม่ครบ 3 ภาพ
-                                 if (bitmapList.size < 3 ){
+                                 // ถ้าภาพยังไม่ครบ 3 ภาพ และ Dialog ไม่ได้แสดงอยู่
+
+                                 if (bitmapList.size < 3){
                                      // เพิ่มรูป Bitmap เข้า List จนกว่าจะครบ 3 รูป
                                      bitmapList.add(bitmapList.size,bitmapToShow!!)
                                      bitmapToJpg(bitmapToShow!!,context,"image${bitmapList.size.toString()}.jpg")
@@ -335,7 +336,8 @@ class ScanFrontActivity : AppCompatActivity() {
                                          // เสร็จแล้วแสดงภาพที่ชัดที่สุดออกมา
                                          showDialog = true
                                          isShutter = false
-
+                                         // พักการ Predict
+                                         isPredicting = false
                                          // รับ bitmap ภาพที่คมที่สุดเพื่อมา Process
                                           val sharpestBitmapMat = bitmapToMat(bitmapList[sharPestImageIndex])
 
@@ -371,8 +373,9 @@ class ScanFrontActivity : AppCompatActivity() {
                                      isTiming = false
 //                                     println("Cancelled Timer")
                                  }
-
-                                 processImageProxy(imageProxy)
+                                 if(isPredicting){
+                                     processImageProxy(imageProxy)
+                                 }
                              }
 
                              // ปิด Image Proxy หลัง Process เสร็จ
@@ -404,7 +407,7 @@ class ScanFrontActivity : AppCompatActivity() {
                 showDialog = false
                 // Clear Bitmap List หลังจากปิด Dialog
                 bitmapList.clear()
-                
+                isPredicting = true
                 //รีเซ็ต GuideText เมื่อปิด Dialog (ถ่ายใหม่)
                 cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
             }
