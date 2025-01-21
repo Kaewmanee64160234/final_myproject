@@ -6,9 +6,10 @@ import '../controllers/flow_detact_controller.dart';
 
 class FlowDetactView extends GetView<FlowDetactController> {
   const FlowDetactView({super.key});
-
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -22,7 +23,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
         backgroundColor: const Color.fromRGBO(3, 6, 80, 1),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(screenWidth * 0.04), // Dynamic padding
         child: Center(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -34,26 +35,26 @@ class FlowDetactView extends GetView<FlowDetactController> {
                   return Column(
                     children: [
                       CircleAvatar(
-                        radius: 50,
+                        radius: screenWidth * 0.15, // Responsive radius
                         backgroundImage: MemoryImage(
                           controller.card.value.getDecodedPortrait(),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: screenWidth * 0.04),
                       Text(
                         'LaserCode: ${controller.laserCodeOriginal.value}',
-                        style: const TextStyle(
-                          fontSize: 16,
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.04, // Responsive font size
                           fontWeight: FontWeight.bold,
                           color: Colors.blueAccent,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      _buildCardDetails(),
+                      SizedBox(height: screenWidth * 0.04),
+                      _buildCardDetails(context),
                     ],
                   );
                 } else {
-                  return _buildRegistrationSteps();
+                  return _buildRegistrationSteps(context);
                 }
               }),
             ],
@@ -61,7 +62,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
         ),
       ),
       bottomNavigationBar: Obx(() => Container(
-            child: _buildBottomNavigationBar(),
+            child: _buildBottomNavigationBar(context),
             color: controller.card.value.idNumber.isNotEmpty
                 ? Colors.white
                 : Colors.blueGrey[100],
@@ -69,59 +70,108 @@ class FlowDetactView extends GetView<FlowDetactController> {
     );
   }
 
-  Widget _buildCardDetails() {
+  Widget _buildCardDetails(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Card(
       elevation: 4,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'บัตรประชาชน (TH)',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const Divider(),
-          _buildInfoRow('Card ID:', controller.card.value.idNumber),
-          _buildInfoRow('Full Name (TH):', controller.card.value.th.fullName),
-          // Add more fields as needed...
-        ],
+      margin: EdgeInsets.all(screenWidth * 0.04), // Dynamic margins
+      child: Padding(
+        padding: EdgeInsets.all(screenWidth * 0.04), // Dynamic padding
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'บัตรประชาชน (TH)',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const Divider(),
+            _buildInfoRow('Card ID:', controller.card.value.idNumber),
+            _buildInfoRow('Prefix:', controller.card.value.th.prefix),
+            _buildInfoRow('Full Name (TH):', controller.card.value.th.fullName),
+            _buildInfoRow('First Name:', controller.card.value.th.name),
+            _buildInfoRow('Last Name:', controller.card.value.th.lastName),
+            _buildInfoRow(
+                'Date of Birth:', controller.card.value.th.dateOfBirth),
+            _buildInfoRow(
+                'Date of Issue:', controller.card.value.th.dateOfIssue),
+            _buildInfoRow(
+                'Date of Expiry:', controller.card.value.th.dateOfExpiry),
+            _buildInfoRow('Address:', controller.card.value.th.address.full),
+            SizedBox(height: screenWidth * 0.04),
+            const Text(
+              'บัตรประชาชน (EN)',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const Divider(),
+            _buildInfoRow('Card ID:', controller.card.value.idNumber),
+            _buildInfoRow('Prefix:', controller.card.value.en.prefix),
+            _buildInfoRow('Full Name (EN):', controller.card.value.en.fullName),
+            _buildInfoRow('First Name:', controller.card.value.en.name),
+            _buildInfoRow('Last Name:', controller.card.value.en.lastName),
+            _buildInfoRow(
+                'Date of Birth:', controller.card.value.en.dateOfBirth),
+            _buildInfoRow(
+                'Date of Issue:', controller.card.value.en.dateOfIssue),
+            _buildInfoRow(
+                'Date of Expiry:', controller.card.value.en.dateOfExpiry),
+            _buildInfoRow('Address:', controller.card.value.en.address.full),
+            // show similarity
+            SizedBox(height: screenWidth * 0.04),
+            const Text(
+              'Similarity',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const Divider(),
+            _buildInfoRow(
+              'Similarity:',
+              controller.similarity.value.toStringAsFixed(2),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildRegistrationSteps() {
+  Widget _buildRegistrationSteps(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Column(
       children: [
-        const SizedBox(height: 20),
+        SizedBox(height: screenWidth * 0.05),
         const Image(
           image: AssetImage('assets/images/data-protection.png'),
           width: 200,
           height: 200,
         ),
-        const SizedBox(height: 20),
-        const Text(
+        SizedBox(height: screenWidth * 0.05),
+        Text(
           "ขั้นตอนการลงทะเบียนด้วยตนเอง",
-          style: TextStyle(fontSize: 18),
+          style: TextStyle(fontSize: screenWidth * 0.05),
         ),
-        const SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: const [
-              StepWidget(step: 1, text: "ถ่ายภาพหน้บัตรประชาชน"),
-              StepWidget(step: 2, text: "ถ่ายภาพหน้าบัตรประชาชน"),
-              StepWidget(step: 3, text: "ถ่ายภาพหน้าตัวเอง"),
-              StepWidget(step: 4, text: "สร้างรหัส 8 หลัก"),
-            ],
-          ),
+        SizedBox(height: screenWidth * 0.05),
+        GridView.count(
+          crossAxisCount: screenWidth > 600 ? 4 : 2, // Responsive columns
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: const [
+            StepWidget(step: 1, text: "ถ่ายภาพหน้บัตรประชาชน"),
+            StepWidget(step: 2, text: "ถ่ายภาพหน้าบัตรประชาชน"),
+            StepWidget(step: 3, text: "ถ่ายภาพหน้าตัวเอง"),
+            StepWidget(step: 4, text: "สร้างรหัส 8 หลัก"),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildBottomNavigationBar() {
+  Widget _buildBottomNavigationBar(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return BottomAppBar(
       child: Container(
         color: Colors.white,
+        padding: EdgeInsets.symmetric(vertical: screenWidth * 0.04),
         child: Center(
           child: controller.card.value.idNumber.isEmpty
               ? ElevatedButton(
@@ -132,12 +182,13 @@ class FlowDetactView extends GetView<FlowDetactController> {
                     ),
                   ),
                   onPressed: controller.openCameraPage,
-                  child: const Text(
+                  child: Text(
                     'เริ่มต้น',
                     style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
+                      fontSize: screenWidth * 0.05,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 )
               : Row(
@@ -151,10 +202,10 @@ class FlowDetactView extends GetView<FlowDetactController> {
                         ),
                       ),
                       onPressed: controller.openScanFace,
-                      child: const Text(
+                      child: Text(
                         'ต่อไป',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: screenWidth * 0.05,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -167,10 +218,10 @@ class FlowDetactView extends GetView<FlowDetactController> {
                         ),
                       ),
                       onPressed: controller.clearDataForNewOCR,
-                      child: const Text(
+                      child: Text(
                         'Clear Data',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: screenWidth * 0.05,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
