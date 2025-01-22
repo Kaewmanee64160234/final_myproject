@@ -50,14 +50,20 @@ class HomeView extends GetView<HomeController> {
                   child: Row(
                     children: [
                       // image
-                      Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          image: const DecorationImage(
-                            image: AssetImage('assets/images/feedback.png'),
-                            fit: BoxFit.cover,
+                      GestureDetector(
+                        onTap: () {
+                          // Call the native method to open camera
+                          Get.toNamed(Routes.FLOW_DETACT);
+                        },
+                        child: Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            image: const DecorationImage(
+                              image: AssetImage('assets/images/feedback.png'),
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                       ),
@@ -65,30 +71,24 @@ class HomeView extends GetView<HomeController> {
                           width: 16), // Spacing between image and text
                       // text
                       Expanded(
-                        child: GestureDetector(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'ยืนยันตัวตนด้วยตนเอง',
-                                style: GoogleFonts.kanit(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'ยืนยันตัวตนด้วยตนเอง',
+                              style: GoogleFonts.kanit(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                               ),
-                              Text(
-                                'กรุณายืนยันตัวตนด้วยตนเอง โดยใช้บัตรประชาชน',
-                                style: GoogleFonts.kanit(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                ),
+                            ),
+                            Text(
+                              'กรุณายืนยันตัวตนด้วยตนเอง โดยใช้บัตรประชาชน',
+                              style: GoogleFonts.kanit(
+                                fontSize: 14,
+                                color: Colors.grey,
                               ),
-                            ],
-                          ),
-                          onTap: () {
-                            // Call the native method to open camera
-                            Get.toNamed(Routes.FLOW_DETACT);
-                          },
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -194,7 +194,7 @@ class StepWidget extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style:  GoogleFonts.kanit(
+              style: GoogleFonts.kanit(
                 fontSize: 16,
                 fontWeight: FontWeight.normal,
               ),
