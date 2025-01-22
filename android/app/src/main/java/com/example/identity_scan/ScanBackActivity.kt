@@ -14,7 +14,6 @@ import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -83,10 +82,7 @@ import java.util.concurrent.Executors
 import java.io.File
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import com.smarttoolfactory.screenshot.ScreenshotBox
-import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.identity_scan.ml.ModelUnquant
@@ -100,12 +96,12 @@ import org.opencv.imgproc.Imgproc
 import java.io.FileOutputStream
 import java.io.OutputStream
 import kotlin.math.pow
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.googlefonts.Font
+import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.text.style.TextAlign
 import org.opencv.imgcodecs.Imgcodecs
 
@@ -117,14 +113,12 @@ class ScanBackActivity: AppCompatActivity() {
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
     private var isPredicting = true
     private lateinit var model: ModelUnquant
-//    private lateinit var model: ModelBack
     private var isProcessing = false
     private var lastProcessedTime: Long = 0
     private var isFound = false
     private lateinit var flutterEngine: FlutterEngine
     private lateinit var methodChannel: MethodChannel
     private val CHANNEL = "camera"
-    private val dbHelper = DatabaseHelper(this)
     private var isTiming = false
     // นับภาพที่ Capture จาก 1
     // จัดเก็บ Bitmap ของรูปภาพทั้ง 5
@@ -132,8 +126,7 @@ class ScanBackActivity: AppCompatActivity() {
     private var sharPestImageIndex = 0
     private lateinit var mat: Mat
     private var pathFinal = ""
-
-
+    private lateinit var fontKanit : FontFamily
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -148,6 +141,22 @@ class ScanBackActivity: AppCompatActivity() {
         } else {
             Log.d("OpenCV", "OpenCV initialization successful")
         }
+
+        val provider = GoogleFont.Provider(
+            providerAuthority = "com.google.android.gms.fonts",
+            providerPackage = "com.google.android.gms",
+            certificates = R.array.com_google_android_gms_fonts_certs
+        )
+
+        val fontName = GoogleFont("Kanit")
+
+        fontKanit = FontFamily(
+            Font(
+                googleFont = fontName,
+                fontProvider = provider,
+                weight = FontWeight.Bold,
+            )
+        )
 
         // Initialize FlutterEngine manually
         flutterEngine = FlutterEngine(this)
@@ -205,22 +214,43 @@ class ScanBackActivity: AppCompatActivity() {
                                 }
                             )
                         }
-
-                        // Cancel button
-//                        Button(
-//                            onClick = { cancelProcess() },
-//                            colors = ButtonDefaults.buttonColors(Color.Red),
-//                            modifier = Modifier.padding(bottom = 16.dp) // Bottom padding for button
-//                        ) {
-//                            Text(
-//                                text = "ยกเลิก",
-//                                color = Color.White,
-//                                fontSize = 16.sp
-//                            )
-//                        }
                     }
                 }
             }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        cameraExecutor.shutdown()
+
+        // ปลด ModelDetectCard
+        model.close()
+
+        // ปลด FlutterEngine
+        flutterEngine.destroy()
+    }
+
+    private fun checkPermissions() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 0)
+        }
+    }
+
+    private fun checkAndRequestCameraPermission() {
+        if (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+            } else {
+                TODO("VERSION.SDK_INT < M")
+            }
+        ) {
+            Log.d("NativeDemo", "Permission not granted. Requesting permission.")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
+            }
+        } else {
+            Log.d("NativeDemo", "Permission already granted. Proceeding with photo capture.")
+            // capturePhoto()
         }
     }
 
@@ -298,6 +328,7 @@ class ScanBackActivity: AppCompatActivity() {
 
             // Guide text below the rectangle
             Text(
+                fontFamily = fontKanit,
                 text = cameraViewModel.guideText,
                 color = Color.White,
                 fontSize = 18.sp,
@@ -310,20 +341,8 @@ class ScanBackActivity: AppCompatActivity() {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        cameraExecutor.shutdown()
-
-        // ปลด ModelDetectCard
-        model.close()
-
-        // ปลด FlutterEngine
-        flutterEngine.destroy()
-    }
-
     @Composable
     fun CameraPreview(modifier: Modifier = Modifier) {
-        val screenshotState = rememberScreenshotState()
         var bitmapToShow by remember { mutableStateOf<Bitmap?>(null) }
         var isShutter by remember { mutableStateOf(false) }
         var showDialog by remember { mutableStateOf(false) }
@@ -341,7 +360,6 @@ class ScanBackActivity: AppCompatActivity() {
             }
         }
 
-        ScreenshotBox(screenshotState = screenshotState) {
             AndroidView(
                 factory = { ctx ->
                     val previewView = PreviewView(ctx)
@@ -352,12 +370,6 @@ class ScanBackActivity: AppCompatActivity() {
 
                         val preview = Preview.Builder()
                             .build()
-
-                        // For High end device
-                        // android.util.Size(1080, 1440),
-                        // Mid-Low End
-                        // android.util.Size(720, 960),
-                        //
 
                         val resolutionSelector1 = ResolutionSelector.Builder()
                             .setResolutionStrategy(
@@ -419,13 +431,6 @@ class ScanBackActivity: AppCompatActivity() {
                                           val sharpestBitmapMat = bitmapToMat(bitmapList[sharPestImageIndex])
 
                                          // คำนวณเพื่อเตรียม Processing
-//                                       
-//                                         val bitmap = BitmapFactory.decodeFile("/storage/emulated/0/Android/data/com.example.identity_scan/files/images/frontCardOriginal.png")
-
-//                                         val matfromstorage = bitmapToMat(bitmap)
-//                                         val contrastValue = calculateContrast(matfromstorage)
-//                                         val resolutionValue = calculateResolution(matfromstorage)
-//                                         val snrValue = calculateSNR(matfromstorage)
 
                                          val contrastValue = calculateContrast(sharpestBitmapMat)
                                          val resolutionValue = calculateResolution(sharpestBitmapMat)
@@ -439,13 +444,9 @@ class ScanBackActivity: AppCompatActivity() {
                                          // บันทึกลง Storage
                                          saveMatToStorage(context,processedMat,"backCardProcessed")
 
-
                                      }
                                  }
-//                                การ Print ขนาดของ Image Proxy
-//                               val imageWidth = imageProxy.width
-//                               val imageHeight = imageProxy.height
-//                               println("Image Resolution: $imageWidth x $imageHeight")
+
                              }else{
                                  if (isFound){
                                      if (!isTiming){
@@ -455,13 +456,11 @@ class ScanBackActivity: AppCompatActivity() {
                                  }else{
                                      timer.cancel()
                                      isTiming = false
-//                                     println("Cancelled Timer")
                                  }
                                  if(isPredicting){
                                     processImageProxy(imageProxy)
                                 }
                              }
-
                              // ปิด Image Proxy หลัง Process เสร็จ
                              imageProxy.close()
                          }
@@ -483,7 +482,6 @@ class ScanBackActivity: AppCompatActivity() {
                     .fillMaxWidth()
                     .aspectRatio(4f / 3f)
             )
-        }
 
         // Show Dialog
         if (showDialog && bitmapToShow != null) {
@@ -603,6 +601,7 @@ class ScanBackActivity: AppCompatActivity() {
                     ) {
                         // Title Text
                         Text(
+                            fontFamily = fontKanit,
                             text = "ยืนยันข้อมูล",
                             color = Color(0xFF2D3892), // Stylish blue title
                             fontSize = 22.sp, // Larger font size for prominence
@@ -612,6 +611,7 @@ class ScanBackActivity: AppCompatActivity() {
 
                         // Subtitle
                         Text(
+                            fontFamily = fontKanit,
                             text = "กรุณาตรวจสอบความชัดเจนของภาพบัตร",
                             color = Color.Gray,
                             fontSize = 14.sp,
@@ -648,6 +648,7 @@ class ScanBackActivity: AppCompatActivity() {
                                     .border(2.dp, Color.Gray, RoundedCornerShape(24.dp))
                             ) {
                                 Text(
+                                    fontFamily = fontKanit,
                                     text = "ถ่ายใหม่",
                                     color = Color.Black,
                                     fontSize = 16.sp,
@@ -667,6 +668,7 @@ class ScanBackActivity: AppCompatActivity() {
                                     .border(2.dp, Color(0xFF2D3892), RoundedCornerShape(24.dp)) // Border matches button color
                             ) {
                                 Text(
+                                    fontFamily = fontKanit,
                                     text = "ยืนยัน",
                                     color = Color.White,
                                     fontSize = 16.sp,
@@ -689,12 +691,14 @@ class ScanBackActivity: AppCompatActivity() {
             onDismissRequest = { onDismiss() },
             title = {
                 Text(
+                    fontFamily = fontKanit,
                     text = "Confirmation",
                     style = androidx.compose.material.MaterialTheme.typography.h6
                 )
             },
             text = {
                 Text(
+                    fontFamily = fontKanit,
                     text = "Are you sure you want to cancel and go back?",
                     style = androidx.compose.material.MaterialTheme.typography.body2
                 )
@@ -704,7 +708,10 @@ class ScanBackActivity: AppCompatActivity() {
                     onClick = { onConfirm() },
                     colors = ButtonDefaults.buttonColors()
                 ) {
-                    Text(text = "Yes", color = Color.White)
+                    Text(
+                        fontFamily = fontKanit,
+                        text = "Yes", color = Color.White
+                    )
                 }
             },
             dismissButton = {
@@ -712,7 +719,10 @@ class ScanBackActivity: AppCompatActivity() {
                     onClick = { onDismiss() },
                     colors = ButtonDefaults.buttonColors()
                 ) {
-                    Text(text = "No", color = Color.White)
+                    Text(
+                        fontFamily = fontKanit,
+                        text = "No", color = Color.White
+                    )
                 }
             },
             backgroundColor = Color.White,
@@ -932,56 +942,6 @@ class ScanBackActivity: AppCompatActivity() {
         return glarePercentage
     }
 
-
-
-//    private fun preprocessing(snr: Double, contrast: Double, resolution: String, inputMat: Mat): Mat {
-//        val (width, height) = resolution.split("x").map { it.toInt() }
-//        val minResolution = 500 // Minimum acceptable resolution for OCR
-//        val snrThreshold = 10.0 // Minimum SNR threshold
-//        val contrastThreshold = 50.0 // Minimum contrast threshold
-//
-//        if (width < minResolution || height < minResolution) {
-//            println("Image resolution is too low ($resolution). Skipping preprocessing.")
-//            return inputMat // Return the original image if resolution is insufficient
-//        }
-//
-//        return if (snr < snrThreshold || contrast < contrastThreshold) {
-//            println("Image quality is medium (SNR: $snr, Contrast: $contrast). Applying preprocessing...")
-//
-//            // Clone the original Mat to avoid modifying it directly
-//            var processedMat = inputMat.clone()
-//
-//            // Ensure the input is in the correct color format
-//            // ต้องคอมเมนต์ไว้เพราะจะทำให้สีเพื้ยนเมื่อใช้กับ ImageProxy
-////            if (processedMat.type() != CvType.CV_8UC3) {
-////                Imgproc.cvtColor(processedMat, processedMat, Imgproc.COLOR_RGBA2BGR)
-////            }
-//
-//            if (inputMat.type() != CvType.CV_8UC1 && inputMat.type() != CvType.CV_8UC3) {
-//                println("Input Mat type (${inputMat.type()}) is not supported. Converting to CV_8UC3...")
-//                Imgproc.cvtColor(inputMat, inputMat, Imgproc.COLOR_RGBA2BGR)
-//            }
-//
-//            // Step 1: Adjust gamma for luminance enhancement
-//            processedMat = applyGammaCorrection(processedMat, gamma = 1.8)
-//
-//            // Step 2: Apply bilateral filter for noise reduction while preserving edges
-//            processedMat = reduceNoiseWithBilateral(processedMat)
-//
-//            // Step 3: Apply median filter for further noise reduction
-//            processedMat = reduceNoiseWithMedian(processedMat)
-//
-//            // Step 4: Apply unsharp mask to enhance sharpness without affecting colors
-//            processedMat = enhanceSharpenUnsharpMask(processedMat)
-//
-//            println("Preprocessing completed.")
-//            processedMat
-//        } else {
-//            println("Image quality is sufficient (SNR: $snr, Contrast: $contrast). Skipping preprocessing.")
-//            inputMat // Return the original image if quality is sufficient
-//        }
-//    }
-
     // ฟังก์ชันหลักในการประมวลผลภาพ
     private fun preprocessing(snr: Double, contrast: Double, resolution: String, inputMat: Mat): Mat {
         val (width, height) = resolution.split("x").map { it.toInt() }
@@ -1013,7 +973,6 @@ class ScanBackActivity: AppCompatActivity() {
             processedMat = applyGammaCorrection(processedMat, gamma = 1.8)
 
             processedMat = reduceNoiseWithBilateral(processedMat)
-
 
             processedMat = enhanceSharpenUnsharpMask(processedMat)
 
@@ -1140,109 +1099,6 @@ class ScanBackActivity: AppCompatActivity() {
             e.printStackTrace()
             println("Failed to save image: ${e.message}")
             false
-        }
-    }
-
-
-
-    @Composable
-    fun CameraWithOverlay(modifier: Modifier = Modifier, guideText: String) {
-        Box(modifier = modifier) {
-            // Camera Preview filling the whole screen
-            CameraPreview(modifier = Modifier.fillMaxSize())
-
-            Text(
-                text = guideText,
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .align(Alignment.Center)
-            )
-
-//            Text(
-//                text = "BrightnessValue ${cameraViewModel.brightnessValueText}",
-//                color = Color.White,
-//                fontSize = 24.sp,
-//                fontWeight = FontWeight.Bold,
-//                modifier = Modifier.align(Alignment.BottomCenter)
-//            )
-//
-//
-//            Text(
-//                text = "GlareValue ${cameraViewModel.glareValueText}",
-//                color = Color.White,
-//                fontSize = 24.sp,
-//                fontWeight = FontWeight.Bold,
-//                modifier = Modifier
-//                    .align(Alignment.BottomCenter)
-//                    .padding(20.dp) // Add 20dp padding
-//            )
-//            Text(
-//                text = "GlareValue ${cameraViewModel.snrValueText}",
-//                color = Color.White,
-//                fontSize = 24.sp,
-//                fontWeight = FontWeight.Bold,
-//                modifier = Modifier
-//                    .align(Alignment.BottomCenter)
-//                    .padding(20.dp) // Add 20dp padding
-//            )
-
-
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                // ขนาดบัตรเครดิตในอัตราส่วน
-                val creditCardAspectRatio = 3.37f / 2.125f // อัตราส่วน 3.37:2.125
-
-                // ใช้ขนาดของหน้าจอในการคำนวณขนาดกรอบ
-                val rectWidth = size.width * 0.7f // ขนาดความกว้างของกรอบเป็น 70% ของความกว้างหน้าจอ
-                val rectHeight = rectWidth / creditCardAspectRatio // คำนวณความสูงจากอัตราส่วนของบัตรเครดิต
-
-                // ทำให้กรอบอยู่ตรงกลาง
-                val rectLeft = (size.width - rectWidth) / 2
-                val rectTop = (size.height - rectHeight) / 2
-
-                val cornerRadius = 16.dp.toPx() // กำหนดขนาดมุมโค้ง
-
-                // คำนวณค่าของ right และ bottom
-                val rectRight = rectLeft + rectWidth
-                val rectBottom = rectTop + rectHeight
-
-
-                // วาดกรอบด้วยมุมโค้ง
-                drawRoundRect(
-                    color = Color.Gray,
-                    topLeft = Offset(rectLeft, rectTop),
-                    size = Size(rectWidth, rectHeight),
-                    cornerRadius = CornerRadius(cornerRadius, cornerRadius),
-                    style = Stroke(width = 4f) // กำหนดความหนาของเส้นขอบ
-                )
-
-                rectPositionViewModel.updateRectPosition(rectLeft, rectTop, rectRight, rectBottom)
-            }
-        }
-    }
-
-    private fun checkPermissions() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 0)
-        }
-    }
-
-
-    private fun checkAndRequestCameraPermission() {
-        if (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
-            } else {
-                TODO("VERSION.SDK_INT < M")
-            }
-        ) {
-            Log.d("NativeDemo", "Permission not granted. Requesting permission.")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
-            }
-        } else {
-            Log.d("NativeDemo", "Permission already granted. Proceeding with photo capture.")
-            // capturePhoto()
         }
     }
 }
