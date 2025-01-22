@@ -7,6 +7,7 @@ abstract class Routes {
   static const FLOW_DETACT = _Paths.FLOW_DETACT;
   static const MAPPING_FACE = _Paths.MAPPING_FACE;
   static const RESULT_OCR = _Paths.RESULT_OCR;
+  static const OCR_RESULT = _Paths.OCR_RESULT;
 }
 
 abstract class _Paths {
@@ -15,4 +16,5 @@ abstract class _Paths {
   static const FLOW_DETACT = '/flow-detact';
   static const MAPPING_FACE = '/mapping-face';
   static const RESULT_OCR = '/result-ocr';
+  static const OCR_RESULT = '/ocr-result';
 }

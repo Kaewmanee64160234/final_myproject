@@ -66,6 +66,24 @@ class FlowDetactController extends GetxController {
   var dateOfBirthEn = ''.obs;
   var dateOfIssueEn = ''.obs;
   var dateOfExpiryEn = ''.obs;
+  // error message for validate
+  var idNumberError = ''.obs;
+  var fullNameError = ''.obs;
+  var prefixError = ''.obs;
+  var firstNameError = ''.obs;
+  var lastNameError = ''.obs;
+  var dateOfBirthError = ''.obs;
+  var dateOfIssueError = ''.obs;
+  var dateOfExpiryError = ''.obs;
+  var religionError = ''.obs;
+  var addressError = ''.obs;
+  var prefixEnError = ''.obs;
+  var firstNameEnError = ''.obs;
+  var lastNameEnError = ''.obs;
+  var dateOfBirthEnError = ''.obs;
+  var dateOfIssueEnError = ''.obs;
+  var dateOfExpiryEnError = ''.obs;
+  var laserCodeError = ''.obs;
 
   final ApiOcrCreditCardService apiOcrCreditCardService = Get.find();
   static const platform = MethodChannel('native_function');
@@ -75,6 +93,8 @@ class FlowDetactController extends GetxController {
   var similarity = 0.0.obs;
   var isApiActive = false.obs;
   final imageFromCameraBase64 = "".obs;
+  // isValid
+  var isValid = false.obs;
 
   @override
   void onInit() {
@@ -109,7 +129,6 @@ class FlowDetactController extends GetxController {
       print("Result from OpenCV: $result");
     } catch (e) {
       print("Error opening OpenCV view: $e");
-      Get.snackbar("Error", "Failed to open OpenCV view.");
     }
   }
 
@@ -261,19 +280,14 @@ class FlowDetactController extends GetxController {
           dateOfBirthEn.value = card.value.en.dateOfBirth;
           dateOfIssueEn.value = card.value.en.dateOfIssue;
           dateOfExpiryEn.value = card.value.en.dateOfExpiry;
-
-          Get.snackbar("Success", "OCR for processed image completed.");
         } else {
           print("Error: Processed image file does not exist.");
-          Get.snackbar("Error", "Processed image file not found.");
         }
       } else {
-        Get.snackbar("Error", "No processed image path received.");
         print("Error: No processed image path received.");
       }
       isLoading.value = false;
     } catch (e) {
-      Get.snackbar("Error", "Failed to send processed image to OCR: $e");
       print("Error: Failed to send processed image to OCR: $e");
     } finally {
       isLoading.value = false;
@@ -306,19 +320,15 @@ class FlowDetactController extends GetxController {
           laserCodeOriginal.value = res;
           // set data
           laserCodeOriginal.value = card.value.laserCode;
-
-          Get.snackbar("Success", "OCR for processed image completed.");
+          Get.offNamed(Routes.OCR_RESULT);
         } else {
           print("Error: Processed image file does not exist.");
-          Get.snackbar("Error", "Processed image file not found.");
         }
       } else {
-        Get.snackbar("Error", "No processed image path received.");
         print("Error: No processed image path received.");
       }
       isLoading.value = false; // Reset loading state
     } catch (e) {
-      Get.snackbar("Error", "Failed to send processed image to OCR: $e");
       print("Error: Failed to send processed image to OCR: $e");
     } finally {
       isLoading.value = false; // Reset loading state
@@ -334,7 +344,6 @@ class FlowDetactController extends GetxController {
       print("Similarity: $res");
       similarity.value = res;
     } catch (e) {
-      Get.snackbar("Error", "Failed to compare similarity: $e");
       print("Error: Failed to compare similarity: $e");
     } finally {
       isLoading.value = false;
@@ -345,5 +354,142 @@ class FlowDetactController extends GetxController {
   // imageFromCameraBase64 as Uint8List
   getDecodedPortrait() {
     return base64Decode(imageFromCameraBase64.value);
+  }
+
+  bool validateIdCard(String idNumber) {
+    // Check length and if it's numeric
+    if (idNumber.length != 13 || int.tryParse(idNumber) == null) {
+      return false;
+    }
+
+    // Convert to list of digits
+    List<int> digits = idNumber.split('').map(int.parse).toList();
+
+    // Split into main digits and check digit
+    List<int> mainDigits = digits.sublist(0, 12);
+    int checkDigit = digits[12];
+
+    // Calculate the total sum
+    int total = 0;
+    for (int i = 0; i < mainDigits.length; i++) {
+      total += mainDigits[i] * (13 - i);
+    }
+
+    // Calculate remainder and expected check digit
+    int remainder = total % 11;
+    int calculatedCheckDigit = (11 - remainder) % 10;
+
+    // Compare calculated check digit with the actual check digit
+    return calculatedCheckDigit == checkDigit;
+  }
+
+  String? validateField(String value, {required String fieldName}) {
+    if (value.isEmpty) return '$fieldName is required';
+    if (fieldName == 'Card ID' && value.length < 13) {
+      return 'Card ID must be at least 13 characters';
+    }
+    if (fieldName == 'Date of Birth' &&
+        !RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(value)) {
+      return 'Date of Birth must be in DD/MM/YYYY format';
+    }
+    return null; // No errors
+  }
+
+  void validateFields() {
+    // clear error message
+    idNumberError.value = '';
+    fullNameError.value = '';
+    prefixError.value = '';
+    firstNameError.value = '';
+    lastNameError.value = '';
+    dateOfBirthError.value = '';
+    dateOfIssueError.value = '';
+    dateOfExpiryError.value = '';
+    religionError.value = '';
+    addressError.value = '';
+    prefixEnError.value = '';
+    firstNameEnError.value = '';
+    lastNameEnError.value = '';
+    dateOfBirthEnError.value = '';
+    dateOfIssueEnError.value = '';
+    dateOfExpiryEnError.value = '';
+    laserCodeError.value = '';
+
+    // validate
+    if (idNumber.value.isEmpty) {
+      idNumberError.value = 'Card ID is required';
+    }
+    if (validateIdCard(idNumber.value) == false) {
+      idNumberError.value = 'Card ID is invalid';
+    }
+    if (fullName.value.isEmpty) {
+      fullNameError.value = 'Full Name is required';
+    }
+    if (prefix.value.isEmpty) {
+      prefixError.value = 'Prefix is required';
+    }
+    if (firstName.value.isEmpty) {
+      firstNameError.value = 'First Name is required';
+    }
+    if (lastName.value.isEmpty) {
+      lastNameError.value = 'Last Name is required';
+    }
+    if (dateOfBirth.value.isEmpty) {
+      dateOfBirthError.value = 'Date of Birth is required';
+    }
+    if (dateOfIssue.value.isEmpty) {
+      dateOfIssueError.value = 'Date of Issue is required';
+    }
+    if (dateOfExpiry.value.isEmpty) {
+      dateOfExpiryError.value = 'Date of Expiry is required';
+    }
+    if (religion.value.isEmpty) {
+      religionError.value = 'Religion is required';
+    }
+    if (address.value.isEmpty) {
+      addressError.value = 'Address is required';
+    }
+    if (prefixEn.value.isEmpty) {
+      prefixEnError.value = 'Prefix is required';
+    }
+    if (firstNameEn.value.isEmpty) {
+      firstNameEnError.value = 'First Name is required';
+    }
+    if (lastNameEn.value.isEmpty) {
+      lastNameEnError.value = 'Last Name is required';
+    }
+    if (dateOfBirthEn.value.isEmpty) {
+      dateOfBirthEnError.value = 'Date of Birth is required';
+    }
+    if (dateOfIssueEn.value.isEmpty) {
+      dateOfIssueEnError.value = 'Date of Issue is required';
+    }
+    if (dateOfExpiryEn.value.isEmpty) {
+      dateOfExpiryEnError.value = 'Date of Expiry is required';
+    }
+    if (laserCodeOriginal.value.isEmpty) {
+      laserCodeError.value = 'Laser Code is required';
+    }
+    if (idNumberError.value.isEmpty &&
+        fullNameError.value.isEmpty &&
+        prefixError.value.isEmpty &&
+        firstNameError.value.isEmpty &&
+        lastNameError.value.isEmpty &&
+        dateOfBirthError.value.isEmpty &&
+        dateOfIssueError.value.isEmpty &&
+        dateOfExpiryError.value.isEmpty &&
+        religionError.value.isEmpty &&
+        addressError.value.isEmpty &&
+        prefixEnError.value.isEmpty &&
+        firstNameEnError.value.isEmpty &&
+        lastNameEnError.value.isEmpty &&
+        dateOfBirthEnError.value.isEmpty &&
+        dateOfIssueEnError.value.isEmpty &&
+        dateOfExpiryEnError.value.isEmpty &&
+        laserCodeError.value.isEmpty) {
+      isValid.value = true;
+    } else {
+      isValid.value = false;
+    }
   }
 }
