@@ -30,72 +30,63 @@ class FlowDetactView extends GetView<FlowDetactController> {
         backgroundColor: const Color.fromRGBO(3, 6, 80, 1),
       ),
       body: Obx(() {
-        // ถ้า isLoading เป็น true แสดง loading indicator
-        if (controller.isLoading.value &&
-            controller.card.value.laserCode.isEmpty &&
-            controller.card.value.idNumber.isEmpty &&
-            controller.isApiActive.value) {
+        // Show loading indicator while API is active and data is still loading
+        if (controller.isLoading.value || controller.isApiActive.value) {
           return Center(
             child: CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
             ),
           );
         }
-        // ถ้า isLoading เป็น false แสดง SingleChildScrollView
-        else {
-          return SingleChildScrollView(
-            padding: EdgeInsets.all(screenWidth * 0.04), // Dynamic padding
-            child: Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // แสดงรายละเอียดหากไม่มีการโหลด
-                  if (controller.idNumber.isNotEmpty &&
-                      controller.laserCodeOriginal.value.isNotEmpty &&
-                      !controller.isLoading.value)
-                    Column(
-                      children: [
-                        // ตรวจสอบความถูกต้องของข้อมูล
-                        Text(
-                          'โปรดตรวจสอบความถูกต้องของข้อมูล',
-                          style: GoogleFonts.kanit(
-                            fontSize: screenWidth * 0.05,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: screenWidth * 0.04),
-                        CircleAvatar(
-                          radius: screenWidth * 0.15, // Responsive radius
-                          backgroundImage: MemoryImage(
-                            controller.card.value.getDecodedPortrait(),
-                          ),
-                        ),
-                        SizedBox(height: screenWidth * 0.04),
-                        Divider(),
-                        Text(
-                          'รายละเอียดบัตรประชาชน',
-                          style: GoogleFonts.kanit(
-                            fontSize: screenWidth * 0.05,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        _buildCardDetails(),
-                      ],
-                    )
-                  else
-                    _buildRegistrationSteps(
-                        context), // หากไม่มี card ID ให้แสดงขั้นตอนการลงทะเบียน
-                ],
-              ),
-            ),
-          );
+
+        // Show registration steps when the app starts, and data is not yet loaded
+        if (controller.idNumber.isEmpty ||
+            controller.laserCodeOriginal.value.isEmpty) {
+          return _buildRegistrationSteps(context);
         }
+
+        // Show content in a SingleChildScrollView when data is loaded
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(screenWidth * 0.04), // Dynamic padding
+          child: Center(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'โปรดตรวจสอบความถูกต้องของข้อมูล',
+                  style: GoogleFonts.kanit(
+                    fontSize: screenWidth * 0.05,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: screenWidth * 0.04),
+                CircleAvatar(
+                  radius: screenWidth * 0.15, // Responsive radius
+                  backgroundImage: MemoryImage(
+                    controller.card.value.getDecodedPortrait(),
+                  ),
+                ),
+                SizedBox(height: screenWidth * 0.04),
+                const Divider(),
+                Text(
+                  'รายละเอียดบัตรประชาชน',
+                  style: GoogleFonts.kanit(
+                    fontSize: screenWidth * 0.05,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                _buildCardDetails(),
+              ],
+            ),
+          ),
+        );
       }),
       bottomNavigationBar: Obx(() {
+        // Display an empty SizedBox during loading
         if (controller.isLoading.value) {
-          // ใส่เป็น sizedbox แทน Container เพราะใส่ Container แล้วมีปัญหา
-          return SizedBox();
+          return const SizedBox();
         } else {
+          // Display bottom navigation bar after data is loaded
           return _buildBottomNavigationBar(context);
         }
       }),

@@ -313,6 +313,7 @@ class FlowDetactController extends GetxController {
 
           final res = await apiOcrCreditCardService
               .uploadBase64ImageBack(processedImageBase64);
+
           print("OCR Processed Image Success: $res");
           print("isApiActive: $isApiActive.value");
 
@@ -320,6 +321,7 @@ class FlowDetactController extends GetxController {
 
           card.value.laserCode = res;
           laserCodeOriginal.value = res;
+          isApiActive.value = false;
           // set data
           laserCodeOriginal.value = card.value.laserCode;
         } else {
