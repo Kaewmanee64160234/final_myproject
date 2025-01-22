@@ -6,10 +6,12 @@ import 'package:get/get.dart';
 import 'package:identity_scan/app/data/models/card_type.dart';
 import 'package:identity_scan/app/data/models/receive_data.dart';
 import 'package:identity_scan/app/data/models/services/api_ocr_credit_card_service.dart';
+import 'package:identity_scan/app/modules/mapping_face/controllers/mapping_face_controller.dart';
 import 'package:identity_scan/app/routes/app_pages.dart';
 
 class FlowDetactController extends GetxController {
   final count = 0.obs;
+
   final card = Rx<ID_CARD>(ID_CARD(
     idNumber: '',
     th: ID_CARD_DETAIL(
@@ -346,7 +348,8 @@ class FlowDetactController extends GetxController {
       print("Error: Failed to compare similarity: $e");
     } finally {
       isLoading.value = false;
-      Get.toNamed(Routes.MAPPING_FACE);
+      Get.find<MappingFaceController>().similarity.value = similarity.value;
+      Get.offAllNamed(Routes.MAPPING_FACE);
     }
   }
 

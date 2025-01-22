@@ -15,8 +15,10 @@ class MappingFaceView extends GetView<MappingFaceController> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MappingFaceView'),
+        title: const Text('ค่าความคล้ายคลึง'),
         centerTitle: true,
+        backgroundColor: const Color.fromRGBO(45, 56, 146, 1),
+        foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         child: Column(

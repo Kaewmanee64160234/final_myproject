@@ -9,8 +9,8 @@ class MappingFaceBinding extends Bindings {
     Get.lazyPut<MappingFaceController>(
       () => MappingFaceController(),
     );
-    Get.lazyPut<FlowDetactController>(
-      () => FlowDetactController(),
+    Get.put<FlowDetactController>(
+      FlowDetactController(),
     );
   }
 }

@@ -116,56 +116,56 @@ class FlowDetactView extends GetView<FlowDetactController> {
           'Prefix',
           controller.prefix,
           error: controller.prefixError,
-          isDisabled: true,
+          isDisabled: false,
         ),
         // first name
         _buildEditableRow(
           'First Name',
           controller.firstName,
           error: controller.firstNameError,
-          isDisabled: true,
+          isDisabled: false,
         ),
         // last name
         _buildEditableRow(
           'Last Name',
           controller.lastName,
           error: controller.lastNameError,
-          isDisabled: true,
+          isDisabled: false,
         ),
         // date of birth
         _buildEditableRow(
           'Date of Birth',
           controller.dateOfBirth,
           error: controller.dateOfBirthError,
-          isDisabled: true,
+          isDisabled: false,
         ),
         // date of issue
         _buildEditableRow(
           'Date of Issue',
           controller.dateOfIssue,
           error: controller.dateOfIssueError,
-          isDisabled: true,
+          isDisabled: false,
         ),
         // date of expiry
         _buildEditableRow(
           'Date of Expiry',
           controller.dateOfExpiry,
           error: controller.dateOfExpiryError,
-          isDisabled: true,
+          isDisabled: false,
         ),
         // religion
         _buildEditableRow(
           'Religion',
           controller.religion,
           error: controller.religionError,
-          isDisabled: true,
+          isDisabled: false,
         ),
         // address
         _buildEditableRow(
           'Address',
           controller.address,
           error: controller.addressError,
-          isDisabled: true,
+          isDisabled: false,
         ),
         Divider(),
         // header eng
@@ -183,42 +183,42 @@ class FlowDetactView extends GetView<FlowDetactController> {
           'Prefix',
           controller.prefixEn,
           error: controller.prefixEnError,
-          isDisabled: true,
+          isDisabled: false,
         ),
         // first name
         _buildEditableRow(
           'First Name',
           controller.firstNameEn,
           error: controller.firstNameEnError,
-          isDisabled: true,
+          isDisabled: false,
         ),
         // last name
         _buildEditableRow(
           'Last Name',
           controller.lastNameEn,
           error: controller.lastNameEnError,
-          isDisabled: true,
+          isDisabled: false,
         ),
         // date of birth
         _buildEditableRow(
           'Date of Birth',
           controller.dateOfBirthEn,
           error: controller.dateOfBirthEnError,
-          isDisabled: true,
+          isDisabled: false,
         ),
         // date of issue
         _buildEditableRow(
           'Date of Issue',
           controller.dateOfIssueEn,
           error: controller.dateOfIssueEnError,
-          isDisabled: true,
+          isDisabled: false,
         ),
         // date of expiry
         _buildEditableRow(
           'Date of Expiry',
           controller.dateOfExpiryEn,
           error: controller.dateOfExpiryEnError,
-          isDisabled: true,
+          isDisabled: false,
         ),
       ],
     );
