@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:identity_scan/app/modules/home/views/home_view.dart';
+import 'package:identity_scan/app/routes/app_pages.dart';
 
 import '../controllers/flow_detact_controller.dart';
 
@@ -373,37 +374,30 @@ class FlowDetactView extends GetView<FlowDetactController> {
             child: Obx(() {
               if (controller.similarity.value != 0) {
                 // Congratulatory message with Clear Data button
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(height: screenWidth * 0.02),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.1,
-                          vertical: screenWidth * 0.03, // Dynamic padding
-                        ),
+                return ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      onPressed: () {
-                        controller.clearDataForNewOCR();
-                        controller.isApiActive.value = true;
-                      },
-                      child: Text(
-                        'Clear Data for Restart',
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.04,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.1,
+                        vertical: screenWidth * 0.03, // Dynamic padding
                       ),
                     ),
-                  ],
-                );
-              } else if (controller.idNumber.isEmpty) {
+                    onPressed: () {
+                      Get.toNamed(Routes.RESULT_OCR);
+                    },
+                    child: Text(
+                      'Continue',
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ));
+              } else if (controller.idNumber.isEmpty &&
+                  controller.similarity.value == 0) {
                 // Start button
                 return ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -427,6 +421,43 @@ class FlowDetactView extends GetView<FlowDetactController> {
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
+                  ),
+                );
+              } else if (controller.similarity.value != 0 &&
+                  controller.similarity.value < 0.98) {
+                // Continue and Clear Data buttons
+                return Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.15,
+                            vertical: screenWidth * 0.03, // Dynamic padding
+                          ),
+                        ),
+                        onPressed: () {
+                          controller.validateFields();
+                          if (controller.isValid.value) {
+                            Get.toNamed(Routes.RESULT_OCR);
+                          }
+                        },
+                        child: Text(
+                          'ยืนยัน', // "Next"
+                          style: GoogleFonts.kanit(
+                            fontSize: screenWidth * 0.04,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: screenWidth * 0.02),
+                    ],
                   ),
                 );
               } else {

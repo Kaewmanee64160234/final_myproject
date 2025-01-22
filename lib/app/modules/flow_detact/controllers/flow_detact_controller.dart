@@ -348,8 +348,7 @@ class FlowDetactController extends GetxController {
       print("Error: Failed to compare similarity: $e");
     } finally {
       isLoading.value = false;
-      Get.find<MappingFaceController>().similarity.value = similarity.value;
-      Get.offAllNamed(Routes.MAPPING_FACE);
+      Get.toNamed(Routes.MAPPING_FACE);
     }
   }
 

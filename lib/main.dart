@@ -5,10 +5,9 @@ import 'package:get/get.dart';
 
 import 'app/routes/app_pages.dart';
 
-
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
-           
+
   runApp(
     GetMaterialApp(
       title: "Application",
