@@ -25,6 +25,8 @@ import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -79,6 +81,7 @@ import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.graphics.BlendMode
 import com.example.identity_scan.ml.ModelFace
 import com.example.identity_scan.ml.ModelUnquant
 import org.opencv.android.Utils
@@ -150,16 +153,21 @@ class ScanFace : AppCompatActivity() {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        Text( modifier = Modifier
-                            .height(80.dp)
-                            .padding(top = 40.dp),
+                        Text(
+                            modifier = Modifier
+                                .height(80.dp)
+                                .padding(top = 40.dp),
                             text = "ถ่ายภาพใบหน้า",
                             color = Color.White,
                             style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
                         )
                     }
 
-                    CameraWithOverlay(modifier = Modifier.weight(1f), guideText = cameraViewModel.guideText)
+                    // Camera with overlay and dynamic behavior
+                    CameraWithOverlay(
+                        modifier = Modifier.weight(1f),
+                        guideText = cameraViewModel.guideText
+                    )
 
                     Row(
                         modifier = Modifier
@@ -168,29 +176,25 @@ class ScanFace : AppCompatActivity() {
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .wrapContentSize(Alignment.Center)
+                        Button(
+                            onClick = {
+                                val resultIntent = Intent()
+                                setResult(RESULT_CANCELED, resultIntent)
+                                finish()
+                            },
+                            colors = ButtonDefaults.buttonColors(Color.Red)
                         ) {
-                            Button(
-                                onClick = {
-                                    val resultIntent = Intent()
-                                    setResult(RESULT_CANCELED, resultIntent)
-                                    finish()
-                                },
-                                colors = ButtonDefaults.buttonColors(Color.Red)
-                            ) {
-                                Text(
-                                    text = "ยกเลิก",
-                                    color = Color.White,
-                                    fontSize = 16.sp
-                                )
-                            }
+                            Text(
+                                text = "ยกเลิก",
+                                color = Color.White,
+                                fontSize = 16.sp
+                            )
                         }
                     }
                 }
             }
         }
+
     }
 
     override fun onDestroy() {
@@ -733,54 +737,76 @@ class ScanFace : AppCompatActivity() {
 
     @Composable
     fun CameraWithOverlay(modifier: Modifier = Modifier, guideText: String) {
-        Box(modifier = modifier) {
-            // Camera Preview filling the whole screen
+        // Dynamic colors based on guideText
+        val borderColor by animateColorAsState(
+            targetValue = if (guideText == "ถือค้างไว้") Color.Green else Color.Red,
+            animationSpec = tween(durationMillis = 500)
+        )
+        val textColor by animateColorAsState(
+            targetValue = if (guideText == "ถือค้างไว้") Color.Green else Color.White,
+            animationSpec = tween(durationMillis = 500)
+        )
+
+        Box(modifier = modifier.fillMaxSize()) {
+            // Camera Preview
             CameraPreview(modifier = Modifier.fillMaxSize())
 
-            Text(
-                text = guideText,
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .align(Alignment.Center)
-            )
-
-//            Canvas(modifier = Modifier.fillMaxSize()) {
-//                val centerX = size.width / 2
-//                val centerY = size.height / 2
-//                val radiusX = size.width / 2 // Horizontal radius
-//                val radiusY = size.height / 3 // Vertical radius (adjust as needed)
-//
-//                drawOval(
-//                    color = Color.Gray,
-//                    topLeft = Offset(centerX - radiusX, centerY - radiusY),
-//                    size = Size(radiusX * 2, radiusY * 2),
-//                    style = Stroke(width = 4f) // Set the stroke width as needed
-//                )
-//            }
-
+            // Overlay with oval and guide text
             Canvas(modifier = Modifier.fillMaxSize()) {
-                val centerX = size.width / 2
-                val centerY = size.height / 2
+                val canvasWidth = size.width
+                val canvasHeight = size.height
 
-                // เพิ่มความสูงของวงรี (Vertical radius)
-                val radiusX = size.width / 2 // Horizontal radius
-                val radiusY = size.height / 2.5f // เพิ่ม vertical radius ให้สูงขึ้น (จาก /3 เป็น /2.5)
+                val ovalWidth = canvasWidth * 0.7f
+                val ovalHeight = canvasHeight * 0.5f
+                val ovalLeft = (canvasWidth - ovalWidth) / 2
+                val ovalTop = (canvasHeight - ovalHeight) / 2
 
+                // Background outside the oval
+                drawRect(
+                    color = Color.Black.copy(alpha = 0.6f),
+                    size = size
+                )
+
+                // Clear the oval area
                 drawOval(
-                    color = Color.Gray,
-                    topLeft = Offset(centerX - radiusX, centerY - radiusY),
-                    size = Size(radiusX * 2, radiusY * 2),
-                    style = Stroke(width = 4f) // Set the stroke width as needed
+                    color = Color.Transparent,
+                    topLeft = Offset(ovalLeft, ovalTop),
+                    size = Size(ovalWidth, ovalHeight),
+                    blendMode =  BlendMode.Clear
+                )
+
+                // Oval border
+                drawOval(
+                    color = borderColor,
+                    topLeft = Offset(ovalLeft, ovalTop),
+                    size = Size(ovalWidth, ovalHeight),
+                    style = Stroke(width = 8.dp.toPx())
                 )
             }
 
+            // Guide Text
+            Text(
+                text = guideText,
+                color = textColor,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 16.dp)
+            )
 
-
-
+            // Instruction Text
+            Text(
+                text = "ให้ใบหน้าอยู่ในกรอบที่กำหนด ไม่มีปิดตา จมูก ปาก และคาง",
+                color = Color.White,
+                fontSize = 16.sp,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp)
+            )
         }
     }
+
 
     private fun checkPermissions() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
