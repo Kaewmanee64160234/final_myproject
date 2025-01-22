@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:identity_scan/app/modules/home/views/home_view.dart';
 
 import '../controllers/flow_detact_controller.dart';
@@ -13,9 +14,9 @@ class FlowDetactView extends GetView<FlowDetactController> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title:  Text(
           'ขั้นตอนการลงทะเบียน',
-          style: TextStyle(
+          style: GoogleFonts.kanit(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
@@ -191,10 +192,10 @@ class FlowDetactView extends GetView<FlowDetactController> {
         SizedBox(height: screenWidth * 0.05),
         Text(
           "ขั้นตอนการลงทะเบียนด้วยตนเอง",
-          style: TextStyle(fontSize: screenWidth * 0.05),
+          style: GoogleFonts.kanit(fontSize: screenWidth * 0.05),
         ),
         SizedBox(height: screenWidth * 0.05),
-        StepWidget(step: 1, text: "ถ่ายภาพหน้บัตรประชาชน"),
+        StepWidget(step: 1, text: "ถ่ายภาพหน้าบัตรประชาชน",),
         StepWidget(step: 2, text: "ถ่ายภาพหน้าบัตรประชาชน"),
         StepWidget(step: 3, text: "ถ่ายภาพหน้าตัวเอง"),
       ],
@@ -260,7 +261,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
                   },
                   child: Text(
                     'เริ่มต้น', // "Start"
-                    style: TextStyle(
+                    style: GoogleFonts.kanit(
                       fontSize: screenWidth * 0.04,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,

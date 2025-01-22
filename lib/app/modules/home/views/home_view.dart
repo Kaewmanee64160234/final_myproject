@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:identity_scan/app/routes/app_pages.dart';
 import 'dart:io';
 import '../controllers/home_controller.dart';
@@ -13,9 +14,9 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'ช่องทางการลงทะเบียน',
-          style: TextStyle(
+          style: GoogleFonts.kanit(
             color: Colors.white,
           ),
         ),
@@ -28,19 +29,6 @@ class HomeView extends GetView<HomeController> {
           SingleChildScrollView(
             child: Column(
               children: [
-                // ขั้นตอนการลงทะเบียน
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    'ขั้นตอนการลงทะเบียน',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.start,
-                  ),
-                ),
-                // container show 2 card have image 1. card vertify by ypurself 2. card vertify by system
                 Container(
                   // wit 80% of screen width and have shadow
                   width: double.infinity,
@@ -80,17 +68,17 @@ class HomeView extends GetView<HomeController> {
                         child: GestureDetector(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
+                            children: [
                               Text(
                                 'ยืนยันตัวตนด้วยตนเอง',
-                                style: TextStyle(
+                                style: GoogleFonts.kanit(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
                                 'กรุณายืนยันตัวตนด้วยตนเอง โดยใช้บัตรประชาชน',
-                                style: TextStyle(
+                                style: GoogleFonts.kanit(
                                   fontSize: 14,
                                   color: Colors.grey,
                                 ),
@@ -140,17 +128,17 @@ class HomeView extends GetView<HomeController> {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
                               'ยืนยันตัวตนโดยระบบ',
-                              style: TextStyle(
+                              style: GoogleFonts.kanit(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             Text(
                               'กรุณายืนยันตัวตนโดยระบบ โดยใช้บัตรประชาชน',
-                              style: TextStyle(
+                              style: GoogleFonts.kanit(
                                 fontSize: 14,
                                 color: Colors.grey,
                               ),
@@ -195,7 +183,7 @@ class StepWidget extends StatelessWidget {
             backgroundColor: const Color.fromRGBO(45, 56, 146, 1),
             child: Text(
               '$step',
-              style: const TextStyle(
+              style: GoogleFonts.kanit(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -206,7 +194,7 @@ class StepWidget extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
+              style:  GoogleFonts.kanit(
                 fontSize: 16,
                 fontWeight: FontWeight.normal,
               ),
