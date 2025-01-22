@@ -35,15 +35,19 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -84,6 +88,7 @@ import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.identity_scan.ml.ModelUnquant
 import org.opencv.android.Utils
 import org.opencv.core.Core
@@ -99,6 +104,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.text.style.TextAlign
 import org.opencv.imgcodecs.Imgcodecs
@@ -481,14 +487,28 @@ class ScanBackActivity: AppCompatActivity() {
 
         // Show Dialog
         if (showDialog && bitmapToShow != null) {
-            ShowImageDialog(bitmap = bitmapToShow!!) {
-                showDialog = false
-                // Clear Bitmap List หลังจากปิด Dialog
-                bitmapList.clear()
-                // กลับมา Predict หลังจากปิด Dialog
-                isPredicting = true
-                cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
-            }
+
+            ShowImageDialog(
+                bitmap =  bitmapToShow!!,
+                onRetake = {
+                    showDialog = false
+                    // Clear Bitmap List หลังจากปิด Dialog
+                    bitmapList.clear()
+                    // กลับมา Predict หลังจากปิด Dialog
+                    isPredicting = true
+                    //รีเซ็ต GuideText เมื่อปิด Dialog (ถ่ายใหม่)
+                    cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
+                },
+                onConfirm = {
+                    val resultIntent = Intent()
+                    if (pathFinal.isNotEmpty()) {
+                        resultIntent.putExtra("result", pathFinal.toString())
+                        setResult(RESULT_OK, resultIntent)
+                        Log.w("pathFinal", pathFinal.toString())
+                        finish()
+                    }
+
+                })
         }
     }
 
@@ -553,87 +573,113 @@ class ScanBackActivity: AppCompatActivity() {
     }
 
     @Composable
-    fun ShowImageDialog(bitmap: Bitmap, onDismiss: () -> Unit) {
-        Dialog(onDismissRequest = onDismiss) {
+    fun ShowImageDialog(
+        bitmap: Bitmap,
+        onRetake: () -> Unit, // Callback for "ถ่ายใหม่"
+        onConfirm: () -> Unit // Callback for "ยืนยัน"
+    ) {
+        Dialog(onDismissRequest = { /* Prevent dismiss by clicking outside */ }) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center // Centers the entire dialog content
+                    .background(Color.Black.copy(alpha = 0.8f)) // Dim background
+                    .padding(8.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Column(
-                    modifier = Modifier.wrapContentSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Surface(
+                    modifier = Modifier
+
+                        .wrapContentHeight()
+                        .padding(8.dp),
+                    shape = RoundedCornerShape(16.dp), // Rounded corners for a modern look
+                    color = Color.White, // Dialog background
+                    shadowElevation = 12.dp // Subtle shadow for emphasis
                 ) {
-                    // Display the image with restricted height
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Captured Image",
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(500.dp) // Adjust height as needed
-                            .padding(bottom = 16.dp)
-                    )
-                    // Display the buttons in a row
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp), // Space between buttons
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                            // Red Button: "ถ่ายใหม่"
+                        // Title Text
+                        Text(
+                            text = "ยืนยันข้อมูล",
+                            color = Color(0xFF2D3892), // Stylish blue title
+                            fontSize = 22.sp, // Larger font size for prominence
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
+                        // Subtitle
+                        Text(
+                            text = "กรุณาตรวจสอบความชัดเจนของภาพบัตร",
+                            color = Color.Gray,
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+
+                        // Display the captured image
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Captured Image",
+                            modifier = Modifier
+                                .fillMaxWidth() // Wider image
+                                .height(300.dp) // Adjusted height for layout
+                                .clip(RoundedCornerShape(12.dp)) // Rounded corners for the image
+                                .padding(8.dp) // Padding around the image
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Button row
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly // Evenly distribute buttons
+                        ) {
+                            // Retake Button
                             Button(
-                                onClick = {
-                                    isFound = false
-                                    onDismiss() // Close the dialog when clicking "ถ่ายใหม่"
-                                          },
-                                colors = ButtonDefaults.buttonColors(Color.Red)
+                                onClick = onRetake,
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp)
+                                    .border(2.dp, Color.Gray, RoundedCornerShape(24.dp))
                             ) {
                                 Text(
                                     text = "ถ่ายใหม่",
-                                    color = Color.White,
-                                    fontSize = 16.sp
+                                    color = Color.Black,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
 
-                            // Default Button: "ใช้ภาพนี้"
-//                            Button(
-//                                onClick = {
-//                                    val resultIntent = Intent()
-//                                    if(pathFinal.isNotEmpty()){
-//                                        resultIntent.putExtra("result", pathFinal.toString())
-//                                        setResult(RESULT_OK, resultIntent)
-////                                        Log.w("pathFinal",pathFinal.toString())
-//                                        finish()
-//                                    }
-//
-//                                }
-//                            ) {
-//                                Text(
-//                                    text = "ใช้ภาพนี้",
-//                                    fontSize = 16.sp
-//                                )
-//                            }
+                            Spacer(modifier = Modifier.width(16.dp))
 
-
+                            // Confirm Button
                             Button(
-                                onClick = {
-                                    val resultIntent = Intent()
-                                    resultIntent.putExtra("result", pathFinal.toString())
-                                    setResult(RESULT_OK, resultIntent)
-                                    finish()
-                                }
+                                onClick = onConfirm,
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D3892)),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp)
+                                    .border(2.dp, Color(0xFF2D3892), RoundedCornerShape(24.dp)) // Border matches button color
                             ) {
                                 Text(
-                                    text = "ใช้ภาพนี้",
-                                    fontSize = 16.sp
+                                    text = "ยืนยัน",
+                                    color = Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
-
-
+                        }
                     }
                 }
             }
         }
     }
+
     @Composable
     fun ShowCancelConfirmationDialog(
         onConfirm: () -> Unit,
