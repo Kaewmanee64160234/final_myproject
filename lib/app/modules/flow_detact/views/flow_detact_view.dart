@@ -83,7 +83,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
       }),
       bottomNavigationBar: Obx(() {
         // Display an empty SizedBox during loading
-        if (controller.isLoading.value) {
+        if (controller.isLoading.value || controller.isApiActive.value) {
           return const SizedBox();
         } else {
           // Display bottom navigation bar after data is loaded
