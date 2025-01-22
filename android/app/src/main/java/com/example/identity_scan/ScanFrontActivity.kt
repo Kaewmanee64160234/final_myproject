@@ -6,13 +6,11 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.os.Environment
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -37,7 +35,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,7 +45,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Button
@@ -77,7 +73,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import org.tensorflow.lite.DataType
@@ -89,15 +84,9 @@ import java.util.concurrent.Executors
 import java.io.File
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import com.smarttoolfactory.screenshot.ScreenshotBox
-import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
@@ -116,7 +105,6 @@ import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 import java.io.FileOutputStream
 import java.io.OutputStream
-import kotlin.math.max
 import kotlin.math.pow
 
 
@@ -163,7 +151,6 @@ class ScanFrontActivity : AppCompatActivity() {
     private val cameraViewModel: CameraViewModel by viewModels()
     private val rectPositionViewModel: RectPositionViewModel by viewModels()
     private lateinit var model: ModelUnquant
-//    private lateinit var model: ModelBack
     private var isPredicting = true
     private var isProcessing = false
     private var lastProcessedTime: Long = 0
@@ -171,7 +158,6 @@ class ScanFrontActivity : AppCompatActivity() {
     private lateinit var flutterEngine: FlutterEngine
     private lateinit var methodChannel: MethodChannel
     private val CHANNEL = "camera"
-    private val dbHelper = DatabaseHelper(this)
     private var isTiming = false
     // นับภาพที่ Capture จาก 1
     // จัดเก็บ Bitmap ของรูปภาพทั้ง 5
@@ -260,6 +246,209 @@ class ScanFrontActivity : AppCompatActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        cameraExecutor.shutdown()
+
+        // ปลด ModelDetectCard
+        model.close()
+
+        // ปลด FlutterEngine
+        flutterEngine.destroy()
+    }
+
+    private fun cancelProcess(){
+        val resultIntent = Intent()
+        setResult(RESULT_CANCELED, resultIntent)
+        finish()
+    }
+
+    private fun checkPermissions() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 0)
+        }
+    }
+
+    private fun checkAndRequestCameraPermission() {
+        if (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+            } else {
+                TODO("VERSION.SDK_INT < M")
+            }
+        ) {
+            Log.d("NativeDemo", "Permission not granted. Requesting permission.")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
+            }
+        } else {
+            Log.d("NativeDemo", "Permission already granted. Proceeding with photo capture.")
+            // capturePhoto()
+        }
+    }
+
+
+    @Composable
+    fun CameraPreview(modifier: Modifier = Modifier) {
+        var bitmapToShow by remember { mutableStateOf<Bitmap?>(null) }
+        var isShutter by remember { mutableStateOf(false) }
+        var showDialog by remember { mutableStateOf(false) }
+
+        val context = LocalContext.current
+        val lifecycleOwner = LocalLifecycleOwner.current
+
+        val timer = object : CountDownTimer(1000, 800) {
+            override fun onTick(millisUntilFinished: Long) {
+                println("Time remaining: ${millisUntilFinished / 800} seconds")
+            }
+            override fun onFinish() {
+                println("Founded For 1S")
+                isShutter = true
+            }
+        }
+
+        AndroidView(
+            factory = { ctx ->
+                val previewView = PreviewView(ctx)
+                val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+
+                cameraProviderFuture.addListener({
+                    val cameraProvider = cameraProviderFuture.get()
+
+                    val preview = Preview.Builder()
+                        .build()
+
+                    val resolutionSelector1 = ResolutionSelector.Builder()
+                        .setResolutionStrategy(
+                            ResolutionStrategy(
+                                android.util.Size(1080, 1440), // ความละเอียดที่ต้องการ
+                                ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER // fallback หากไม่รองรับ
+                            )
+                        )
+                        .build()
+
+                    val imageAnalysis = ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .setResolutionSelector(resolutionSelector1)
+                        .build()
+
+                    imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
+
+
+                        // ถ้ามีคำสั่งให้ถ่ายรูป ค่าเริ่มต้นปกติคือ false ดังนั้นโปรแกรมจะวิ่งไปที่ Else ก่อนเสมอ
+                        if (isShutter) {
+                            bitmapToShow = imageProxy.toBitmap()
+                            val matrix = Matrix()
+                            matrix.postRotate(90f)
+                            bitmapToShow = Bitmap.createBitmap(
+                                bitmapToShow!!, // Original Bitmap
+                                0, 0, // Starting coordinates
+                                bitmapToShow!!.width, // Bitmap width
+                                bitmapToShow!!.height, // Bitmap height
+                                matrix, // The rotation matrix
+                                true // Apply smooth transformation
+                            )
+
+                            // ถ้าภาพยังไม่ครบ 3 ภาพ และ Dialog ไม่ได้แสดงอยู่
+                            if (bitmapList.size < 3){
+                                // เพิ่มรูป Bitmap เข้า List จนกว่าจะครบ 3 รูป
+                                bitmapList.add(bitmapList.size,bitmapToShow!!)
+                                bitmapToJpg(bitmapToShow!!,context,"image${bitmapList.size.toString()}.jpg")
+                                if(bitmapList.size == 3){
+                                    // ถ้าครบ 3 รูปแล้วให้หารูปที่คมชัดที่สุด จาก Bitmap List
+                                    var sharPestImage = findSharpestImage()
+                                    println("Sharpest Image Index is: ${sharPestImage.first}, Variance: ${sharPestImage.second}")
+
+                                    // บันทึก Index ของภาพที่ชัดที่สุด ไว้ในตัวแปร
+                                    sharPestImageIndex = sharPestImage.first!!
+
+                                    // เสร็จแล้วแสดงภาพที่ชัดที่สุดออกมา
+                                    showDialog = true
+                                    isShutter = false
+                                    // พักการ Predict
+                                    isPredicting = false
+                                    // รับ bitmap ภาพที่คมที่สุดเพื่อมา Process
+                                    val sharpestBitmapMat = bitmapToMat(bitmapList[sharPestImageIndex])
+
+                                    val contrastValue = calculateContrast(sharpestBitmapMat)
+                                    val resolutionValue = calculateResolution(sharpestBitmapMat)
+                                    val snrValue = calculateSNR(sharpestBitmapMat)
+
+                                    val processedMat = preprocessing(snrValue, contrastValue, resolutionValue, sharpestBitmapMat)
+
+                                    // บันทึกรูป Original ลง Storage
+                                    saveMatToStorage(context,sharpestBitmapMat,"frontCardOriginal")
+
+                                    // บันทึกลง Storage
+                                    saveMatToStorage(context,processedMat,"frontCardProcessed")
+
+                                }
+                            }
+                        }else{
+                            if (isFound){
+                                if (!isTiming){
+                                    isTiming = true
+                                    timer.start()
+                                    println("Start Timer")
+                                }
+                            }else{
+                                timer.cancel()
+                                isTiming = false
+                            }
+                            if(isPredicting){
+                                processImageProxy(imageProxy)
+                            }
+                        }
+                        // ปิด Image Proxy หลัง Process เสร็จ
+                        imageProxy.close()
+                    }
+
+                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                    cameraProvider.bindToLifecycle(
+                        lifecycleOwner,
+                        cameraSelector,
+                        preview,
+                        imageAnalysis
+                    )
+                    preview.setSurfaceProvider(previewView.surfaceProvider)
+                }, ContextCompat.getMainExecutor(ctx))
+
+                previewView
+            },
+            modifier = modifier
+                .fillMaxWidth()
+                .aspectRatio(4f / 3f)
+        )
+
+
+        // Show Dialog
+        if (showDialog && bitmapToShow != null) {
+            ShowImageDialog(
+                bitmap =  bitmapToShow!!,
+                onRetake = {
+                    showDialog = false
+                    // Clear Bitmap List หลังจากปิด Dialog
+                    bitmapList.clear()
+                    // กลับมา Predict หลังจากปิด Dialog
+                    isPredicting = true
+                    //รีเซ็ต GuideText เมื่อปิด Dialog (ถ่ายใหม่)
+                    cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
+                },
+                onConfirm = {
+                    val resultIntent = Intent()
+                    if(pathFinal.isNotEmpty()) {
+                        resultIntent.putExtra("result", pathFinal.toString())
+                        setResult(RESULT_OK, resultIntent)
+                        Log.w("pathFinal", pathFinal.toString())
+                        finish()
+                    }
+
+                }
+            )
+
+        }
+    }
+
     @Composable
     fun CameraWithOverlay(
         modifier: Modifier = Modifier,
@@ -344,211 +533,6 @@ class ScanFrontActivity : AppCompatActivity() {
                     .align(Alignment.Center)
                     .padding(top = 300.dp) // Adjust text position
             )
-        }
-    }
-
-
-
-    private fun cancelProcess(){
-        val resultIntent = Intent()
-        setResult(RESULT_CANCELED, resultIntent)
-        finish()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        cameraExecutor.shutdown()
-
-        // ปลด ModelDetectCard
-        model.close()
-
-        // ปลด FlutterEngine
-        flutterEngine.destroy()
-    }
-
-    @Composable
-    fun CameraPreview(modifier: Modifier = Modifier) {
-        val screenshotState = rememberScreenshotState()
-        var bitmapToShow by remember { mutableStateOf<Bitmap?>(null) }
-        var isShutter by remember { mutableStateOf(false) }
-        var showDialog by remember { mutableStateOf(false) }
-
-        val context = LocalContext.current
-        val lifecycleOwner = LocalLifecycleOwner.current
-
-         val timer = object : CountDownTimer(1000, 800) {
-            override fun onTick(millisUntilFinished: Long) {
-                println("Time remaining: ${millisUntilFinished / 800} seconds")
-            }
-            override fun onFinish() {
-                println("Founded For 1S")
-                isShutter = true
-            }
-        }
-
-        ScreenshotBox(screenshotState = screenshotState) {
-            AndroidView(
-                factory = { ctx ->
-                    val previewView = PreviewView(ctx)
-                    val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-
-                    cameraProviderFuture.addListener({
-                        val cameraProvider = cameraProviderFuture.get()
-
-                        val preview = Preview.Builder()
-                            .build()
-
-                        // For High end device
-                        // android.util.Size(1080, 1440),
-                        // Mid-Low End
-                        // android.util.Size(720, 960),
-                        //
-
-                        val resolutionSelector1 = ResolutionSelector.Builder()
-                            .setResolutionStrategy(
-                                ResolutionStrategy(
-                                    android.util.Size(1080, 1440), // ความละเอียดที่ต้องการ
-                                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER // fallback หากไม่รองรับ
-                                )
-                            )
-                            .build()
-
-                        val imageAnalysis = ImageAnalysis.Builder()
-                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                            .setResolutionSelector(resolutionSelector1)
-                            .build()
-
-                         imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
-
-                    
-                             // ถ้ามีคำสั่งให้ถ่ายรูป ค่าเริ่มต้นปกติคือ false ดังนั้นโปรแกรมจะวิ่งไปที่ Else ก่อนเสมอ
-                             if (isShutter) {
-                                // println("is Shutter")
-                                 //bitmapToShow = cropToCreditCardAspectRatio()
-
-                                 bitmapToShow = imageProxy.toBitmap()
-
-                                 // Update รูปภาพ ที่นี่
-                                 val matrix = Matrix()
-
-                                 matrix.postRotate(90f)
-
-                                 bitmapToShow = Bitmap.createBitmap(
-                                     bitmapToShow!!, // Original Bitmap
-                                     0, 0, // Starting coordinates
-                                     bitmapToShow!!.width, // Bitmap width
-                                     bitmapToShow!!.height, // Bitmap height
-                                     matrix, // The rotation matrix
-                                     true // Apply smooth transformation
-                                 )
-
-                                 // ถ้าภาพยังไม่ครบ 3 ภาพ และ Dialog ไม่ได้แสดงอยู่
-
-                                 if (bitmapList.size < 3){
-                                     // เพิ่มรูป Bitmap เข้า List จนกว่าจะครบ 3 รูป
-                                     bitmapList.add(bitmapList.size,bitmapToShow!!)
-                                     bitmapToJpg(bitmapToShow!!,context,"image${bitmapList.size.toString()}.jpg")
-                                     if(bitmapList.size == 3){
-                                         // ถ้าครบ 3 รูปแล้วให้หารูปที่คมชัดที่สุด จาก Bitmap List
-                                         var sharPestImage = findSharpestImage()
-                                         println("Sharpest Image Index is: ${sharPestImage.first}, Variance: ${sharPestImage.second}")
-
-                                         // บันทึก Index ของภาพที่ชัดที่สุด ไว้ในตัวแปร
-                                         sharPestImageIndex = sharPestImage.first!!
-
-                                         // เสร็จแล้วแสดงภาพที่ชัดที่สุดออกมา
-                                         showDialog = true
-                                         isShutter = false
-                                         // พักการ Predict
-                                         isPredicting = false
-                                         // รับ bitmap ภาพที่คมที่สุดเพื่อมา Process
-                                          val sharpestBitmapMat = bitmapToMat(bitmapList[sharPestImageIndex])
-
-                                         val contrastValue = calculateContrast(sharpestBitmapMat)
-                                         val resolutionValue = calculateResolution(sharpestBitmapMat)
-                                         val snrValue = calculateSNR(sharpestBitmapMat)
-
-                                         val processedMat = preprocessing(snrValue, contrastValue, resolutionValue, sharpestBitmapMat)
-
-                                         // บันทึกรูป Original ลง Storage
-                                         saveMatToStorage(context,sharpestBitmapMat,"frontCardOriginal")
-
-                                         // บันทึกลง Storage
-                                         saveMatToStorage(context,processedMat,"frontCardProcessed")
-                            
-                                     }
-                                 }
-//                                การ Print ขนาดของ Image Proxy
-//                               val imageWidth = imageProxy.width
-//                               val imageHeight = imageProxy.height
-//                               println("Image Resolution: $imageWidth x $imageHeight")
-                             }else{
-                                // println("isNot Shutter")
-
-                                 if (isFound){
-                                     if (!isTiming){
-                                         isTiming = true
-                                         timer.start()
-                                         println("Start Timer")
-                                     }
-                                 }else{
-                                     timer.cancel()
-                                     isTiming = false
-//                                     println("Cancelled Timer")
-                                 }
-                                 if(isPredicting){
-                                     processImageProxy(imageProxy)
-                                 }
-                             }
-
-                             // ปิด Image Proxy หลัง Process เสร็จ
-                             imageProxy.close()
-                         }
-
-                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-                        cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            cameraSelector,
-                            preview,
-                            imageAnalysis
-                        )
-                        preview.setSurfaceProvider(previewView.surfaceProvider)
-                    }, ContextCompat.getMainExecutor(ctx))
-
-                    previewView
-                },
-                modifier = modifier
-                    .fillMaxWidth()
-                    .aspectRatio(4f / 3f)
-            )
-        }
-
-        // Show Dialog
-        if (showDialog && bitmapToShow != null) {
-            ShowImageDialog(
-                bitmap =  bitmapToShow!!,
-                onRetake = {
-                    showDialog = false
-                    // Clear Bitmap List หลังจากปิด Dialog
-                    bitmapList.clear()
-                    // กลับมา Predict หลังจากปิด Dialog
-                    isPredicting = true
-                    //รีเซ็ต GuideText เมื่อปิด Dialog (ถ่ายใหม่)
-                    cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
-                },
-                onConfirm = {
-                    val resultIntent = Intent()
-                    if(pathFinal.isNotEmpty()) {
-                        resultIntent.putExtra("result", pathFinal.toString())
-                        setResult(RESULT_OK, resultIntent)
-                        Log.w("pathFinal", pathFinal.toString())
-                        finish()
-                    }
-
-                }
-            )
-
         }
     }
 
@@ -724,30 +708,6 @@ class ScanFrontActivity : AppCompatActivity() {
         }
     }
 
-
-
-    private fun updateImageData(newImageData: String) {
-        try {
-            val db = dbHelper.writableDatabase
-            // SQL query to update image_data where id = 1
-            val updateQuery = """
-            UPDATE images
-            SET image_data = ?
-            WHERE id = 1
-        """.trimIndent()
-
-            // Execute the update query with the new image data
-            val statement = db.compileStatement(updateQuery)
-            statement.bindString(1, newImageData)  // Bind the parameter
-            statement.executeUpdateDelete()  // Execute the update query
-
-            println("Database Image data updated successfully.")
-        } catch (e: Exception) {
-            e.printStackTrace()
-            println("DatabaseError Error while updating data: ${e.message}")
-        }
-    }
-
     private fun processImageProxy(imageProxy: ImageProxy) {
         // Crop Image to square before processing further
 
@@ -776,8 +736,6 @@ class ScanFrontActivity : AppCompatActivity() {
                     val maxIndex = outputArray.indices
                         .filter { outputArray[it] >= 0.8 } // เลือก index ที่ค่า >= 80
                         .maxByOrNull { outputArray[it] } ?: 4 // หากไม่มี index ที่เข้าเงื่อนไข ให้ใช้ค่า default เป็น 4
-
-//                    val maxIndex = outputArray.indices.maxByOrNull { outputArray[it] } ?: -1
 
                     // จัดการวัดค่า brightness และ Glare
                     mat =  bitmapToMat(croppedBitmap)
@@ -818,7 +776,6 @@ class ScanFrontActivity : AppCompatActivity() {
 //                    val elapsedTime = endTime - startTime
                     // พิมพ์เวลาที่ใช้ในการประมวลผล
 //                    println("Processing time: $elapsedTime ms")
-
                 } else {
                     println("Error: Process Fail")
                 }
@@ -1112,33 +1069,6 @@ class ScanFrontActivity : AppCompatActivity() {
             e.printStackTrace()
             println("Failed to save image: ${e.message}")
             false
-        }
-    }
-
-
-
-
-    private fun checkPermissions() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 0)
-        }
-    }
-
-
-    private fun checkAndRequestCameraPermission() {
-        if (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
-            } else {
-                TODO("VERSION.SDK_INT < M")
-            }
-        ) {
-            Log.d("NativeDemo", "Permission not granted. Requesting permission.")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
-            }
-        } else {
-            Log.d("NativeDemo", "Permission already granted. Proceeding with photo capture.")
-            // capturePhoto()
         }
     }
 }

@@ -6,13 +6,10 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.os.Environment
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -21,8 +18,6 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
-import androidx.camera.core.resolutionselector.ResolutionSelector
-import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.animateColorAsState
@@ -48,7 +43,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -62,9 +56,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import org.tensorflow.lite.DataType
@@ -76,8 +67,6 @@ import java.util.concurrent.Executors
 import java.io.File
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import com.smarttoolfactory.screenshot.ScreenshotBox
-import com.smarttoolfactory.screenshot.rememberScreenshotState
 import io.flutter.embedding.engine.dart.DartExecutor
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.ButtonDefaults
@@ -86,27 +75,19 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.googlefonts.Font
 import androidx.compose.ui.text.googlefonts.GoogleFont
 import com.example.identity_scan.ml.ModelFace
-import com.example.identity_scan.ml.ModelUnquant
 import org.opencv.android.Utils
 import org.opencv.core.Core
-import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.MatOfDouble
 import org.opencv.core.MatOfPoint
 import org.opencv.imgproc.Imgproc
 import java.io.FileOutputStream
 import java.io.OutputStream
-import kotlin.math.max
-import kotlin.math.pow
-
-
 
 class ScanFace : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
     private val CAMERA_REQUEST_CODE = 2001
     private val cameraViewModel: CameraViewModel by viewModels()
-    private val rectPositionViewModel: RectPositionViewModel by viewModels()
-//    private lateinit var model: ModelUnquant
     private lateinit var model: ModelFace
     private var isProcessing = false
     private var isPredicting = true
@@ -115,7 +96,6 @@ class ScanFace : AppCompatActivity() {
     private lateinit var flutterEngine: FlutterEngine
     private lateinit var methodChannel: MethodChannel
     private val CHANNEL = "camera"
-    private val dbHelper = DatabaseHelper(this)
     private var isTiming = false
     // นับภาพที่ Capture จาก 1
     // จัดเก็บ Bitmap ของรูปภาพทั้ง 5
@@ -125,13 +105,11 @@ class ScanFace : AppCompatActivity() {
     private var pathFinal = ""
     private lateinit var fontKanit : FontFamily
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         cameraExecutor = Executors.newSingleThreadExecutor()
         checkPermissions()
         checkAndRequestCameraPermission()
-//        model = ModelBack.newInstance(this)
         model = ModelFace.newInstance(this)
 
         if (!org.opencv.android.OpenCVLoader.initDebug()) {
@@ -216,7 +194,6 @@ class ScanFace : AppCompatActivity() {
                 }
             }
         }
-
     }
 
     override fun onDestroy() {
@@ -230,9 +207,31 @@ class ScanFace : AppCompatActivity() {
         flutterEngine.destroy()
     }
 
+    private fun checkPermissions() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 0)
+        }
+    }
+
+    private fun checkAndRequestCameraPermission() {
+        if (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+            } else {
+                TODO("VERSION.SDK_INT < M")
+            }
+        ) {
+            Log.d("NativeDemo", "Permission not granted. Requesting permission.")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
+            }
+        } else {
+            Log.d("NativeDemo", "Permission already granted. Proceeding with photo capture.")
+            // capturePhoto()
+        }
+    }
+
     @Composable
     fun CameraPreview(modifier: Modifier = Modifier) {
-        val screenshotState = rememberScreenshotState()
         var bitmapToShow by remember { mutableStateOf<Bitmap?>(null) }
         var isShutter by remember { mutableStateOf(false) }
         var showDialog by remember { mutableStateOf(false) }
@@ -250,22 +249,6 @@ class ScanFace : AppCompatActivity() {
             }
         }
 
-        ScreenshotBox(screenshotState = screenshotState) {
-
-//            Button(
-//                onClick = {
-//                    isShutter = true
-//                },
-//                colors = ButtonDefaults.buttonColors(Color.Red)
-//            ) {
-//                Text(
-//                    text = "toggle Dialog",
-//                    color = Color.White,
-//                    fontSize = 16.sp
-//                )
-//            }
-
-
             AndroidView(
                 factory = { ctx ->
                     val previewView = PreviewView(ctx)
@@ -276,21 +259,6 @@ class ScanFace : AppCompatActivity() {
 
                         val preview = Preview.Builder()
                             .build()
-
-                        // For High end device
-                        // android.util.Size(1080, 1440),
-                        // Mid-Low End
-                        // android.util.Size(720, 960),
-                        //
-
-//                        val resolutionSelector1 = ResolutionSelector.Builder()
-//                            .setResolutionStrategy(
-//                                ResolutionStrategy(
-//                                    android.util.Size(1080, 1440), // ความละเอียดที่ต้องการ
-//                                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER // fallback หากไม่รองรับ
-//                                )
-//                            )
-//                            .build()
 
                         val imageAnalysis = ImageAnalysis.Builder()
                             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -315,7 +283,6 @@ class ScanFace : AppCompatActivity() {
                                     matrix, // The rotation matrix
                                     true // Apply smooth transformation
                                 )
-
 
                                 // ถ้าภาพยังไม่ครบ 3 ภาพ
                                 if (bitmapList.size < 3 ){
@@ -380,7 +347,6 @@ class ScanFace : AppCompatActivity() {
                     .fillMaxWidth()
                     .aspectRatio(4f / 3f)
             )
-        }
 
         // Show Dialog
         if (showDialog && bitmapToShow != null) {
@@ -830,31 +796,6 @@ class ScanFace : AppCompatActivity() {
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 16.dp)
             )
-        }
-    }
-
-
-    private fun checkPermissions() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 0)
-        }
-    }
-
-
-    private fun checkAndRequestCameraPermission() {
-        if (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
-            } else {
-                TODO("VERSION.SDK_INT < M")
-            }
-        ) {
-            Log.d("NativeDemo", "Permission not granted. Requesting permission.")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
-            }
-        } else {
-            Log.d("NativeDemo", "Permission already granted. Proceeding with photo capture.")
-            // capturePhoto()
         }
     }
 }
