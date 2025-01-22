@@ -48,8 +48,42 @@ class FlowDetactView extends GetView<FlowDetactController> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _buildRegistrationSteps(
-                      context), // หากไม่มี card ID ให้แสดงขั้นตอนการลงทะเบียน
+                  // แสดงรายละเอียดหากไม่มีการโหลด
+                  if (controller.idNumber.isNotEmpty &&
+                      controller.laserCodeOriginal.value.isNotEmpty &&
+                      !controller.isLoading.value)
+                    Column(
+                      children: [
+                        // ตรวจสอบความถูกต้องของข้อมูล
+                        Text(
+                          'โปรดตรวจสอบความถูกต้องของข้อมูล',
+                          style: GoogleFonts.kanit(
+                            fontSize: screenWidth * 0.05,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: screenWidth * 0.04),
+                        CircleAvatar(
+                          radius: screenWidth * 0.15, // Responsive radius
+                          backgroundImage: MemoryImage(
+                            controller.card.value.getDecodedPortrait(),
+                          ),
+                        ),
+                        SizedBox(height: screenWidth * 0.04),
+                        Divider(),
+                        Text(
+                          'รายละเอียดบัตรประชาชน',
+                          style: GoogleFonts.kanit(
+                            fontSize: screenWidth * 0.05,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        _buildCardDetails(),
+                      ],
+                    )
+                  else
+                    _buildRegistrationSteps(
+                        context), // หากไม่มี card ID ให้แสดงขั้นตอนการลงทะเบียน
                 ],
               ),
             ),
@@ -64,6 +98,196 @@ class FlowDetactView extends GetView<FlowDetactController> {
           return _buildBottomNavigationBar(context);
         }
       }),
+    );
+  }
+
+  Widget _buildCardDetails() {
+    return Column(
+      children: [
+        // แสดงรายละเอียดของบัตรประชาชน
+        _buildEditableRow(
+          'Card ID',
+          controller.idNumber,
+          error: controller.idNumberError,
+          isDisabled: true,
+        ),
+        // prefix
+        _buildEditableRow(
+          'Prefix',
+          controller.prefix,
+          error: controller.prefixError,
+          isDisabled: true,
+        ),
+        // first name
+        _buildEditableRow(
+          'First Name',
+          controller.firstName,
+          error: controller.firstNameError,
+          isDisabled: true,
+        ),
+        // last name
+        _buildEditableRow(
+          'Last Name',
+          controller.lastName,
+          error: controller.lastNameError,
+          isDisabled: true,
+        ),
+        // date of birth
+        _buildEditableRow(
+          'Date of Birth',
+          controller.dateOfBirth,
+          error: controller.dateOfBirthError,
+          isDisabled: true,
+        ),
+        // date of issue
+        _buildEditableRow(
+          'Date of Issue',
+          controller.dateOfIssue,
+          error: controller.dateOfIssueError,
+          isDisabled: true,
+        ),
+        // date of expiry
+        _buildEditableRow(
+          'Date of Expiry',
+          controller.dateOfExpiry,
+          error: controller.dateOfExpiryError,
+          isDisabled: true,
+        ),
+        // religion
+        _buildEditableRow(
+          'Religion',
+          controller.religion,
+          error: controller.religionError,
+          isDisabled: true,
+        ),
+        // address
+        _buildEditableRow(
+          'Address',
+          controller.address,
+          error: controller.addressError,
+          isDisabled: true,
+        ),
+        Divider(),
+        // header eng
+        Text(
+          'Thai ID Card Details',
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        // eng detail card
+        // prefix
+        _buildEditableRow(
+          'Prefix',
+          controller.prefixEn,
+          error: controller.prefixEnError,
+          isDisabled: true,
+        ),
+        // first name
+        _buildEditableRow(
+          'First Name',
+          controller.firstNameEn,
+          error: controller.firstNameEnError,
+          isDisabled: true,
+        ),
+        // last name
+        _buildEditableRow(
+          'Last Name',
+          controller.lastNameEn,
+          error: controller.lastNameEnError,
+          isDisabled: true,
+        ),
+        // date of birth
+        _buildEditableRow(
+          'Date of Birth',
+          controller.dateOfBirthEn,
+          error: controller.dateOfBirthEnError,
+          isDisabled: true,
+        ),
+        // date of issue
+        _buildEditableRow(
+          'Date of Issue',
+          controller.dateOfIssueEn,
+          error: controller.dateOfIssueEnError,
+          isDisabled: true,
+        ),
+        // date of expiry
+        _buildEditableRow(
+          'Date of Expiry',
+          controller.dateOfExpiryEn,
+          error: controller.dateOfExpiryEnError,
+          isDisabled: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditableRow(String label, RxString value,
+      {RxString? error, bool isDisabled = false, bool isNumeric = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Label
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Obx(() {
+            return TextFormField(
+              controller: TextEditingController(text: value.value)
+                ..selection =
+                    TextSelection.collapsed(offset: value.value.length),
+              onChanged: (text) {
+                value.value = text;
+
+                // Validate dynamically
+                if (label == 'Card ID') {
+                  error?.value = controller.validateIdCard(value.value)
+                      ? '' // Valid input
+                      : 'Invalid Card ID (must be 13 digits)';
+                } else if (text.isEmpty) {
+                  error?.value = '$label is required';
+                } else {
+                  error?.value = ''; // Clear error if valid
+                }
+              },
+              readOnly: isDisabled,
+              keyboardType:
+                  isNumeric ? TextInputType.number : TextInputType.text,
+              decoration: InputDecoration(
+                hintText: 'Enter $label',
+                errorText: error?.value.isEmpty ?? true ? null : error?.value,
+                filled: true,
+                fillColor: Colors.grey.shade100,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.blue),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.grey),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              ),
+              style: const TextStyle(fontSize: 16, color: Colors.black),
+            );
+          }),
+        ],
+      ),
     );
   }
 

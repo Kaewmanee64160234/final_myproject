@@ -320,7 +320,6 @@ class FlowDetactController extends GetxController {
           laserCodeOriginal.value = res;
           // set data
           laserCodeOriginal.value = card.value.laserCode;
-          Get.offNamed(Routes.OCR_RESULT);
         } else {
           print("Error: Processed image file does not exist.");
         }
