@@ -1105,7 +1105,11 @@ class ScanBackActivity: AppCompatActivity() {
         val startTime = System.currentTimeMillis() // Capture start time
 
         return try {
-            // Step 1: Get app-specific storage directory
+            // Step 1: Convert BGR to RGB
+            val rgbMat = Mat()
+            Imgproc.cvtColor(processedMat, rgbMat, Imgproc.COLOR_BGR2RGB)
+
+            // Step 2: Get app-specific storage directory
             val storageDir = File(context.getExternalFilesDir(null), "images")
             if (!storageDir.exists()) {
                 if (!storageDir.mkdirs()) {
@@ -1114,22 +1118,22 @@ class ScanBackActivity: AppCompatActivity() {
                 }
             }
 
-            // Step 2: Directly use OpenCV imwrite for fast saving
+            // Step 3: Directly use OpenCV imwrite for fast saving
             val file = File(storageDir, "$fileName.jpg")
-            val success = Imgcodecs.imwrite(file.absolutePath, processedMat)
+            val success = Imgcodecs.imwrite(file.absolutePath, rgbMat)
 
             if (!success) {
                 println("Failed to save image using OpenCV imwrite")
                 return false
             }
 
-            // Step 3: Return success
+            // Step 4: Return success
             pathFinal = file.absolutePath
             println("Image saved successfully at: ${file.absolutePath}")
 
-//            val endTime = System.currentTimeMillis() // Capture end time
-//            val runtime = endTime - startTime // Calculate the difference
-//            println("Image saved in $runtime ms")
+            val endTime = System.currentTimeMillis() // Capture end time
+            val runtime = endTime - startTime // Calculate the difference
+            println("Image saved in $runtime ms")
 
             true
         } catch (e: Exception) {
