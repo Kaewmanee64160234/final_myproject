@@ -106,6 +106,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.googlefonts.Font
+import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.text.style.TextAlign
 import org.opencv.imgcodecs.Imgcodecs
 
@@ -132,6 +135,7 @@ class ScanBackActivity: AppCompatActivity() {
     private var sharPestImageIndex = 0
     private lateinit var mat: Mat
     private var pathFinal = ""
+    private lateinit var fontKanit : FontFamily
 
 
 
@@ -148,6 +152,22 @@ class ScanBackActivity: AppCompatActivity() {
         } else {
             Log.d("OpenCV", "OpenCV initialization successful")
         }
+
+        val provider = GoogleFont.Provider(
+            providerAuthority = "com.google.android.gms.fonts",
+            providerPackage = "com.google.android.gms",
+            certificates = R.array.com_google_android_gms_fonts_certs
+        )
+
+        val fontName = GoogleFont("Kanit")
+
+        fontKanit = FontFamily(
+            Font(
+                googleFont = fontName,
+                fontProvider = provider,
+                weight = FontWeight.Bold,
+            )
+        )
 
         // Initialize FlutterEngine manually
         flutterEngine = FlutterEngine(this)
@@ -298,6 +318,7 @@ class ScanBackActivity: AppCompatActivity() {
 
             // Guide text below the rectangle
             Text(
+                fontFamily = fontKanit,
                 text = cameraViewModel.guideText,
                 color = Color.White,
                 fontSize = 18.sp,
@@ -603,6 +624,7 @@ class ScanBackActivity: AppCompatActivity() {
                     ) {
                         // Title Text
                         Text(
+                            fontFamily = fontKanit,
                             text = "ยืนยันข้อมูล",
                             color = Color(0xFF2D3892), // Stylish blue title
                             fontSize = 22.sp, // Larger font size for prominence
@@ -612,6 +634,7 @@ class ScanBackActivity: AppCompatActivity() {
 
                         // Subtitle
                         Text(
+                            fontFamily = fontKanit,
                             text = "กรุณาตรวจสอบความชัดเจนของภาพบัตร",
                             color = Color.Gray,
                             fontSize = 14.sp,
@@ -648,6 +671,7 @@ class ScanBackActivity: AppCompatActivity() {
                                     .border(2.dp, Color.Gray, RoundedCornerShape(24.dp))
                             ) {
                                 Text(
+                                    fontFamily = fontKanit,
                                     text = "ถ่ายใหม่",
                                     color = Color.Black,
                                     fontSize = 16.sp,
@@ -667,6 +691,7 @@ class ScanBackActivity: AppCompatActivity() {
                                     .border(2.dp, Color(0xFF2D3892), RoundedCornerShape(24.dp)) // Border matches button color
                             ) {
                                 Text(
+                                    fontFamily = fontKanit,
                                     text = "ยืนยัน",
                                     color = Color.White,
                                     fontSize = 16.sp,
@@ -689,12 +714,14 @@ class ScanBackActivity: AppCompatActivity() {
             onDismissRequest = { onDismiss() },
             title = {
                 Text(
+                    fontFamily = fontKanit,
                     text = "Confirmation",
                     style = androidx.compose.material.MaterialTheme.typography.h6
                 )
             },
             text = {
                 Text(
+                    fontFamily = fontKanit,
                     text = "Are you sure you want to cancel and go back?",
                     style = androidx.compose.material.MaterialTheme.typography.body2
                 )
@@ -704,7 +731,10 @@ class ScanBackActivity: AppCompatActivity() {
                     onClick = { onConfirm() },
                     colors = ButtonDefaults.buttonColors()
                 ) {
-                    Text(text = "Yes", color = Color.White)
+                    Text(
+                        fontFamily = fontKanit,
+                        text = "Yes", color = Color.White
+                    )
                 }
             },
             dismissButton = {
@@ -712,7 +742,10 @@ class ScanBackActivity: AppCompatActivity() {
                     onClick = { onDismiss() },
                     colors = ButtonDefaults.buttonColors()
                 ) {
-                    Text(text = "No", color = Color.White)
+                    Text(
+                        fontFamily = fontKanit,
+                        text = "No", color = Color.White
+                    )
                 }
             },
             backgroundColor = Color.White,
@@ -1152,6 +1185,7 @@ class ScanBackActivity: AppCompatActivity() {
             CameraPreview(modifier = Modifier.fillMaxSize())
 
             Text(
+                fontFamily = fontKanit,
                 text = guideText,
                 color = Color.White,
                 fontSize = 24.sp,

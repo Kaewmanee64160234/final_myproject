@@ -82,6 +82,9 @@ import io.flutter.embedding.engine.dart.DartExecutor
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.googlefonts.Font
+import androidx.compose.ui.text.googlefonts.GoogleFont
 import com.example.identity_scan.ml.ModelFace
 import com.example.identity_scan.ml.ModelUnquant
 import org.opencv.android.Utils
@@ -120,6 +123,7 @@ class ScanFace : AppCompatActivity() {
     private var sharPestImageIndex = 0
     private lateinit var mat: Mat
     private var pathFinal = ""
+    private lateinit var fontKanit : FontFamily
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -135,6 +139,22 @@ class ScanFace : AppCompatActivity() {
         } else {
             Log.d("OpenCV", "OpenCV initialization successful")
         }
+
+        val provider = GoogleFont.Provider(
+            providerAuthority = "com.google.android.gms.fonts",
+            providerPackage = "com.google.android.gms",
+            certificates = R.array.com_google_android_gms_fonts_certs
+        )
+
+        val fontName = GoogleFont("Kanit")
+
+        fontKanit = FontFamily(
+            Font(
+                googleFont = fontName,
+                fontProvider = provider,
+                weight = FontWeight.Bold,
+            )
+        )
 
         // Initialize FlutterEngine manually
         flutterEngine = FlutterEngine(this)
@@ -154,6 +174,7 @@ class ScanFace : AppCompatActivity() {
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Text(
+                            fontFamily = fontKanit,
                             modifier = Modifier
                                 .height(80.dp)
                                 .padding(top = 40.dp),
@@ -185,6 +206,7 @@ class ScanFace : AppCompatActivity() {
                             colors = ButtonDefaults.buttonColors(Color.Red)
                         ) {
                             Text(
+                                fontFamily = fontKanit,
                                 text = "ยกเลิก",
                                 color = Color.White,
                                 fontSize = 16.sp
@@ -470,6 +492,7 @@ class ScanFace : AppCompatActivity() {
                             colors = ButtonDefaults.buttonColors(Color.Red)
                         ) {
                             Text(
+                                fontFamily = fontKanit,
                                 text = "ถ่ายใหม่",
                                 color = Color.White,
                                 fontSize = 16.sp
@@ -490,6 +513,7 @@ class ScanFace : AppCompatActivity() {
                             }
                         ) {
                             Text(
+                                fontFamily = fontKanit,
                                 text = "ใช้ภาพนี้",
                                 fontSize = 16.sp
                             )
@@ -786,6 +810,7 @@ class ScanFace : AppCompatActivity() {
 
             // Guide Text
             Text(
+                fontFamily = fontKanit,
                 text = guideText,
                 color = textColor,
                 fontSize = 18.sp,
@@ -797,6 +822,7 @@ class ScanFace : AppCompatActivity() {
 
             // Instruction Text
             Text(
+                fontFamily = fontKanit,
                 text = "ให้ใบหน้าอยู่ในกรอบที่กำหนด ไม่มีปิดตา จมูก ปาก และคาง",
                 color = Color.White,
                 fontSize = 16.sp,

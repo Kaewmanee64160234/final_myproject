@@ -101,6 +101,9 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.googlefonts.Font
+import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.text.style.TextAlign
 import com.example.identity_scan.ml.ModelUnquant
 import org.opencv.android.Utils
@@ -176,6 +179,7 @@ class ScanFrontActivity : AppCompatActivity() {
     private var sharPestImageIndex = 0
     private lateinit var mat: Mat
     private var pathFinal = ""
+    private lateinit var fontKanit : FontFamily
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -191,6 +195,23 @@ class ScanFrontActivity : AppCompatActivity() {
         } else {
             Log.d("OpenCV", "OpenCV initialization successful")
         }
+
+        val provider = GoogleFont.Provider(
+            providerAuthority = "com.google.android.gms.fonts",
+            providerPackage = "com.google.android.gms",
+            certificates = R.array.com_google_android_gms_fonts_certs
+        )
+
+        val fontName = GoogleFont("Kanit")
+
+        fontKanit = FontFamily(
+            Font(
+                googleFont = fontName,
+                fontProvider = provider,
+                weight = FontWeight.Bold,
+            )
+        )
+
 
         // Initialize FlutterEngine manually
         flutterEngine = FlutterEngine(this)
@@ -214,6 +235,7 @@ class ScanFrontActivity : AppCompatActivity() {
                     ) {
                         // Title
                         Text(
+                            fontFamily = fontKanit,
                             text = "สแกนหน้าบัตร",
                             color = Color.White,
                             style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
@@ -312,6 +334,7 @@ class ScanFrontActivity : AppCompatActivity() {
 
             // Guide text below the rectangle
             Text(
+                fontFamily = fontKanit,
                 text = cameraViewModel.guideText,
                 color = Color.White,
                 fontSize = 18.sp,
@@ -620,6 +643,7 @@ class ScanFrontActivity : AppCompatActivity() {
                     ) {
                         // Title Text
                         Text(
+                            fontFamily = fontKanit,
                             text = "ยืนยันข้อมูล",
                             color = Color(0xFF2D3892), // Stylish blue title
                             fontSize = 22.sp, // Larger font size for prominence
@@ -629,6 +653,7 @@ class ScanFrontActivity : AppCompatActivity() {
 
                         // Subtitle
                         Text(
+                            fontFamily = fontKanit,
                             text = "กรุณาตรวจสอบความชัดเจนของภาพบัตร",
                             color = Color.Gray,
                             fontSize = 14.sp,
@@ -665,6 +690,7 @@ class ScanFrontActivity : AppCompatActivity() {
                                     .border(2.dp, Color.Gray, RoundedCornerShape(24.dp))
                             ) {
                                 Text(
+                                    fontFamily = fontKanit,
                                     text = "ถ่ายใหม่",
                                     color = Color.Black,
                                     fontSize = 16.sp,
@@ -684,6 +710,7 @@ class ScanFrontActivity : AppCompatActivity() {
                                     .border(2.dp, Color(0xFF2D3892), RoundedCornerShape(24.dp)) // Border matches button color
                             ) {
                                 Text(
+                                    fontFamily = fontKanit,
                                     text = "ยืนยัน",
                                     color = Color.White,
                                     fontSize = 16.sp,
