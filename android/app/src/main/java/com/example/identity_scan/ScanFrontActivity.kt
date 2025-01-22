@@ -225,17 +225,7 @@ class ScanFrontActivity : AppCompatActivity() {
                         )
 
                         // Cancel button
-                        Button(
-                            onClick = { cancelProcess() },
-                            colors = ButtonDefaults.buttonColors(Color.Red),
-                            modifier = Modifier.padding(bottom = 16.dp) // Bottom padding for button
-                        ) {
-                            Text(
-                                text = "ยกเลิก",
-                                color = Color.White,
-                                fontSize = 16.sp
-                            )
-                        }
+
                     }
                 }
             }

@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
@@ -127,6 +128,7 @@ class ScanBackActivity: AppCompatActivity() {
     private var pathFinal = ""
 
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -149,6 +151,11 @@ class ScanBackActivity: AppCompatActivity() {
         methodChannel = MethodChannel(flutterEngine.dartExecutor, CHANNEL)
 
         setContent {
+            var showDialog by remember { mutableStateOf(false) }
+            BackHandler {
+                showDialog = true
+            }
+
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = Color.Black // Set background color to black
@@ -178,19 +185,33 @@ class ScanBackActivity: AppCompatActivity() {
                             cameraViewModel = cameraViewModel,
                             rectPositionViewModel = rectPositionViewModel
                         )
-
-                        // Cancel button
-                        Button(
-                            onClick = { cancelProcess() },
-                            colors = ButtonDefaults.buttonColors(Color.Red),
-                            modifier = Modifier.padding(bottom = 16.dp) // Bottom padding for button
-                        ) {
-                            Text(
-                                text = "ยกเลิก",
-                                color = Color.White,
-                                fontSize = 16.sp
+                        if (showDialog) {
+                            ShowCancelConfirmationDialog(
+                                onConfirm = {
+                                    // Perform the action on confirmation (e.g., navigate back)
+                                    showDialog = false
+                                    // Add your navigation logic here
+                                   cancelProcess()
+                                },
+                                onDismiss = {
+                                    // Close the dialog
+                                    showDialog = false
+                                }
                             )
                         }
+
+                        // Cancel button
+//                        Button(
+//                            onClick = { cancelProcess() },
+//                            colors = ButtonDefaults.buttonColors(Color.Red),
+//                            modifier = Modifier.padding(bottom = 16.dp) // Bottom padding for button
+//                        ) {
+//                            Text(
+//                                text = "ยกเลิก",
+//                                color = Color.White,
+//                                fontSize = 16.sp
+//                            )
+//                        }
                     }
                 }
             }
@@ -613,21 +634,46 @@ class ScanBackActivity: AppCompatActivity() {
             }
         }
     }
-    private fun showCancelConfirmationDialog() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Confirmation")
-            .setMessage("Are you sure you want to cancel and go back?")
-            .setPositiveButton("Yes") { _, _ ->
-                // User confirmed; call cancelProcess
-                cancelProcess()
-            }
-            .setNegativeButton("No") { dialog, _ ->
-                // User canceled; dismiss the dialog
-                dialog.dismiss()
-            }
-            .create()
-            .show()
+    @Composable
+    fun ShowCancelConfirmationDialog(
+        onConfirm: () -> Unit,
+        onDismiss: () -> Unit
+    ) {
+        androidx.compose.material.AlertDialog(
+            onDismissRequest = { onDismiss() },
+            title = {
+                Text(
+                    text = "Confirmation",
+                    style = androidx.compose.material.MaterialTheme.typography.h6
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to cancel and go back?",
+                    style = androidx.compose.material.MaterialTheme.typography.body2
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { onConfirm() },
+                    colors = ButtonDefaults.buttonColors()
+                ) {
+                    Text(text = "Yes", color = Color.White)
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { onDismiss() },
+                    colors = ButtonDefaults.buttonColors()
+                ) {
+                    Text(text = "No", color = Color.White)
+                }
+            },
+            backgroundColor = Color.White,
+            contentColor = Color.Black
+        )
     }
+
 
     private fun cancelProcess(){
         val resultIntent = Intent()
