@@ -10,7 +10,7 @@ import 'package:identity_scan/app/routes/app_pages.dart';
 
 class FlowDetactController extends GetxController {
   final count = 0.obs;
-  var card = ID_CARD(
+  final card = Rx<ID_CARD>(ID_CARD(
     idNumber: '',
     th: ID_CARD_DETAIL(
       fullName: '',
@@ -48,7 +48,25 @@ class FlowDetactController extends GetxController {
     ),
     portrait: '',
     laserCode: '',
-  ).obs;
+  ));
+  // create valiable for edit data id card
+  var idNumber = ''.obs;
+  var fullName = ''.obs;
+  var prefix = ''.obs;
+  var firstName = ''.obs;
+  var lastName = ''.obs;
+  var dateOfBirth = ''.obs;
+  var dateOfIssue = ''.obs;
+  var dateOfExpiry = ''.obs;
+  var religion = ''.obs;
+  var address = ''.obs;
+  var prefixEn = ''.obs;
+  var firstNameEn = ''.obs;
+  var lastNameEn = ''.obs;
+  var dateOfBirthEn = ''.obs;
+  var dateOfIssueEn = ''.obs;
+  var dateOfExpiryEn = ''.obs;
+
   final ApiOcrCreditCardService apiOcrCreditCardService = Get.find();
   static const platform = MethodChannel('native_function');
   var statusMessage = "Waiting for preprocessing...".obs;
@@ -182,6 +200,24 @@ class FlowDetactController extends GetxController {
       laserCode: '',
     );
     laserCodeOriginal.value = '';
+    idNumber.value = '';
+    fullName.value = '';
+    prefix.value = '';
+    firstName.value = '';
+    lastName.value = '';
+    dateOfBirth.value = '';
+    dateOfIssue.value = '';
+    dateOfExpiry.value = '';
+    religion.value = '';
+    address.value = '';
+    prefixEn.value = '';
+    firstNameEn.value = '';
+    lastNameEn.value = '';
+    dateOfBirthEn.value = '';
+    dateOfIssueEn.value = '';
+    dateOfExpiryEn.value = '';
+    imageFromCameraBase64.value = "";
+
     similarity.value = 0.0;
     isLoading.value = false;
   }
@@ -208,6 +244,23 @@ class FlowDetactController extends GetxController {
           card.value =
               (await apiOcrCreditCardService.uploadBase64Image(imageBase64))!;
           print("OCR Processed Image Success: ${card.value.idNumber}");
+          // set data
+          idNumber.value = card.value.idNumber;
+          fullName.value = card.value.th.fullName;
+          prefix.value = card.value.th.prefix;
+          firstName.value = card.value.th.name;
+          lastName.value = card.value.th.lastName;
+          dateOfBirth.value = card.value.th.dateOfBirth;
+          dateOfIssue.value = card.value.th.dateOfIssue;
+          dateOfExpiry.value = card.value.th.dateOfExpiry;
+          religion.value = card.value.th.religion;
+          address.value = card.value.th.address.full;
+          prefixEn.value = card.value.en.prefix;
+          firstNameEn.value = card.value.en.name;
+          lastNameEn.value = card.value.en.lastName;
+          dateOfBirthEn.value = card.value.en.dateOfBirth;
+          dateOfIssueEn.value = card.value.en.dateOfIssue;
+          dateOfExpiryEn.value = card.value.en.dateOfExpiry;
 
           Get.snackbar("Success", "OCR for processed image completed.");
         } else {
@@ -251,6 +304,8 @@ class FlowDetactController extends GetxController {
 
           card.value.laserCode = res;
           laserCodeOriginal.value = res;
+          // set data
+          laserCodeOriginal.value = card.value.laserCode;
 
           Get.snackbar("Success", "OCR for processed image completed.");
         } else {

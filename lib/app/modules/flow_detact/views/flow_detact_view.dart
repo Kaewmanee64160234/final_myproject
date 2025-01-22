@@ -1,3 +1,6 @@
+import 'package:bottom_picker/bottom_picker.dart';
+import 'package:bottom_picker/resources/arrays.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,7 +17,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
 
     return Scaffold(
       appBar: AppBar(
-        title:  Text(
+        title: Text(
           'ขั้นตอนการลงทะเบียน',
           style: GoogleFonts.kanit(
             color: Colors.white,
@@ -42,23 +45,23 @@ class FlowDetactView extends GetView<FlowDetactController> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // แสดงรายละเอียดหากไม่มีการโหลด
-                  if (controller.card.value.idNumber.isNotEmpty)
+                  if (controller.idNumber.isNotEmpty &&
+                      controller.laserCodeOriginal.value.isNotEmpty)
                     Column(
                       children: [
+                        // ตรวจสอบความถูกต้องของข้อมูล
+                        Text(
+                          'โปรดตรวจสอบความถูกต้องของข้อมูล',
+                          style: GoogleFonts.kanit(
+                            fontSize: screenWidth * 0.05,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: screenWidth * 0.04),
                         CircleAvatar(
                           radius: screenWidth * 0.15, // Responsive radius
                           backgroundImage: MemoryImage(
                             controller.card.value.getDecodedPortrait(),
-                          ),
-                        ),
-                        SizedBox(height: screenWidth * 0.04),
-                        Text(
-                          'LaserCode: ${controller.laserCodeOriginal.value}',
-                          style: TextStyle(
-                            fontSize:
-                                screenWidth * 0.04, // Responsive font size
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blueAccent,
                           ),
                         ),
                         SizedBox(height: screenWidth * 0.04),
@@ -88,91 +91,181 @@ class FlowDetactView extends GetView<FlowDetactController> {
   Widget _buildCardDetails(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return Card(
-      elevation: 4,
-      margin: EdgeInsets.all(screenWidth * 0.04), // Dynamic margins
-      child: Padding(
-        padding: EdgeInsets.all(screenWidth * 0.04), // Dynamic padding
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'บัตรประชาชน (TH)',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const Divider(),
-            _buildEditableRow('Card ID:', controller.card.value.idNumber.obs),
-            _buildEditableRow('Prefix:', controller.card.value.th.prefix.obs),
-            _buildEditableRow('First Name:', controller.card.value.th.name.obs),
-            _buildEditableRow(
-                'Last Name:', controller.card.value.th.lastName.obs),
-            _buildEditableRow(
-                'Date of Birth:', controller.card.value.th.dateOfBirth.obs),
-            _buildEditableRow(
-                'Date of Issue:', controller.card.value.th.dateOfIssue.obs),
-            _buildEditableRow(
-                'Date of Expiry:', controller.card.value.th.dateOfExpiry.obs),
-            _buildEditableRow(
-                'Address:', controller.card.value.th.address.full.obs),
-            SizedBox(height: screenWidth * 0.04),
-            const Text(
-              'บัตรประชาชน (EN)',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const Divider(),
-            _buildEditableRow('Card ID:', controller.card.value.idNumber.obs),
-            _buildEditableRow('Prefix:', controller.card.value.en.prefix.obs),
-            _buildEditableRow('First Name:', controller.card.value.en.name.obs),
-            _buildEditableRow(
-                'Last Name:', controller.card.value.en.lastName.obs),
-            _buildEditableRow(
-                'Date of Birth:', controller.card.value.en.dateOfBirth.obs),
-            _buildEditableRow(
-                'Date of Issue:', controller.card.value.en.dateOfIssue.obs),
-            _buildEditableRow(
-                'Date of Expiry:', controller.card.value.en.dateOfExpiry.obs),
-            SizedBox(height: screenWidth * 0.04),
-            const Divider(),
-            _buildEditableRow(
-                'Laser Code:', controller.card.value.laserCode.obs),
-          ],
-        ),
+    return Padding(
+      padding: EdgeInsets.all(screenWidth * 0.04), // Dynamic padding
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'บัตรประชาชนภาษาไทย',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const Divider(),
+          _buildEditableRow('Card ID', controller.idNumber, isDisabled: true),
+          _buildEditableRow('Prefix', controller.prefix),
+          _buildEditableRow('First Name', controller.fullName),
+          _buildEditableRow('Last Name', controller.lastName),
+          _buildEditableRow('Date of Birth', controller.dateOfBirth),
+          _buildEditableRow('Date of Issue', controller.dateOfIssue),
+          _buildEditableRow('Date of Expiry', controller.dateOfExpiry),
+          _buildEditableRow('Address:', controller.address),
+          SizedBox(height: screenWidth * 0.04),
+          const Text(
+            'บัตรประชาชน (EN)',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const Divider(),
+          _buildEditableRow('Prefix', controller.prefixEn),
+          _buildEditableRow('First Name', controller.firstNameEn),
+          _buildEditableRow('Last Name', controller.lastNameEn),
+          _buildEditableRow('Date of Birth', controller.dateOfBirthEn),
+          _buildEditableRow('Date of Issue', controller.dateOfIssueEn),
+          _buildEditableRow('Date of Expiry', controller.dateOfExpiryEn),
+          SizedBox(height: screenWidth * 0.04),
+          const Divider(),
+          _buildEditableRow('Laser Code', controller.laserCodeOriginal),
+          ElevatedButton(
+            onPressed: () {
+              BottomPicker.date(
+                pickerTitle: Text(
+                  'Set your Birthday',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Colors.blue,
+                  ),
+                ),
+                dateOrder: DatePickerDateOrder.dmy,
+                initialDateTime: DateTime(1996, 10, 22),
+                maxDateTime: DateTime(1998),
+                minDateTime: DateTime(1980),
+                pickerTextStyle: TextStyle(
+                  color: Colors.blue,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+                onChange: (index) {
+                  print(index);
+                },
+                onSubmit: (index) {
+                  print(index);
+                },
+                bottomPickerTheme: BottomPickerTheme.plumPlate,
+              ).show(context);
+            },
+            child: Text('Set your Birthday'),
+          )
+        ],
       ),
     );
   }
 
-  Widget _buildEditableRow(String label, RxString value) {
+  Widget beautifulTextField({
+    required String labelText,
+    required String hintText,
+    required TextEditingController controller,
+    bool readOnly = false,
+    Function(String)? onChanged,
+  }) {
+    return TextFormField(
+      controller: controller,
+      readOnly: readOnly,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: labelText,
+        labelStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: Colors.grey,
+        ),
+        hintText: hintText,
+        hintStyle: const TextStyle(color: Colors.grey),
+        filled: true,
+        fillColor: Colors.grey.shade100,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.grey),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.blue),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.grey),
+        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+      style: const TextStyle(fontSize: 16, color: Colors.black),
+    );
+  }
+
+  Widget _buildEditableRow(String label, RxString value,
+      {bool isDate = false, bool isDisabled = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            flex: 3,
-            child: Text(
-              label,
+          // Label
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 4), // Spacing between label and field
+          Obx(() {
+            return TextFormField(
+              enabled: !isDisabled,
+              controller: TextEditingController(text: value.value)
+                ..selection =
+                    TextSelection.collapsed(offset: value.value.length),
+              readOnly: isDate,
+              onTap: isDate
+                  ? () async {
+                      // Open date picker if this field is a date
+                      DateTime? pickedDate = await showDatePicker(
+                        context: Get.context!,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(1900), // Minimum date
+                        lastDate: DateTime.now(), // Maximum date
+                      );
+                      if (pickedDate != null) {
+                        value.value =
+                            '${pickedDate.day}/${pickedDate.month}/${pickedDate.year}';
+                      }
+                    }
+                  : null,
+              onChanged: isDate ? null : (text) => value.value = text,
+              decoration: InputDecoration(
+                hintText: isDate ? 'Select Date' : 'Enter $label',
+                filled: true,
+                fillColor: const Color.fromARGB(255, 255, 255, 255),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade500, width: 2),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              ),
               style: const TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.bold,
+                color: Colors.black,
               ),
-            ),
-          ),
-          Expanded(
-            flex: 5,
-            child: Obx(
-              () => TextField(
-                controller: TextEditingController(text: value.value)
-                  ..selection =
-                      TextSelection.collapsed(offset: value.value.length),
-                onChanged: (text) => value.value = text,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                ),
-              ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
@@ -195,7 +288,10 @@ class FlowDetactView extends GetView<FlowDetactController> {
           style: GoogleFonts.kanit(fontSize: screenWidth * 0.05),
         ),
         SizedBox(height: screenWidth * 0.05),
-        StepWidget(step: 1, text: "ถ่ายภาพหน้าบัตรประชาชน",),
+        StepWidget(
+          step: 1,
+          text: "ถ่ายภาพหน้าบัตรประชาชน",
+        ),
         StepWidget(step: 2, text: "ถ่ายภาพหน้าบัตรประชาชน"),
         StepWidget(step: 3, text: "ถ่ายภาพหน้าตัวเอง"),
       ],
@@ -243,7 +339,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
                     ),
                   ],
                 );
-              } else if (controller.card.value.idNumber.isEmpty) {
+              } else if (controller.idNumber.isEmpty) {
                 // Start button
                 return ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -270,11 +366,11 @@ class FlowDetactView extends GetView<FlowDetactController> {
                 );
               } else {
                 // Continue and Clear Data buttons
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Flexible(
-                      child: ElevatedButton(
+                return Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           shape: RoundedRectangleBorder(
@@ -292,30 +388,9 @@ class FlowDetactView extends GetView<FlowDetactController> {
                           ),
                         ),
                       ),
-                    ),
-                    SizedBox(width: screenWidth * 0.02),
-                    Flexible(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                              vertical: screenWidth * 0.03),
-                        ),
-                        onPressed: controller.clearDataForNewOCR,
-                        child: Text(
-                          'Clear Data',
-                          style: TextStyle(
-                            fontSize: screenWidth * 0.04,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                      SizedBox(width: screenWidth * 0.02),
+                    ],
+                  ),
                 );
               }
             }),
