@@ -386,7 +386,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
                       ),
                     ),
                     onPressed: () {
-                      Get.toNamed(Routes.RESULT_OCR);
+                      Get.toNamed(Routes.MAPPING_FACE);
                     },
                     child: Text(
                       'Continue',

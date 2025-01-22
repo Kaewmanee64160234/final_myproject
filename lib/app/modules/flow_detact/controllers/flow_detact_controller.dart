@@ -336,19 +336,49 @@ class FlowDetactController extends GetxController {
     }
   }
 
-// compare misilality
   void compareSimilarity(String base64Image) async {
     try {
       isLoading.value = true;
+
+      // Validate Base64 string before making API call
+      try {
+        base64Decode(card.value.portrait);
+        base64Decode(base64Image);
+      } catch (e) {
+        throw Exception("Invalid Base64 image data");
+      }
+
       final res = await apiOcrCreditCardService.mappingFace(
-          card.value.portrait, base64Image);
+        card.value.portrait,
+        base64Image,
+      );
+
       print("Similarity: $res");
       similarity.value = res;
     } catch (e) {
       print("Error: Failed to compare similarity: $e");
     } finally {
       isLoading.value = false;
-      Get.toNamed(Routes.MAPPING_FACE);
+
+      final mappingFaceController = Get.find<MappingFaceController>();
+      mappingFaceController.similarity.value = similarity.value;
+      mappingFaceController.card.value = card.value;
+      mappingFaceController.laserCodeOriginal.value = laserCodeOriginal.value;
+      mappingFaceController.imageFromCameraBase64.value =
+          imageFromCameraBase64.value;
+      print("data: ${mappingFaceController.card.value.idNumber}");
+      print("data: ${mappingFaceController.laserCodeOriginal.value}");
+      print("data: ${mappingFaceController.imageFromCameraBase64.value}");
+
+      // Navigate to the next page without back navigation
+      Get.offAndToNamed(
+        Routes.MAPPING_FACE,
+        arguments: {
+          'portraitImage': base64Decode(card.value.portrait),
+          'cameraImage': base64Decode(base64Image),
+          'similarity': similarity.value,
+        },
+      );
     }
   }
 
