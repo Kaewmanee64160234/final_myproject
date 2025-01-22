@@ -1143,53 +1143,6 @@ class ScanBackActivity: AppCompatActivity() {
         }
     }
 
-//
-//    fun saveMatToStorage(context: Context, processedMat: Mat, fileName: String): Boolean {
-//        val startTime = System.currentTimeMillis() // Capture start time
-//
-//        return try {
-//            // Step 1: Convert Mat to Bitmap
-//            val bitmap = Bitmap.createBitmap(processedMat.cols(), processedMat.rows(), Bitmap.Config.ARGB_8888)
-//            Utils.matToBitmap(processedMat, bitmap)
-//
-//            // Step 2: Get app-specific storage directory
-//            val storageDir = File(context.getExternalFilesDir(null), "images")
-//            if (!storageDir.exists()) {
-//                if (storageDir.mkdirs()) {
-//                    println("Directory created successfully: ${storageDir.absolutePath}")
-//                } else {
-//                    println("Failed to create directory: ${storageDir.absolutePath}")
-//                    return false // Exit if folder creation fails
-//                }
-//            }
-//
-//            // Step 3: Create a file to save the image
-//            val file = File(storageDir, "$fileName.png")
-//            val outputStream = FileOutputStream(file)
-//
-//            // Step 4: Compress the Bitmap and write to file
-//            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-//
-//            // Step 5: Close the stream and return success
-//
-//            outputStream.flush()
-//            outputStream.close()
-////            step 6 send dataa
-//            pathFinal = file.absolutePath
-//
-//            println("Image saved successfully at: ${file.absolutePath}")
-//
-//            val endTime = System.currentTimeMillis() // Capture end time
-//            val runtime = endTime - startTime // Calculate the difference
-//            println("Image saved in $runtime ms")
-//
-//            true
-//        } catch (e: Exception) {
-//            e.printStackTrace()
-//            println("Failed to save image: ${e.message}")
-//            false
-//        }
-//    }
 
 
     @Composable
