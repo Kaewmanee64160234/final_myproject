@@ -605,7 +605,7 @@ class ScanFrontActivity : AppCompatActivity() {
             ) {
                 Surface(
                     modifier = Modifier
-                       
+
                         .wrapContentHeight()
                         .padding(8.dp),
                     shape = RoundedCornerShape(16.dp), // Rounded corners for a modern look
@@ -644,7 +644,7 @@ class ScanFrontActivity : AppCompatActivity() {
                                 .fillMaxWidth() // Wider image
                                 .height(300.dp) // Adjusted height for layout
                                 .clip(RoundedCornerShape(12.dp)) // Rounded corners for the image
-                                .padding(8.dp) // Equal padding around the image
+                                .padding(8.dp) // Padding around the image
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -676,12 +676,12 @@ class ScanFrontActivity : AppCompatActivity() {
 
                             // Confirm Button
                             Button(
-                                onClick = onRetake,
-                                colors = ButtonDefaults.buttonColors(containerColor =Color(0xFF2D3892)),
+                                onClick = onConfirm,
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D3892)),
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(48.dp)
-
+                                    .border(2.dp, Color(0xFF2D3892), RoundedCornerShape(24.dp)) // Border matches button color
                             ) {
                                 Text(
                                     text = "ยืนยัน",
@@ -690,13 +690,13 @@ class ScanFrontActivity : AppCompatActivity() {
                                     fontWeight = FontWeight.Bold
                                 )
                             }
-
                         }
                     }
                 }
             }
         }
     }
+
 
 
     private fun updateImageData(newImageData: String) {
