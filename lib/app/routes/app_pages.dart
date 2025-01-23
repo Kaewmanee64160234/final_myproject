@@ -32,11 +32,12 @@ class AppPages {
     GetPage(
       name: _Paths.MAPPING_FACE,
       page: () {
+        // ดึงค่าจาก Get.arguments
         final args = Get.arguments as Map<String, dynamic>;
+
         return MappingFaceView(
-          portraitImage: args['portraitImage'],
-          cameraImage: args['cameraImage'],
-          similarity: args['similarity'],
+          card: args['card'], // ส่งค่าของ card
+          similarity: args['similarity'], // ส่งค่าของ similarity
         );
       },
       binding: MappingFaceBinding(),
@@ -53,7 +54,7 @@ class AppPages {
     ),
     GetPage(
       name: _Paths.RESULT_OCR,
-      page: () => const ResultOcrView(),
+      page: () => ResultOcrView(),
       binding: ResultOcrBinding(),
     ),
   ];

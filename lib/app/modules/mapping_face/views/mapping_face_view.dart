@@ -2,17 +2,20 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:identity_scan/app/data/models/card_type.dart';
+import 'package:identity_scan/app/data/models/services/similarity.dart';
+import 'package:identity_scan/app/modules/flow_detact/controllers/flow_detact_controller.dart';
 import 'package:identity_scan/app/routes/app_pages.dart';
 
-class MappingFaceView extends StatelessWidget {
-  final Uint8List portraitImage;
-  final Uint8List cameraImage;
-  final double similarity;
+class MappingFaceView extends GetView<FlowDetactController>  {
 
-  const MappingFaceView({
+  final ID_CARD card;
+  final Similarity similarity;
+
+  // Constructor ที่รับค่าพารามิเตอร์ card และ similarity เป็น required parameters
+  MappingFaceView({
     super.key,
-    required this.portraitImage,
-    required this.cameraImage,
+    required this.card,
     required this.similarity,
   });
 
@@ -37,7 +40,7 @@ class MappingFaceView extends StatelessWidget {
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: similarity >= 0.98
+              colors: similarity.similarity >= 0.5
                   ? [
                       Colors.green.shade400,
                       Colors.blue.shade400
@@ -71,7 +74,9 @@ class MappingFaceView extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _buildCircularAvatar(
-                        image: portraitImage,
+                        image:
+                            
+                                similarity.portraitImage,
                         label: 'บัตรประชาชน', // "ID Card"
                         screenWidth: screenWidth,
                       ),
@@ -87,7 +92,7 @@ class MappingFaceView extends StatelessWidget {
                         ),
                       ),
                       _buildCircularAvatar(
-                        image: cameraImage,
+                        image:similarity.cameraImage,
                         label: 'ภาพจากกล้อง', // "Camera Image"
                         screenWidth: screenWidth,
                       ),
@@ -96,7 +101,7 @@ class MappingFaceView extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child: Text(
-                      'ค่าความคล้ายคลึง: ${(similarity * 100).toStringAsFixed(2)} %',
+                      'ค่าความคล้ายคลึง: ${(similarity.similarity * 100).toStringAsFixed(2)} %',
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -107,7 +112,7 @@ class MappingFaceView extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: similarity >= 0.98
+                    child: similarity.similarity >= 0.5
                         ? ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
@@ -120,7 +125,9 @@ class MappingFaceView extends StatelessWidget {
                             ),
                             onPressed: () {
                               Get.offNamed(
-                                  Routes.RESULT_OCR); // Prevents going back
+                                  Routes.RESULT_OCR); 
+
+                              // Get.to(ResultOcrView());
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -166,6 +173,9 @@ class MappingFaceView extends StatelessWidget {
             ),
           ),
         ),
+        floatingActionButton: FloatingActionButton(onPressed: ((){
+          print(card.th.fullName);
+        }),child: Text("Hello"),),
       ),
     );
   }

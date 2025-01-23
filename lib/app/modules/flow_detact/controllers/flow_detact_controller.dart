@@ -5,8 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:identity_scan/app/data/models/card_type.dart';
 import 'package:identity_scan/app/data/models/services/api_ocr_credit_card_service.dart';
+import 'package:identity_scan/app/data/models/services/similarity.dart';
 import 'package:identity_scan/app/modules/mapping_face/controllers/mapping_face_controller.dart';
 import 'package:identity_scan/app/routes/app_pages.dart';
+
+import '../../mapping_face/views/mapping_face_view.dart';
 
 class FlowDetactController extends GetxController {
   final count = 0.obs;
@@ -86,7 +89,7 @@ class FlowDetactController extends GetxController {
   var dateOfExpiryEnError = ''.obs;
   var laserCodeError = ''.obs;
 
-  final ApiOcrCreditCardService apiOcrCreditCardService = Get.find();
+  final ApiOcrCreditCardService apiOcrCreditCardService = Get.put(ApiOcrCreditCardService());
   static const platform = MethodChannel('native_function');
   var statusMessage = "Waiting for preprocessing...".obs;
   var laserCodeOriginal = ''.obs;
@@ -372,15 +375,26 @@ class FlowDetactController extends GetxController {
       print("data: ${mappingFaceController.laserCodeOriginal.value}");
       print("data: ${mappingFaceController.imageFromCameraBase64.value}");
 
+      Similarity similarityObject = Similarity(
+          portraitImage: base64Decode(card.value.portrait),
+          cameraImage: base64Decode(imageFromCameraBase64.value),
+          similarity: similarity.value);
+      ID_CARD cardObject = createCardObject();
+
       // Navigate to the next page without back navigation
-      Get.offAndToNamed(
-        Routes.MAPPING_FACE,
-        arguments: {
-          'portraitImage': base64Decode(card.value.portrait),
-          'cameraImage': base64Decode(base64Image),
-          'similarity': similarity.value,
-        },
-      );
+      Get.offAll(MappingFaceView(
+        card: cardObject, // ส่งค่าของ cardObject
+        similarity: similarityObject, // ส่งค่าของ similarityObject
+      )); 
+      
+      // Get.offAndToNamed(
+      //   Routes.MAPPING_FACE,
+      //   arguments: {
+      //     'portraitImage': base64Decode(card.value.portrait),
+      //     'cameraImage': base64Decode(base64Image),
+      //     'similarity': similarity.value,
+      //   },
+      // );
     }
   }
 
@@ -388,7 +402,7 @@ class FlowDetactController extends GetxController {
   getDecodedPortrait() {
     return base64Decode(imageFromCameraBase64.value);
   }
-
+  
   bool validateIdCard(String idNumber) {
     // Check length and if it's numeric
     if (idNumber.length != 13 || int.tryParse(idNumber) == null) {
@@ -548,5 +562,54 @@ class FlowDetactController extends GetxController {
     } else {
       isValid.value = false;
     }
+  }
+
+  ID_CARD createCardObject() {
+    // สร้าง object ใหม่จากค่าที่เก็บใน Rx
+    ID_CARD newIdCard = ID_CARD(
+      idNumber: idNumber.value, // ดึงค่าจาก Rx idNumber
+      th: ID_CARD_DETAIL(
+        fullName: fullName.value,
+        prefix: prefix.value,
+        name: firstName.value,
+        lastName: lastName.value,
+        dateOfBirth: dateOfBirth.value,
+        dateOfIssue: dateOfIssue.value,
+        dateOfExpiry: dateOfExpiry.value,
+        religion: religion.value,
+        address: Address(
+          province: address.value,
+          district: '', // ปรับค่าตามที่คุณต้องการ
+          full: '', // ปรับค่าตามที่คุณต้องการ
+          firstPart: '', // ปรับค่าตามที่คุณต้องการ
+          subdistrict: '', // ปรับค่าตามที่คุณต้องการ
+        ),
+      ),
+      en: ID_CARD_DETAIL(
+        fullName: "none",
+        prefix: prefixEn.value,
+        name: firstNameEn.value,
+        lastName: lastNameEn.value,
+        dateOfBirth: dateOfBirthEn.value,
+        dateOfIssue: dateOfIssueEn.value,
+        dateOfExpiry: dateOfExpiryEn.value,
+        religion: religion.value,
+        address: Address(
+          province: address.value, // กรณีนี้สามารถใช้ address ที่เดียวกัน
+          district: '', // ปรับค่าตามที่คุณต้องการ
+          full: '',
+          firstPart: '',
+          subdistrict: '',
+        ),
+      ),
+      portrait: imageFromCameraBase64.value, // กำหนดค่า portrait
+      laserCode: laserCodeOriginal.value, // ดึงค่าจาก laserCode
+    );
+
+    // สามารถใช้งาน `newIdCard` ต่อไปตามที่ต้องการ
+    print(newIdCard.toString());
+    print(newIdCard.th.name);
+
+    return newIdCard;
   }
 }
