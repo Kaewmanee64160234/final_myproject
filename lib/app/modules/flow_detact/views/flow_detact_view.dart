@@ -434,7 +434,9 @@ class FlowDetactView extends GetView<FlowDetactController> {
                         onPressed: () {
                           controller.validateFields();
                           if (controller.isValid.value) {
-                            Get.toNamed(Routes.RESULT_OCR);
+                            Get.toNamed(Routes.RESULT_OCR, arguments: {
+                              'card': controller.card.value,
+                            });
                           }
                         },
                         child: Text(

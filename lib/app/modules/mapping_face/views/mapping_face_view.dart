@@ -121,7 +121,9 @@ class MappingFaceView extends GetView<FlowDetactController> {
                               ),
                             ),
                             onPressed: () {
-                              Get.offNamed(Routes.RESULT_OCR);
+                              Get.offNamed(Routes.RESULT_OCR, arguments: {
+                                'card': card,
+                              });
 
                               // Get.to(ResultOcrView());
                             },
@@ -168,12 +170,6 @@ class MappingFaceView extends GetView<FlowDetactController> {
               ),
             ),
           ),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: (() {
-            print(card.th.fullName);
-          }),
-          child: Text("Hello"),
         ),
       ),
     );
