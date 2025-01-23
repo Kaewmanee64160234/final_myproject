@@ -496,6 +496,7 @@ class ScanBackActivity: AppCompatActivity() {
                     isPredicting = true
                     //รีเซ็ต GuideText เมื่อปิด Dialog (ถ่ายใหม่)
                     cameraViewModel.updateGuideText("กรุณาวางบัตรในกรอบ")
+                    isFound = false
                 },
                 onConfirm = {
                     val resultIntent = Intent()

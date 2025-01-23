@@ -3,173 +3,177 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:identity_scan/app/data/models/card_type.dart';
+import 'package:identity_scan/app/data/models/services/similarity.dart';
+import 'package:identity_scan/app/modules/flow_detact/controllers/flow_detact_controller.dart';
 import 'package:identity_scan/app/routes/app_pages.dart';
 
-import 'package:identity_scan/app/modules/mapping_face/controllers/mapping_face_controller.dart';
-
-class MappingFaceView extends GetView<MappingFaceController> {
-  final Uint8List portraitImage;
-  final Uint8List cameraImage;
-  final double similarity;
+class MappingFaceView extends GetView<FlowDetactController> {
   final ID_CARD card;
+  final Similarity similarity;
 
-  const MappingFaceView({
+  // Constructor ที่รับค่าพารามิเตอร์ card และ similarity เป็น required parameters
+  MappingFaceView({
     super.key,
-    required this.portraitImage,
-    required this.cameraImage,
-    required this.similarity,
     required this.card,
+    required this.similarity,
   });
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    controller.card.value = card;
 
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false, // Hides the back button
-        title: const Text(
-          'ค่าความคล้ายคลึง',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        backgroundColor: const Color.fromRGBO(45, 56, 146, 1),
-        foregroundColor: Colors.white,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: similarity >= 0.98
-                ? [
-                    Colors.green.shade400,
-                    Colors.blue.shade400,
-                  ] // Success gradient
-                : [
-                    Colors.orange.shade400,
-                    Colors.red.shade400,
-                  ], // Failure gradient
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+    // ignore: deprecated_member_use
+    return WillPopScope(
+      onWillPop: () async => false, // Prevents navigation back
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false, // Hides the back button
+          title: const Text(
+            'ค่าความคล้ายคลึง',
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
+          centerTitle: true,
+          backgroundColor: const Color.fromRGBO(45, 56, 146, 1),
+          foregroundColor: Colors.white,
         ),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Text(
-                    'ค่าความคล้ายคลึง',
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.06,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildCircularAvatar(
-                      image: portraitImage,
-                      label: 'บัตรประชาชน', // "ID Card"
-                      screenWidth: screenWidth,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text(
-                        'VS',
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.05,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    _buildCircularAvatar(
-                      image: cameraImage,
-                      label: 'ภาพจากกล้อง', // "Camera Image"
-                      screenWidth: screenWidth,
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Text(
-                    'ค่าความคล้ายคลึง: ${(similarity * 100).toStringAsFixed(2)} %',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: similarity >= 0.98
-                      ? ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            padding: EdgeInsets.symmetric(
-                              vertical: screenWidth * 0.04,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () {
-                            controller.card.value = card;
-
-                            // Navigate to RESULT_OCR without going back
-                            Get.offNamed(Routes.RESULT_OCR,
-                                arguments: {'card': card});
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              'ดูข้อมูลทั้งหมด', // "Next"
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.05,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        )
-                      : ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            padding: EdgeInsets.symmetric(
-                              vertical: screenWidth * 0.04,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () {
-                            Get.offAllNamed(Routes.HOME); // Go back to Home
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              'คุณไม่ผ่านเกณฑ์ กรุณาลองใหม่', // "You didn't pass the criteria, please try again."
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.045,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                ),
-              ],
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: similarity.similarity >= 0.98
+                  ? [
+                      Colors.green.shade400,
+                      Colors.blue.shade400
+                    ] // Success gradient
+                  : [
+                      Colors.orange.shade400,
+                      Colors.red.shade400
+                    ], // Failure gradient
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
           ),
+          child: Center(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: Text(
+                      'ค่าความคล้ายคลึง',
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.06,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildCircularAvatar(
+                        image: similarity.portraitImage,
+                        label: 'บัตรประชาชน', // "ID Card"
+                        screenWidth: screenWidth,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Text(
+                          'VS',
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.05,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      _buildCircularAvatar(
+                        image: similarity.cameraImage,
+                        label: 'ภาพจากกล้อง', // "Camera Image"
+                        screenWidth: screenWidth,
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: Text(
+                      'ค่าความคล้ายคลึง: ${(similarity.similarity * 100).toStringAsFixed(2)} %',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: similarity.similarity >= 0.98
+                        ? ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              padding: EdgeInsets.symmetric(
+                                vertical: screenWidth * 0.04,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () {
+                              Get.offNamed(Routes.RESULT_OCR);
+
+                              // Get.to(ResultOcrView());
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                'ดูข้อมูลทั้งหมด', // "Next"
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.05,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          )
+                        : ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              padding: EdgeInsets.symmetric(
+                                vertical: screenWidth * 0.04,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () {
+                              Get.offAllNamed(Routes.HOME); // Go back to Home
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                'คุณไม่ผ่านเกณฑ์ กรุณาลองใหม่', // "You didn't pass the criteria, please try again."
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.045,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: (() {
+            print(card.th.fullName);
+          }),
+          child: Text("Hello"),
         ),
       ),
     );
