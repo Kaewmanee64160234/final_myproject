@@ -36,12 +36,12 @@ class AppPages {
     ),
     GetPage(
       name: _Paths.RESULT_OCR,
-      page: () => const ResultOcrView(),
+      page: () =>  ResultOcrView(),
       binding: ResultOcrBinding(),
     ),
     GetPage(
       name: _Paths.OCR_RESULT,
-      page: () => const OcrResultView(),
+      page: () =>  OcrResultView(),
       binding: OcrResultBinding(),
     ),
   ];
