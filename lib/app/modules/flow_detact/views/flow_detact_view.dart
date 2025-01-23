@@ -25,6 +25,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
           ),
         ),
         centerTitle: true,
+        foregroundColor: Colors.white,
         backgroundColor: const Color.fromRGBO(3, 6, 80, 1),
       ),
       body: Obx(() {
@@ -447,6 +448,32 @@ class FlowDetactView extends GetView<FlowDetactController> {
                       ),
                       SizedBox(width: screenWidth * 0.02),
                     ],
+                  ),
+                );
+              }
+              if (controller.validateIdCard(controller.card.value.idNumber) ==
+                  false) {
+                return ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.15,
+                      vertical: screenWidth * 0.03, // Dynamic padding
+                    ),
+                  ),
+                  onPressed: () {
+                    Get.offAll(() => HomeView());
+                  },
+                  child: Text(
+                    'ข้อมูลไม่ถูกต้อง ลองอีกครั้ง', // "Start"
+                    style: GoogleFonts.kanit(
+                      fontSize: screenWidth * 0.04,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 );
               } else {

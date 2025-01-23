@@ -270,6 +270,7 @@ class FlowDetactController extends GetxController {
           fullName.value = card.value.th.fullName;
           prefix.value = card.value.th.prefix;
           firstName.value = card.value.th.name;
+
           lastName.value = card.value.th.lastName;
           dateOfBirth.value = card.value.th.dateOfBirth;
           dateOfIssue.value = card.value.th.dateOfIssue;

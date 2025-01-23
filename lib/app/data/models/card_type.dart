@@ -56,14 +56,21 @@ class ID_CARD_DETAIL {
   });
 
   factory ID_CARD_DETAIL.fromJson(Map<String, dynamic> json) {
+    String validateDate(String date) {
+      if (date == 'th_data' || date == 'en_data') {
+        return '';
+      }
+      return date;
+    }
+
     return ID_CARD_DETAIL(
       fullName: json['fullName'] ?? '',
       prefix: json['prefix'] ?? '',
       name: json['name'] ?? '',
       lastName: json['lastName'] ?? '',
-      dateOfBirth: json['dateOfBirth'] ?? '',
-      dateOfIssue: json['dateOfIssue'] ?? '',
-      dateOfExpiry: json['dateOfExpiry'] ?? '',
+      dateOfBirth: validateDate(json['dateOfBirth'] ?? ''),
+      dateOfIssue: validateDate(json['dateOfIssue'] ?? ''),
+      dateOfExpiry: validateDate(json['dateOfExpiry'] ?? ''),
       religion: json['religion'] ?? '',
       address: json['address'] != null
           ? Address.fromJson(json['address'])
