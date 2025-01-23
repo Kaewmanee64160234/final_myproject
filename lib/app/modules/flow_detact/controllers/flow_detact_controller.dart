@@ -450,77 +450,81 @@ class FlowDetactController extends GetxController {
 
     // validate
     if (idNumber.value.isEmpty) {
-      idNumberError.value = 'Card ID is required';
+      idNumberError.value = 'ต้องระบุเลขบัตรประชาชน';
       // alert show card id is required
-      Get.snackbar('Card ID is required', 'Please enter Card ID');
+      Get.snackbar('ต้องระบุเลขบัตรประชาชน', 'กรุณากรอกเลขบัตรประชาชน');
     }
     if (validateIdCard(idNumber.value) == false) {
-      idNumberError.value = 'Card ID is invalid';
-      Get.snackbar('Card ID is invalid', 'Please enter valid Card ID');
+      idNumberError.value = 'เลขบัตรประชาชนไม่ถูกต้อง';
+      Get.snackbar(
+          'เลขบัตรประชาชนไม่ถูกต้อง', 'กรุณากรอกเลขบัตรประชาชนที่ถูกต้อง');
     }
     if (fullName.value.isEmpty) {
-      fullNameError.value = 'Full Name is required';
-      Get.snackbar('Full Name is required', 'Please enter Full Name');
+      fullNameError.value = 'ต้องระบุชื่อเต็ม';
+      Get.snackbar('ต้องระบุชื่อเต็ม', 'กรุณากรอกชื่อเต็ม');
     }
     if (prefix.value.isEmpty) {
-      prefixError.value = 'Prefix is required';
-      Get.snackbar('Prefix is required', 'Please enter Prefix');
+      prefixError.value = 'ต้องระบุคำนำหน้า';
+      Get.snackbar('ต้องระบุคำนำหน้า', 'กรุณากรอกคำนำหน้า');
     }
     if (firstName.value.isEmpty) {
-      firstNameError.value = 'First Name is required';
-      Get.snackbar('First Name is required', 'Please enter First Name');
+      firstNameError.value = 'ต้องระบุชื่อ';
+      Get.snackbar('ต้องระบุชื่อ', 'กรุณากรอกชื่อ');
     }
     if (lastName.value.isEmpty) {
-      lastNameError.value = 'Last Name is required';
-      Get.snackbar('Last Name is required', 'Please enter Last Name');
+      lastNameError.value = 'ต้องระบุนามสกุล';
+      Get.snackbar('ต้องระบุนามสกุล', 'กรุณากรอกนามสกุล');
     }
     if (dateOfBirth.value.isEmpty) {
-      dateOfBirthError.value = 'Date of Birth is required';
-      Get.snackbar('Date of Birth is required', 'Please enter Date of Birth');
+      dateOfBirthError.value = 'ต้องระบุวันเดือนปีเกิด';
+      Get.snackbar('ต้องระบุวันเดือนปีเกิด', 'กรุณากรอกวันเดือนปีเกิด');
     }
     if (dateOfIssue.value.isEmpty) {
-      dateOfIssueError.value = 'Date of Issue is required';
-      Get.snackbar('Date of Issue is required', 'Please enter Date of Issue');
+      dateOfIssueError.value = 'ต้องระบุวันที่ออกบัตร';
+      Get.snackbar('ต้องระบุวันที่ออกบัตร', 'กรุณากรอกวันที่ออกบัตร');
     }
     if (dateOfExpiry.value.isEmpty) {
-      dateOfExpiryError.value = 'Date of Expiry is required';
-      Get.snackbar('Date of Expiry is required', 'Please enter Date of Expiry');
+      dateOfExpiryError.value = 'ต้องระบุวันหมดอายุ';
+      Get.snackbar('ต้องระบุวันหมดอายุ', 'กรุณากรอกวันหมดอายุ');
     }
     if (religion.value.isEmpty) {
-      religionError.value = 'Religion is required';
-      Get.snackbar('Religion is required', 'Please enter Religion');
+      religionError.value = 'ต้องระบุศาสนา';
+      Get.snackbar('ต้องระบุศาสนา', 'กรุณากรอกศาสนา');
     }
     if (address.value.isEmpty) {
-      addressError.value = 'Address is required';
-      Get.snackbar('Address is required', 'Please enter Address');
+      addressError.value = 'ต้องระบุที่อยู่';
+      Get.snackbar('ต้องระบุที่อยู่', 'กรุณากรอกที่อยู่');
     }
     if (prefixEn.value.isEmpty) {
-      prefixEnError.value = 'Prefix is required';
-      Get.snackbar('Prefix is required', 'Please enter Prefix');
+      prefixEnError.value = 'ต้องระบุคำนำหน้าภาษาอังกฤษ';
+      Get.snackbar('ต้องระบุคำนำหน้าภาษาอังกฤษ', 'กรุณากรอกคำนำหน้าภาษาอังกฤษ');
     }
     if (firstNameEn.value.isEmpty) {
-      firstNameEnError.value = 'First Name is required';
-      Get.snackbar('First Name is required', 'Please enter First Name');
+      firstNameEnError.value = 'ต้องระบุชื่อภาษาอังกฤษ';
+      Get.snackbar('ต้องระบุชื่อภาษาอังกฤษ', 'กรุณากรอกชื่อภาษาอังกฤษ');
     }
     if (lastNameEn.value.isEmpty) {
-      lastNameEnError.value = 'Last Name is required';
-      Get.snackbar('Last Name is required', 'Please enter Last Name');
+      lastNameEnError.value = 'ต้องระบุนามสกุลภาษาอังกฤษ';
+      Get.snackbar('ต้องระบุนามสกุลภาษาอังกฤษ', 'กรุณากรอกนามสกุลภาษาอังกฤษ');
     }
     if (dateOfBirthEn.value.isEmpty) {
-      dateOfBirthEnError.value = 'Date of Birth is required';
-      Get.snackbar('Date of Birth is required', 'Please enter Date of Birth');
+      dateOfBirthEnError.value = 'ต้องระบุวันเดือนปีเกิดภาษาอังกฤษ';
+      Get.snackbar('ต้องระบุวันเดือนปีเกิดภาษาอังกฤษ',
+          'กรุณากรอกวันเดือนปีเกิดภาษาอังกฤษ');
     }
     if (dateOfIssueEn.value.isEmpty) {
-      dateOfIssueEnError.value = 'Date of Issue is required';
-      Get.snackbar('Date of Issue is required', 'Please enter Date of Issue');
+      dateOfIssueEnError.value = 'ต้องระบุวันที่ออกบัตรภาษาอังกฤษ';
+      Get.snackbar('ต้องระบุวันที่ออกบัตรภาษาอังกฤษ',
+          'กรุณากรอกวันที่ออกบัตรภาษาอังกฤษ');
     }
     if (dateOfExpiryEn.value.isEmpty) {
-      dateOfExpiryEnError.value = 'Date of Expiry is required';
-      Get.snackbar('Date of Expiry is required', 'Please enter Date of Expiry');
+      dateOfExpiryEnError.value = 'ต้องระบุวันหมดอายุภาษาอังกฤษ';
+      Get.snackbar(
+          'ต้องระบุวันหมดอายุภาษาอังกฤษ', 'กรุณากรอกวันหมดอายุภาษาอังกฤษ');
     }
     if (laserCodeOriginal.value.isEmpty) {
-      laserCodeError.value = 'Laser Code is required';
-      Get.snackbar('Laser Code is required', 'Please enter Laser Code');
+      laserCodeError.value = 'ต้องระบุเลเซอร์โค้ด';
+      Get.snackbar('ต้องระบุเลเซอร์โค้ด', 'กรุณากรอกเลเซอร์โค้ด');
     }
 
     if (idNumberError.value.isEmpty &&

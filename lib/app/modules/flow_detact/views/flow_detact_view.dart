@@ -134,63 +134,63 @@ class FlowDetactView extends GetView<FlowDetactController> {
       children: [
         // แสดงรายละเอียดของบัตรประชาชน
         _buildEditableRow(
-          'Card ID',
+          'เลขบัตรประชาชน', // Card ID
           controller.idNumber,
           error: controller.idNumberError,
           isDisabled: true,
         ),
-        // prefix
+        // คำนำหน้า
         _buildEditableRow(
-          'Prefix',
+          'คำนำหน้า', // Prefix
           controller.prefix,
           error: controller.prefixError,
           isDisabled: false,
         ),
-        // first name
+        // ชื่อ
         _buildEditableRow(
-          'First Name',
+          'ชื่อ', // First Name
           controller.firstName,
           error: controller.firstNameError,
           isDisabled: false,
         ),
-        // last name
+        // นามสกุล
         _buildEditableRow(
-          'Last Name',
+          'นามสกุล', // Last Name
           controller.lastName,
           error: controller.lastNameError,
           isDisabled: false,
         ),
-        // date of birth
+        // วันเกิด
         _buildEditableRow(
-          'Date of Birth',
+          'วันเดือนปีเกิด', // Date of Birth
           controller.dateOfBirth,
           error: controller.dateOfBirthError,
           isDisabled: false,
         ),
-        // date of issue
+        // วันที่ออกบัตร
         _buildEditableRow(
-          'Date of Issue',
+          'วันที่ออกบัตร', // Date of Issue
           controller.dateOfIssue,
           error: controller.dateOfIssueError,
           isDisabled: false,
         ),
-        // date of expiry
+        // วันหมดอายุ
         _buildEditableRow(
-          'Date of Expiry',
+          'วันหมดอายุ', // Date of Expiry
           controller.dateOfExpiry,
           error: controller.dateOfExpiryError,
           isDisabled: false,
         ),
-        // religion
+        // ศาสนา
         _buildEditableRow(
-          'Religion',
+          'ศาสนา', // Religion
           controller.religion,
           error: controller.religionError,
           isDisabled: false,
         ),
-        // address
+        // ที่อยู่
         _buildEditableRow(
-          'Address',
+          'ที่อยู่', // Address
           controller.address,
           error: controller.addressError,
           isDisabled: false,
@@ -198,7 +198,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
         Divider(),
         // header eng
         Text(
-          'Thai ID Card Details',
+          'รายละเอียดบัตรประชาชนภาษาอังกฤษ', // Thai ID Card Details (English)
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -206,44 +206,44 @@ class FlowDetactView extends GetView<FlowDetactController> {
           ),
         ),
         // eng detail card
-        // prefix
+        // คำนำหน้า (ภาษาอังกฤษ)
         _buildEditableRow(
-          'Prefix',
+          'คำนำหน้า (ภาษาอังกฤษ)', // Prefix (English)
           controller.prefixEn,
           error: controller.prefixEnError,
           isDisabled: false,
         ),
-        // first name
+        // ชื่อ (ภาษาอังกฤษ)
         _buildEditableRow(
-          'First Name',
+          'ชื่อ (ภาษาอังกฤษ)', // First Name (English)
           controller.firstNameEn,
           error: controller.firstNameEnError,
           isDisabled: false,
         ),
-        // last name
+        // นามสกุล (ภาษาอังกฤษ)
         _buildEditableRow(
-          'Last Name',
+          'นามสกุล (ภาษาอังกฤษ)', // Last Name (English)
           controller.lastNameEn,
           error: controller.lastNameEnError,
           isDisabled: false,
         ),
-        // date of birth
+        // วันเกิด (ภาษาอังกฤษ)
         _buildEditableRow(
-          'Date of Birth',
+          'วันเดือนปีเกิด (ภาษาอังกฤษ)', // Date of Birth (English)
           controller.dateOfBirthEn,
           error: controller.dateOfBirthEnError,
           isDisabled: false,
         ),
-        // date of issue
+        // วันที่ออกบัตร (ภาษาอังกฤษ)
         _buildEditableRow(
-          'Date of Issue',
+          'วันที่ออกบัตร (ภาษาอังกฤษ)', // Date of Issue (English)
           controller.dateOfIssueEn,
           error: controller.dateOfIssueEnError,
           isDisabled: false,
         ),
-        // date of expiry
+        // วันหมดอายุ (ภาษาอังกฤษ)
         _buildEditableRow(
-          'Date of Expiry',
+          'วันหมดอายุ (ภาษาอังกฤษ)', // Date of Expiry (English)
           controller.dateOfExpiryEn,
           error: controller.dateOfExpiryEnError,
           isDisabled: false,
