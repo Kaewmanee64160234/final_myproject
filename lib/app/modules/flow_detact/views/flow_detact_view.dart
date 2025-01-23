@@ -344,7 +344,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
           step: 1,
           text: "ถ่ายภาพหน้าบัตรประชาชน",
         ),
-        StepWidget(step: 2, text: "ถ่ายภาพหน้าบัตรประชาชน"),
+        StepWidget(step: 2, text: "ถ่ายภาพหลังบัตรประชาชน"),
         StepWidget(step: 3, text: "ถ่ายภาพหน้าตัวเอง"),
       ],
     );
@@ -536,7 +536,7 @@ class StepWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.only(left: 15,top: 8.0,bottom: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
