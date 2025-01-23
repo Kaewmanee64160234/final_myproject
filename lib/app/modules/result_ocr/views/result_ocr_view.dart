@@ -7,14 +7,14 @@ import 'package:identity_scan/app/modules/flow_detact/controllers/flow_detact_co
 import '../controllers/result_ocr_controller.dart';
 
 class ResultOcrView extends GetView<ResultOcrController> {
-  FlowDetactController flowDetactController = Get.put(FlowDetactController());
+  final ID_CARD card;
+  const ResultOcrView({Key? key, required this.card}) : super(key: key);
 
-  // final ID_CARD? idCard;
-  // ResultOcrView({Key? key, this.idCard}) : super(key: key);
-
-  ResultOcrView({super.key});
   @override
   Widget build(BuildContext context) {
+    FlowDetactController flowDetactController = Get.put(FlowDetactController());
+    ResultOcrController resultOcrController = Get.put(ResultOcrController());
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('ResultOcrView'),
@@ -37,6 +37,8 @@ class ResultOcrView extends GetView<ResultOcrController> {
                   },
                   front: Stack(
                     children: [
+                      // image barcode
+
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.all(Radius.circular(8.0)),
@@ -326,6 +328,8 @@ class ResultOcrView extends GetView<ResultOcrController> {
                                     width: 30,
                                   ),
                                   Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       Row(children: [
                                         Text(
@@ -393,17 +397,25 @@ class ResultOcrView extends GetView<ResultOcrController> {
                         ),
                       ),
                       Positioned(
-                        bottom: 5,
+                        bottom: 25,
                         right: 5,
                         child: Image(
-                          image: MemoryImage(
-                            flowDetactController.card.value
-                                .getDecodedPortrait(),
+                          image: AssetImage(
+                            'assets/images/customer-service.png',
                           ),
                           width: 80,
                           // height: 100,
                         ),
                       ),
+                      Positioned(
+                          bottom: 15,
+                          right: 5,
+                          child: Text(
+                            "1302-04-11240912",
+                            style: TextStyle(
+                              fontSize: 12,
+                            ),
+                          ))
                     ],
                   ),
                   back: Container(
@@ -443,6 +455,7 @@ class ResultOcrView extends GetView<ResultOcrController> {
                             ),
                           ),
                           // Positioned image on the left
+
                           Positioned(
                             top: 120, // ตั้งค่าตำแหน่ง Y ของ image
                             left: 10, // ตั้งค่าตำแหน่ง X ของ image
@@ -474,10 +487,6 @@ class ResultOcrView extends GetView<ResultOcrController> {
                         ],
                       ))))
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: (() {}),
-        child: Text("Hello"),
       ),
     );
   }

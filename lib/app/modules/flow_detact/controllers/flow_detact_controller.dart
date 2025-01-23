@@ -362,16 +362,6 @@ class FlowDetactController extends GetxController {
     } finally {
       isLoading.value = false;
 
-      final mappingFaceController = Get.find<MappingFaceController>();
-      mappingFaceController.similarity.value = similarity.value;
-      mappingFaceController.card.value = card.value;
-      mappingFaceController.laserCodeOriginal.value = laserCodeOriginal.value;
-      mappingFaceController.imageFromCameraBase64.value =
-          imageFromCameraBase64.value;
-      print("data: ${mappingFaceController.card.value.idNumber}");
-      print("data: ${mappingFaceController.laserCodeOriginal.value}");
-      print("data: ${mappingFaceController.imageFromCameraBase64.value}");
-
       // Navigate to the next page without back navigation
       Get.offAndToNamed(
         Routes.MAPPING_FACE,
@@ -379,6 +369,7 @@ class FlowDetactController extends GetxController {
           'portraitImage': base64Decode(card.value.portrait),
           'cameraImage': base64Decode(base64Image),
           'similarity': similarity.value,
+          'card': card.value,
         },
       );
     }

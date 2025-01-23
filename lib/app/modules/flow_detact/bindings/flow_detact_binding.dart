@@ -13,6 +13,5 @@ class FlowDetactBinding extends Bindings {
     Get.lazyPut<ApiOcrCreditCardService>(
       () => ApiOcrCreditCardService(),
     );
-    Get.put(MappingFaceController());
   }
 }

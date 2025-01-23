@@ -37,24 +37,25 @@ class AppPages {
           portraitImage: args['portraitImage'],
           cameraImage: args['cameraImage'],
           similarity: args['similarity'],
+          card: args['card'],
         );
       },
       binding: MappingFaceBinding(),
     ),
     GetPage(
       name: _Paths.RESULT_OCR,
-      page: () => ResultOcrView(),
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>;
+        return ResultOcrView(
+          card: args['card'],
+        );
+      },
       binding: ResultOcrBinding(),
     ),
     GetPage(
       name: _Paths.OCR_RESULT,
       page: () => OcrResultView(),
       binding: OcrResultBinding(),
-    ),
-    GetPage(
-      name: _Paths.RESULT_OCR,
-      page: () => const ResultOcrView(),
-      binding: ResultOcrBinding(),
     ),
   ];
 }
