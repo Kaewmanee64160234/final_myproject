@@ -451,58 +451,78 @@ class FlowDetactController extends GetxController {
     // validate
     if (idNumber.value.isEmpty) {
       idNumberError.value = 'Card ID is required';
+      // alert show card id is required
+      Get.snackbar('Card ID is required', 'Please enter Card ID');
     }
     if (validateIdCard(idNumber.value) == false) {
       idNumberError.value = 'Card ID is invalid';
+      Get.snackbar('Card ID is invalid', 'Please enter valid Card ID');
     }
     if (fullName.value.isEmpty) {
       fullNameError.value = 'Full Name is required';
+      Get.snackbar('Full Name is required', 'Please enter Full Name');
     }
     if (prefix.value.isEmpty) {
       prefixError.value = 'Prefix is required';
+      Get.snackbar('Prefix is required', 'Please enter Prefix');
     }
     if (firstName.value.isEmpty) {
       firstNameError.value = 'First Name is required';
+      Get.snackbar('First Name is required', 'Please enter First Name');
     }
     if (lastName.value.isEmpty) {
       lastNameError.value = 'Last Name is required';
+      Get.snackbar('Last Name is required', 'Please enter Last Name');
     }
     if (dateOfBirth.value.isEmpty) {
       dateOfBirthError.value = 'Date of Birth is required';
+      Get.snackbar('Date of Birth is required', 'Please enter Date of Birth');
     }
     if (dateOfIssue.value.isEmpty) {
       dateOfIssueError.value = 'Date of Issue is required';
+      Get.snackbar('Date of Issue is required', 'Please enter Date of Issue');
     }
     if (dateOfExpiry.value.isEmpty) {
       dateOfExpiryError.value = 'Date of Expiry is required';
+      Get.snackbar('Date of Expiry is required', 'Please enter Date of Expiry');
     }
     if (religion.value.isEmpty) {
       religionError.value = 'Religion is required';
+      Get.snackbar('Religion is required', 'Please enter Religion');
     }
     if (address.value.isEmpty) {
       addressError.value = 'Address is required';
+      Get.snackbar('Address is required', 'Please enter Address');
     }
     if (prefixEn.value.isEmpty) {
       prefixEnError.value = 'Prefix is required';
+      Get.snackbar('Prefix is required', 'Please enter Prefix');
     }
     if (firstNameEn.value.isEmpty) {
       firstNameEnError.value = 'First Name is required';
+      Get.snackbar('First Name is required', 'Please enter First Name');
     }
     if (lastNameEn.value.isEmpty) {
       lastNameEnError.value = 'Last Name is required';
+      Get.snackbar('Last Name is required', 'Please enter Last Name');
     }
     if (dateOfBirthEn.value.isEmpty) {
       dateOfBirthEnError.value = 'Date of Birth is required';
+      Get.snackbar('Date of Birth is required', 'Please enter Date of Birth');
     }
     if (dateOfIssueEn.value.isEmpty) {
       dateOfIssueEnError.value = 'Date of Issue is required';
+      Get.snackbar('Date of Issue is required', 'Please enter Date of Issue');
     }
     if (dateOfExpiryEn.value.isEmpty) {
       dateOfExpiryEnError.value = 'Date of Expiry is required';
+      Get.snackbar('Date of Expiry is required', 'Please enter Date of Expiry');
     }
     if (laserCodeOriginal.value.isEmpty) {
       laserCodeError.value = 'Laser Code is required';
+      Get.snackbar('Laser Code is required', 'Please enter Laser Code');
     }
+
     if (idNumberError.value.isEmpty &&
         fullNameError.value.isEmpty &&
         prefixError.value.isEmpty &&
