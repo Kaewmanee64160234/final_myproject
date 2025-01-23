@@ -91,10 +91,9 @@ class MappingFaceView extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Text(
                   'ค่าความคล้ายคลึง: ${(similarity * 100).toStringAsFixed(2)} %',
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.05,
+                  style: const TextStyle(
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -104,28 +103,52 @@ class MappingFaceView extends StatelessWidget {
         ),
         bottomNavigationBar: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              padding: EdgeInsets.symmetric(
-                vertical: screenWidth * 0.03,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: () {
-              Get.offNamed(Routes.RESULT_OCR); // Prevents going back
-            },
-            child: Text(
-              'ถัดไป', // "Next"
-              style: TextStyle(
-                fontSize: screenWidth * 0.05,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
+          child: similarity >= 0.98
+              ? ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: EdgeInsets.symmetric(
+                      vertical: screenWidth * 0.03,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () {
+                    Get.offNamed(Routes.RESULT_OCR); // Prevents going back
+                  },
+                  child: Text(
+                    'ถัดไป', // "Next"
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.05,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                )
+              : ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: EdgeInsets.symmetric(
+                      vertical: screenWidth * 0.03,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () {
+                    Get.offNamed(Routes.HOME); // Prevents going back
+                  },
+                  child: Text(
+                    'คุณไม่ผ่านเกณฑ์ข้อมูลที่กำหนด กรุณาลองใหม่', // "You didn't pass the criteria, please try again."
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.045,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
         ),
       ),
     );
@@ -154,7 +177,7 @@ class MappingFaceView extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: 8.0),
+        const SizedBox(height: 8.0),
         Text(
           label,
           style: TextStyle(
