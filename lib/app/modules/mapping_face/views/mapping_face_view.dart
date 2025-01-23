@@ -5,38 +5,35 @@ import 'package:get/get.dart';
 import 'package:identity_scan/app/routes/app_pages.dart';
 
 class MappingFaceView extends StatelessWidget {
-  const MappingFaceView({super.key});
+  final Uint8List portraitImage;
+  final Uint8List cameraImage;
+  final double similarity;
+
+  const MappingFaceView({
+    super.key,
+    required this.portraitImage,
+    required this.cameraImage,
+    required this.similarity,
+  });
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Retrieve passed arguments
-    final Map<String, dynamic> args = Get.arguments ?? {};
-    final Uint8List? portraitImage = args['portraitImage'];
-    final Uint8List? cameraImage = args['cameraImage'];
-    final double similarity = args['similarity'] ?? 0.0;
-
-    if (portraitImage == null || cameraImage == null) {
-      return Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false, // Hides the back button
-          title: const Text('Error'),
-          centerTitle: true,
-          backgroundColor: Colors.red,
-        ),
-        body: const Center(
-          child: Text(
-            'Invalid data provided. Please try again.',
-            style: TextStyle(fontSize: 18, color: Colors.redAccent),
-          ),
-        ),
-      );
-    }
-
+    // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: () async => false, // Prevents navigation back
       child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false, // Hides the back button
+          title: const Text(
+            'ค่าความคล้ายคลึง',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          centerTitle: true,
+          backgroundColor: const Color.fromRGBO(45, 56, 146, 1),
+          foregroundColor: Colors.white,
+        ),
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(

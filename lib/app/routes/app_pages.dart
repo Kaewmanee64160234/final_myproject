@@ -31,18 +31,25 @@ class AppPages {
     ),
     GetPage(
       name: _Paths.MAPPING_FACE,
-      page: () => const MappingFaceView(),
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>;
+        return MappingFaceView(
+          portraitImage: args['portraitImage'],
+          cameraImage: args['cameraImage'],
+          similarity: args['similarity'],
+        );
+      },
       binding: MappingFaceBinding(),
-    ),
-    GetPage(
-      name: _Paths.RESULT_OCR,
-      page: () => const ResultOcrView(),
-      binding: ResultOcrBinding(),
     ),
     GetPage(
       name: _Paths.OCR_RESULT,
       page: () => const OcrResultView(),
       binding: OcrResultBinding(),
+    ),
+    GetPage(
+      name: _Paths.RESULT_OCR,
+      page: () => const ResultOcrView(),
+      binding: ResultOcrBinding(),
     ),
   ];
 }

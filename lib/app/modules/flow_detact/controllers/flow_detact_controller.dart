@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:identity_scan/app/data/models/card_type.dart';
-import 'package:identity_scan/app/data/models/receive_data.dart';
 import 'package:identity_scan/app/data/models/services/api_ocr_credit_card_service.dart';
 import 'package:identity_scan/app/modules/mapping_face/controllers/mapping_face_controller.dart';
 import 'package:identity_scan/app/routes/app_pages.dart';
