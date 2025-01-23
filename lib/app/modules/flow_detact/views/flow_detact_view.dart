@@ -493,3 +493,49 @@ class FlowDetactView extends GetView<FlowDetactController> {
     );
   }
 }
+
+class StepWidget extends StatelessWidget {
+  final int step;
+  final String text;
+
+  const StepWidget({
+    Key? key,
+    required this.step,
+    required this.text,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Circle for the step number
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: const Color.fromRGBO(45, 56, 146, 1),
+            child: Text(
+              '$step',
+              style: GoogleFonts.kanit(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12), // Spacing between circle and text
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.kanit(
+                fontSize: 16,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
