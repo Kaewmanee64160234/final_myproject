@@ -40,8 +40,6 @@ class FlowDetactView extends GetView<FlowDetactController> {
         // Show registration steps when the app starts, and data is not yet loaded
         if (controller.idNumber.isEmpty ||
             controller.laserCodeOriginal.value.isEmpty) {
-          _showAlertDialog(context, 'Data Missing',
-              'No valid data found. Please ensure your input is complete and correct.');
           return _buildRegistrationSteps(context);
         }
 
@@ -91,42 +89,6 @@ class FlowDetactView extends GetView<FlowDetactController> {
         }
       }),
     );
-  }
-
-  // Alert dialog to notify users of missing data
-  void _showAlertDialog(BuildContext context, String title, String message) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      showDialog(
-        context: context,
-        barrierDismissible: false, // Prevent dismissal by tapping outside
-        builder: (context) {
-          return AlertDialog(
-            title: Text(
-              title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            content: Text(
-              message,
-              style: const TextStyle(fontSize: 16),
-            ),
-            actions: [
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Close'),
-              ),
-            ],
-          );
-        },
-      );
-    });
   }
 
   Widget _buildCardDetails() {
