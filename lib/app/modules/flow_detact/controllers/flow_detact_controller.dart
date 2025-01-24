@@ -377,15 +377,6 @@ class FlowDetactController extends GetxController {
         card: cardObject, // ส่งค่าของ cardObject
         similarity: similarityObject, // ส่งค่าของ similarityObject
       ));
-
-      // Get.offAndToNamed(
-      //   Routes.MAPPING_FACE,
-      //   arguments: {
-      //     'portraitImage': base64Decode(card.value.portrait),
-      //     'cameraImage': base64Decode(base64Image),
-      //     'similarity': similarity.value,
-      //   },
-      // );
     }
   }
 
