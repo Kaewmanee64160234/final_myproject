@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
 import 'package:flip_card/flip_card.dart';
+import 'package:get/get_connect/http/src/utils/utils.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:identity_scan/app/data/models/card_type.dart';
 import 'package:identity_scan/app/modules/flow_detact/controllers/flow_detact_controller.dart';
@@ -30,9 +33,10 @@ class ResultOcrView extends GetView<ResultOcrController> {
           backgroundColor: const Color.fromRGBO(45, 56, 146, 1),
           foregroundColor: Colors.white,
         ),
-        body: Center(
+        body: Container(
+          padding: const EdgeInsets.all(8),
           child: SizedBox(
-            height: 210,
+            height: 250,
             width: 350,
             child: FlipCard(
               direction: FlipDirection.HORIZONTAL,
@@ -42,257 +46,453 @@ class ResultOcrView extends GetView<ResultOcrController> {
                 print(status);
               },
               front: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10.0),
-                  gradient: const LinearGradient(
-                    colors: [Colors.white, Color.fromRGBO(170, 211, 231, 1)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10.0),
+                    gradient: const LinearGradient(
+                      colors: [Colors.white, Color.fromRGBO(170, 211, 231, 1)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    border: Border.all(
+                      color: Colors.grey.shade400,
+                      width: 1,
+                    ),
                   ),
-                  border: Border.all(
-                    color: Colors.grey.shade400,
-                    width: 1,
-                  ),
-                ),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Stack(
                     children: [
-                      // Header with logo and text
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(
-                                2), // Padding between the border and CircleAvatar
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.deepOrange, // Border color
-                                width: 0.5, // Border width
-                              ),
-                            ),
-                            child: ClipOval(
-                              child: CircleAvatar(
-                                backgroundColor: Colors.transparent,
-                                child: Image.asset(
-                                  'assets/images/krut.png',
-                                  width: 50,
-                                  height: 50,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 3, vertical: 3),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Left Side: Images (Krut and Barcode)
+                            Column(
+                              children: [
+                                // Krut Image
+                                Container(
+                                  padding: const EdgeInsets.all(
+                                      2), // Padding between the border and CircleAvatar
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors
+                                          .deepOrangeAccent, // Border color
+                                      width: 0.5, // Border width
+                                    ),
+                                  ),
+                                  child: ClipOval(
+                                    child: CircleAvatar(
+                                      backgroundColor: Colors.transparent,
+                                      child: Image.asset(
+                                        'assets/images/krut.png',
+                                        width: 40,
+                                        height: 40,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                // Barcode Image
+                                Image.asset(
+                                  'assets/images/barcode.png',
+                                  width: 20,
+                                  height: 150,
                                   fit: BoxFit.cover,
                                 ),
-                              ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                            // const SizedBox(width: 8),
+                            // Right Side: Card Information
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    "บัตรประจำตัวประชาชน",
-                                    style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold),
+                                  // Title and ID
+
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 8),
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          "บัตรประจำตัวประชาชน",
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          "Thai National ID Card",
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    "Thai National ID Card",
-                                    style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold),
+                                  // ID Number
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 8),
+                                    child: Row(
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "เลขประจำตัวประชาชน",
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color.fromRGBO(
+                                                    9, 13, 134, 1),
+                                              ),
+                                            ),
+                                            Text(
+                                              "Identification Number",
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color.fromRGBO(
+                                                    9, 13, 134, 1),
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          "${card.idNumber.split('').sublist(0, 1).join()} ${card.idNumber.split('').sublist(1, 5).join()} ${card.idNumber.split('').sublist(5, 10).join()} ${card.idNumber.split('').sublist(10, 12).join()} ${card.idNumber.split('').sublist(12, 13).join()}",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        )
+                                      ],
+                                    ),
                                   ),
-                                ],
-                              ),
-                              // show id number
-                              Row(
-                                children: [
-                                  Column(
+
+                                  // Name in Thai
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        "ชื่อตัวและนามสกุล ",
+                                        style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        card.th.prefix +
+                                            card.th.name +
+                                            " " +
+                                            card.th.lastName,
+                                        style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+
+                                  // Name in English
+                                  Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        "เลขประจำตัวประชาชน",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Color.fromRGBO(9, 13, 134, 1),
-                                        ),
+                                      Image.asset(
+                                          'assets/images/chipcard_nobg.png',
+                                          width: 50,
+                                          height: 50),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              SizedBox(width: 16),
+                                              const Text(
+                                                "Name",
+                                                style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color.fromRGBO(
+                                                        9, 13, 134, 1)),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                "${card.en.prefix} ${card.en.name}",
+                                                style: const TextStyle(
+                                                    fontSize: 15,
+                                                    color: Color.fromRGBO(
+                                                        9, 13, 134, 1)),
+                                              ),
+                                            ],
+                                          ),
+                                          // last name
+                                          Row(
+                                            children: [
+                                              SizedBox(width: 16),
+                                              const Text(
+                                                "Last Name",
+                                                style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color.fromRGBO(
+                                                        9, 13, 134, 1)),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                card.en.lastName,
+                                                style: const TextStyle(
+                                                    fontSize: 15,
+                                                    color: Color.fromRGBO(
+                                                        9, 13, 134, 1)),
+                                              ),
+                                            ],
+                                          ), // Date of Birth
+                                          Row(
+                                            children: [
+                                              const SizedBox(width: 32),
+                                              const Text(
+                                                "วันเกิด:",
+                                                style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                card.th.dateOfBirth,
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12),
+                                              ),
+                                            ],
+                                          ),
+                                          Row(
+                                            children: [
+                                              const SizedBox(width: 32),
+                                              const Text(
+                                                "Date of Birth:",
+                                                style: TextStyle(
+                                                    fontSize: 8,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color.fromRGBO(
+                                                        9, 13, 134, 1)),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                card.en.dateOfBirth,
+                                                style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color.fromRGBO(
+                                                        9, 13, 134, 1)),
+                                              ),
+                                            ],
+                                          ),
+                                          // ศาสนา
+                                          Row(
+                                            children: [
+                                              const SizedBox(width: 32),
+                                              const Text(
+                                                "ศาสนา:",
+                                                style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                card.th.religion,
+                                                style: const TextStyle(
+                                                    fontSize: 12),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                       ),
-                                      Text(
-                                        "Identification Number",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Color.fromRGBO(9, 13, 134, 1),
-                                        ),
-                                      )
                                     ],
                                   ),
-                                  Text(
-                                    card.idNumber,
-                                  )
+
+                                  // Address
+                                  Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Left column for address and dates
+                                        Expanded(
+                                          flex:
+                                              2, // Ensures the address takes up 50% of the row
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              // Address with dynamic line break for "อ."
+                                              Text(
+                                                "ที่อยู่ " +
+                                                    _formatAddressWithLineBreak(
+                                                        card.th.address
+                                                            .province),
+                                                style: const TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                maxLines:
+                                                    2, // Limits the address to two lines
+                                                overflow: TextOverflow
+                                                    .ellipsis, // Adds ellipsis if text overflows
+                                                softWrap:
+                                                    true, // Allows text to wrap
+                                              ),
+                                              const SizedBox(height: 2),
+                                              // Dates
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  // Date of Issue
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        card.th.dateOfIssue,
+                                                        style: const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 8),
+                                                      ),
+                                                      const Text(
+                                                        "วันออกบัตร",
+                                                        style: TextStyle(
+                                                            fontSize: 10,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
+                                                      Text(
+                                                        card.en.dateOfIssue,
+                                                        style: const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color:
+                                                                Color.fromRGBO(
+                                                                    9,
+                                                                    13,
+                                                                    134,
+                                                                    1),
+                                                            fontSize: 8),
+                                                      ),
+                                                      const Text(
+                                                        "Date of Issue",
+                                                        style: TextStyle(
+                                                            fontSize: 8,
+                                                            color:
+                                                                Color.fromRGBO(
+                                                                    9,
+                                                                    13,
+                                                                    134,
+                                                                    1),
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(
+                                                      width:
+                                                          70), // Spacing between columns
+                                                  // Date of Expiry
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        card.th.dateOfExpiry,
+                                                        style: const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 8),
+                                                      ),
+                                                      const Text(
+                                                        "วันหมดอายุ",
+                                                        style: TextStyle(
+                                                            fontSize: 10,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
+                                                      Text(
+                                                        card.en.dateOfExpiry,
+                                                        style: const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color:
+                                                                Color.fromRGBO(
+                                                                    9,
+                                                                    13,
+                                                                    134,
+                                                                    1),
+                                                            fontSize: 8),
+                                                      ),
+                                                      const Text(
+                                                        "Date of Expiry",
+                                                        style: TextStyle(
+                                                            fontSize: 8,
+                                                            color:
+                                                                Color.fromRGBO(
+                                                                    9,
+                                                                    13,
+                                                                    134,
+                                                                    1),
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ]),
                                 ],
-                              )
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      // ID Number
-                      Row(
-                        children: [
-                          const Text(
-                            "เลขประจำตัวประชาชน:",
-                            style: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            flowDetactController.card.value.idNumber,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ],
-                      ),
-                      const Divider(),
-                      // Full Name
-                      Row(
-                        children: [
-                          const Text(
-                            "ชื่อ-นามสกุล:",
-                            style: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              flowDetactController.card.value.th.fullName,
-                              style: const TextStyle(fontSize: 14),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                      // English Name
-                      Row(
-                        children: [
-                          const Text(
-                            "Name:",
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: Color.fromRGBO(9, 13, 134, 1)),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            "${flowDetactController.card.value.en.prefix} ${flowDetactController.card.value.en.name}",
-                            style: const TextStyle(
-                                fontSize: 12,
-                                color: Color.fromRGBO(9, 13, 134, 1)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      // Last Name
-                      Row(
-                        children: [
-                          const Text(
-                            "Last Name:",
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: Color.fromRGBO(9, 13, 134, 1)),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            flowDetactController.card.value.en.lastName,
-                            style: const TextStyle(
-                                fontSize: 12,
-                                color: Color.fromRGBO(9, 13, 134, 1)),
-                          ),
-                        ],
-                      ),
-                      const Divider(),
-                      // Date of Birth
-                      Row(
-                        children: [
-                          const Text(
-                            "วันเกิด:",
-                            style: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            flowDetactController.card.value.th.dateOfBirth,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          const Text(
-                            "Date of Birth:",
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: Color.fromRGBO(9, 13, 134, 1)),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            flowDetactController.card.value.en.dateOfBirth,
-                            style: const TextStyle(
-                                fontSize: 12,
-                                color: Color.fromRGBO(9, 13, 134, 1)),
-                          ),
-                        ],
-                      ),
-                      const Divider(),
-                      // Address
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "ที่อยู่:",
-                            style: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            flowDetactController.card.value.th.address.full,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      // Chip and Flag
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Image.asset(
-                            'assets/images/chipcard_nobg.png',
-                            width: 50,
-                            height: 50,
-                          ),
-                          Column(
-                            children: [
-                              const Text(
-                                "ประเทศไทย",
-                                style: TextStyle(fontSize: 12),
-                              ),
-                              Image.asset(
-                                'assets/images/th_flag.png',
-                                width: 35,
-                                height: 25,
-                              ),
-                              const Text(
-                                "THAILAND",
+                      Positioned(
+                        bottom: 10,
+                        right: 5,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Image.memory(
+                              base64Decode(card.portrait),
+                              // height:
+                              //     90, // Adjusts to 50% of the card height
+                              width: 70, // Keeps the aspect ratio
+                              fit: BoxFit.cover,
+                            ),
+                            const SizedBox(height: 8),
+                            const Text("1302-04-11240912",
                                 style: TextStyle(
-                                    fontSize: 12,
-                                    color: Color.fromRGBO(9, 13, 134, 1)),
-                              ),
-                            ],
-                          ),
-                        ],
+                                    fontSize: 9, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                       ),
                     ],
-                  ),
-                ),
-              ),
+                  )),
               back: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10.0),
@@ -306,17 +506,30 @@ class ResultOcrView extends GetView<ResultOcrController> {
                     width: 1,
                   ),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
-                    "Back of Card",
-                    style: TextStyle(fontSize: 16, color: Colors.black),
+                    "${card.laserCode.split('').sublist(0, 3).join()}-${card.laserCode.split('').sublist(3, 10).join()}-${card.laserCode.split('').sublist(10, 12).join()}",
+                    style: const TextStyle(
+                        fontSize: 16,
+                        color: Color.fromARGB(255, 114, 114, 114),
+                        fontWeight: FontWeight.w100),
                   ),
                 ),
               ),
             ),
           ),
         ),
+        // Button at the bottom
       ),
     );
   }
+}
+
+String _formatAddressWithLineBreak(String address) {
+  // Check if "อ." exists in the address
+  if (address.contains("อ.")) {
+    // Insert a line break before "อ."
+    return address.replaceFirst("อ.", "\nอ.");
+  }
+  return address; // Return the original address if "อ." is not found
 }

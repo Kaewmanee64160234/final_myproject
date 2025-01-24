@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -73,7 +74,7 @@ class MappingFaceView extends GetView<FlowDetactController> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _buildCircularAvatar(
-                        image: similarity.portraitImage,
+                        image: base64Decode(card.portrait),
                         label: 'บัตรประชาชน', // "ID Card"
                         screenWidth: screenWidth,
                       ),
@@ -121,7 +122,9 @@ class MappingFaceView extends GetView<FlowDetactController> {
                               ),
                             ),
                             onPressed: () {
-                              Get.offNamed(Routes.RESULT_OCR);
+                              Get.offNamed(Routes.RESULT_OCR, arguments: {
+                                'card': card,
+                              });
 
                               // Get.to(ResultOcrView());
                             },
@@ -168,12 +171,6 @@ class MappingFaceView extends GetView<FlowDetactController> {
               ),
             ),
           ),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: (() {
-            print(card.th.fullName);
-          }),
-          child: Text("Hello"),
         ),
       ),
     );
