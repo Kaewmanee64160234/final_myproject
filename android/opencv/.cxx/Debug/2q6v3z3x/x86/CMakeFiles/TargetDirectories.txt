@@ -1,3 +1,0 @@
-C:/ProgrammingProject/Flutter/Burst ver/final_myproject/android/opencv/.cxx/Debug/2q6v3z3x/x86/CMakeFiles/opencv_jni_shared.dir
-C:/ProgrammingProject/Flutter/Burst ver/final_myproject/android/opencv/.cxx/Debug/2q6v3z3x/x86/CMakeFiles/edit_cache.dir
-C:/ProgrammingProject/Flutter/Burst ver/final_myproject/android/opencv/.cxx/Debug/2q6v3z3x/x86/CMakeFiles/rebuild_cache.dir
