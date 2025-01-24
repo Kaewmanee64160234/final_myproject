@@ -506,14 +506,49 @@ class ResultOcrView extends GetView<ResultOcrController> {
                     width: 1,
                   ),
                 ),
-                child: Center(
-                  child: Text(
-                    "${card.laserCode.split('').sublist(0, 3).join()}-${card.laserCode.split('').sublist(3, 10).join()}-${card.laserCode.split('').sublist(10, 12).join()}",
-                    style: const TextStyle(
-                        fontSize: 16,
-                        color: Color.fromARGB(255, 114, 114, 114),
-                        fontWeight: FontWeight.w100),
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 32),
+                          child: Column(
+                            children: [
+                              Text("ปรเทศไทย",
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    color: Color.fromRGBO(0, 0, 0, 1),
+                                    fontWeight: FontWeight.bold,
+                                  )),
+                              Image.asset(
+                                'assets/images/th_flag.png',
+                                width: 40,
+                                height: 30,
+                                fit: BoxFit.cover,
+                              ),
+                              // THAILAND
+                              Text("THAILAND",
+                                  style: TextStyle(
+                                    fontSize: 7,
+                                    color: Color.fromRGBO(0, 0, 0, 1),
+                                    fontWeight: FontWeight.bold,
+                                  )),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "${card.laserCode.split('').sublist(0, 3).join()}-${card.laserCode.split('').sublist(3, 10).join()}-${card.laserCode.split('').sublist(10, 12).join()}",
+                      style: const TextStyle(
+                          fontSize: 16,
+                          color: Color.fromARGB(255, 114, 114, 114),
+                          fontWeight: FontWeight.w100),
+                    ),
+                  ],
                 ),
               ),
             ),
