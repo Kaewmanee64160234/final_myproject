@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:identity_scan/app/modules/home/views/home_view.dart';
 import 'package:identity_scan/app/routes/app_pages.dart';
+import 'package:intl/intl.dart';
 
 import '../controllers/flow_detact_controller.dart';
 
@@ -74,7 +75,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                _buildCardDetails(),
+                _buildCardDetails(context),
               ],
             ),
           ),
@@ -92,74 +93,82 @@ class FlowDetactView extends GetView<FlowDetactController> {
     );
   }
 
-  Widget _buildCardDetails() {
+  Widget _buildCardDetails(BuildContext context) {
     return Column(
       children: [
         // แสดงรายละเอียดของบัตรประชาชน
         _buildEditableRow(
-          'เลขบัตรประชาชน', // Card ID
-          controller.idNumber,
-          error: controller.idNumberError,
-          isDisabled: true,
-        ),
+            'เลขบัตรประชาชน', // Card ID
+            controller.idNumber,
+            error: controller.idNumberError,
+            isDisabled: true,
+            contextf: context),
         // คำนำหน้า
         _buildEditableRow(
-          'คำนำหน้า', // Prefix
-          controller.prefix,
-          error: controller.prefixError,
-          isDisabled: false,
-        ),
-        // ชื่อ
+            'คำนำหน้า', // Prefix
+            controller.prefix,
+            error: controller.prefixError,
+            isDisabled: false,
+            contextf: context),
+        // // ชื่อ
+        // _buildEditableRow(
+        //   'ชื่อ', // First Name
+        //   controller.firstName,
+        //   error: controller.firstNameError,
+        //   isDisabled: false,
+        // ),
+        // // นามสกุล
+        // _buildEditableRow(
+        //   'นามสกุล', // Last Name
+        //   controller.lastName,
+        //   error: controller.lastNameError,
+        //   isDisabled: false,
+        // ),
+        // // วันเกิด
         _buildEditableRow(
-          'ชื่อ', // First Name
-          controller.firstName,
-          error: controller.firstNameError,
-          isDisabled: false,
-        ),
-        // นามสกุล
+            'วันเดือนปีเกิด', // Date of Birth
+            controller.dateOfBirth,
+            error: controller.dateOfBirthError,
+            isDisabled: false,
+            contextf: context,
+            isDate: true),
+        // // วันที่ออกบัตร
         _buildEditableRow(
-          'นามสกุล', // Last Name
-          controller.lastName,
-          error: controller.lastNameError,
-          isDisabled: false,
-        ),
-        // วันเกิด
+            'วันที่ออกบัตร', // Date of Issue
+            controller.dateOfIssue,
+            error: controller.dateOfIssueError,
+            isDisabled: false,
+            contextf: context,
+            isDate: true),
+
+        // // วันหมดอายุ
         _buildEditableRow(
-          'วันเดือนปีเกิด', // Date of Birth
-          controller.dateOfBirth,
-          error: controller.dateOfBirthError,
-          isDisabled: false,
-        ),
-        // วันที่ออกบัตร
-        _buildEditableRow(
-          'วันที่ออกบัตร', // Date of Issue
-          controller.dateOfIssue,
-          error: controller.dateOfIssueError,
-          isDisabled: false,
-        ),
-        // วันหมดอายุ
-        _buildEditableRow(
-          'วันหมดอายุ', // Date of Expiry
-          controller.dateOfExpiry,
-          error: controller.dateOfExpiryError,
-          isDisabled: false,
-        ),
-        // ศาสนา
+            'วันหมดอายุ', // Date of Expiry
+            controller.dateOfExpiry,
+            error: controller.dateOfExpiryError,
+            isDisabled: false,
+            contextf: context,
+            isDate: true),
+
+        // // ศาสนา
         _buildEditableRow(
           'ศาสนา', // Religion
           controller.religion,
           error: controller.religionError,
           isDisabled: false,
+          contextf: context,
         ),
-        // ที่อยู่
+        // // ที่อยู่
         _buildEditableRow(
           'ที่อยู่', // Address
           controller.address,
           error: controller.addressError,
           isDisabled: false,
+          contextf: context,
         ),
+
         Divider(),
-        // header eng
+        // // header eng
         Text(
           'รายละเอียดบัตรประชาชนภาษาอังกฤษ', // Thai ID Card Details (English)
           style: const TextStyle(
@@ -168,55 +177,65 @@ class FlowDetactView extends GetView<FlowDetactController> {
             color: Colors.black87,
           ),
         ),
-        // eng detail card
-        // คำนำหน้า (ภาษาอังกฤษ)
+        // // eng detail card
+        // // คำนำหน้า (ภาษาอังกฤษ)
         _buildEditableRow(
           'คำนำหน้า (ภาษาอังกฤษ)', // Prefix (English)
           controller.prefixEn,
           error: controller.prefixEnError,
           isDisabled: false,
+          contextf: context,
         ),
-        // ชื่อ (ภาษาอังกฤษ)
+        // // ชื่อ (ภาษาอังกฤษ)
         _buildEditableRow(
           'ชื่อ (ภาษาอังกฤษ)', // First Name (English)
           controller.firstNameEn,
           error: controller.firstNameEnError,
           isDisabled: false,
+          contextf: context,
         ),
-        // นามสกุล (ภาษาอังกฤษ)
+        // // นามสกุล (ภาษาอังกฤษ)
         _buildEditableRow(
           'นามสกุล (ภาษาอังกฤษ)', // Last Name (English)
           controller.lastNameEn,
           error: controller.lastNameEnError,
           isDisabled: false,
+          contextf: context,
         ),
-        // วันเกิด (ภาษาอังกฤษ)
+        // // วันเกิด (ภาษาอังกฤษ)
         _buildEditableRow(
-          'วันเดือนปีเกิด (ภาษาอังกฤษ)', // Date of Birth (English)
-          controller.dateOfBirthEn,
-          error: controller.dateOfBirthEnError,
-          isDisabled: false,
-        ),
-        // วันที่ออกบัตร (ภาษาอังกฤษ)
+            'วันเดือนปีเกิด (ภาษาอังกฤษ)', // Date of Birth (English)
+            controller.dateOfBirthEn,
+            error: controller.dateOfBirthEnError,
+            isDisabled: false,
+            contextf: context,
+            isDate: true),
+        // // วันที่ออกบัตร (ภาษาอังกฤษ)
         _buildEditableRow(
-          'วันที่ออกบัตร (ภาษาอังกฤษ)', // Date of Issue (English)
-          controller.dateOfIssueEn,
-          error: controller.dateOfIssueEnError,
-          isDisabled: false,
-        ),
-        // วันหมดอายุ (ภาษาอังกฤษ)
+            'วันที่ออกบัตร (ภาษาอังกฤษ)', // Date of Issue (English)
+            controller.dateOfIssueEn,
+            error: controller.dateOfIssueEnError,
+            isDisabled: false,
+            contextf: context,
+            isDate: true),
+        // // วันหมดอายุ (ภาษาอังกฤษ)
         _buildEditableRow(
-          'วันหมดอายุ (ภาษาอังกฤษ)', // Date of Expiry (English)
-          controller.dateOfExpiryEn,
-          error: controller.dateOfExpiryEnError,
-          isDisabled: false,
-        ),
+            'วันหมดอายุ (ภาษาอังกฤษ)', // Date of Expiry (English)
+            controller.dateOfExpiryEn,
+            error: controller.dateOfExpiryEnError,
+            isDisabled: false,
+            contextf: context,
+            isDate: true),
       ],
     );
   }
 
   Widget _buildEditableRow(String label, RxString value,
-      {RxString? error, bool isDisabled = false, bool isNumeric = false}) {
+      {RxString? error,
+      bool isDisabled = false,
+      bool isNumeric = false,
+      bool? isDate,
+      required BuildContext contextf}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Column(
@@ -239,19 +258,9 @@ class FlowDetactView extends GetView<FlowDetactController> {
                     TextSelection.collapsed(offset: value.value.length),
               onChanged: (text) {
                 value.value = text;
-
-                // Validate dynamically
-                if (label == 'Card ID') {
-                  error?.value = controller.validateIdCard(value.value)
-                      ? '' // Valid input
-                      : 'Invalid Card ID (must be 13 digits)';
-                } else if (text.isEmpty) {
-                  error?.value = '$label is required';
-                } else {
-                  error?.value = ''; // Clear error if valid
-                }
               },
-              readOnly: isDisabled,
+              readOnly:
+                  isDisabled || isDate == true, // If isDate, make it read-only
               keyboardType:
                   isNumeric ? TextInputType.number : TextInputType.text,
               decoration: InputDecoration(
@@ -275,6 +284,106 @@ class FlowDetactView extends GetView<FlowDetactController> {
                     const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               ),
               style: const TextStyle(fontSize: 16, color: Colors.black),
+              onTap: isDate == true && !isDisabled
+                  ? () async {
+                      // Initial selected date (to avoid null reference)
+                      DateTime selectedDate = DateTime.now();
+
+                      final BuildContext context =
+                          contextf; // Get context from the widget
+                      showCupertinoModalPopup(
+                        context: context,
+                        builder: (_) => Container(
+                          height: 300,
+                          color: Colors.white,
+                          child: Column(
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    // Picker for Day
+                                    Expanded(
+                                      child: CupertinoPicker(
+                                        itemExtent: 32,
+                                        onSelectedItemChanged: (int value) {
+                                          selectedDate = DateTime(
+                                            selectedDate.year,
+                                            selectedDate.month,
+                                            value + 1,
+                                          );
+                                        },
+                                        children: List<Widget>.generate(
+                                          31,
+                                          (int index) => Center(
+                                              child: Text('${index + 1}')),
+                                        ),
+                                      ),
+                                    ),
+                                    // Picker for Month
+                                    Expanded(
+                                      child: CupertinoPicker(
+                                        itemExtent: 32,
+                                        onSelectedItemChanged: (int value) {
+                                          selectedDate = DateTime(
+                                            selectedDate.year,
+                                            value + 1,
+                                            selectedDate.day,
+                                          );
+                                        },
+                                        children: List<Widget>.generate(
+                                          12,
+                                          (int index) => Center(
+                                            child: Text(
+                                              DateFormat.MMMM('th_TH').format(
+                                                  DateTime(0, index + 1)),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    // Picker for Year
+                                    Expanded(
+                                      child: CupertinoPicker(
+                                        itemExtent: 32,
+                                        onSelectedItemChanged: (int value) {
+                                          selectedDate = DateTime(
+                                            2000 + value,
+                                            selectedDate.month,
+                                            selectedDate.day,
+                                          );
+                                        },
+                                        children: List<Widget>.generate(
+                                          101,
+                                          (int index) => Center(
+                                            child: Text('${2000 + index}'),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              CupertinoButton(
+                                child: Text('ตกลง'),
+                                onPressed: () {
+                                  // แปลงวันที่เป็นรูปแบบวันที่ที่คุณต้องการเป็นภาษาไทย
+                                  String formattedDate =
+                                      "${selectedDate.day} ${DateFormat.MMMM('th_TH').format(selectedDate)} ${selectedDate.year + 543}";
+
+                                  // Update the value with the selected date in Thai
+                                  value.value = formattedDate;
+
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+                  : null, // Only show the custom date picker if isDate is true
             );
           }),
         ],
@@ -414,7 +523,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
                   ),
                 );
               } else if (controller.similarity.value != 0 &&
-                  controller.similarity.value < 0.98) {
+                  controller.similarity.value < 0.90) {
                 // Continue and Clear Data buttons
                 return Center(
                   child: Row(
@@ -536,7 +645,7 @@ class StepWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 15,top: 8.0,bottom: 8.0),
+      padding: const EdgeInsets.only(left: 15, top: 8.0, bottom: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
