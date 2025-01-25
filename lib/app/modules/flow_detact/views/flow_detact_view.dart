@@ -154,6 +154,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
             'วันหมดอายุ', // Date of Expiry
             controller.dateOfExpiry,
             error: controller.dateOfExpiryError,
+            isDateExpiry: true,
             isDisabled: false,
             isEnglish: false,
             contextf: context,
@@ -246,6 +247,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
             'วันหมดอายุ (ภาษาอังกฤษ)', // Date of Expiry (English)
             controller.dateOfExpiryEn,
             error: controller.dateOfExpiryEnError,
+            isDateExpiry: true,
             isDisabled: false,
             contextf: context,
             isDate: true,
@@ -626,7 +628,7 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
         widget.initialDate.month > 0 ? widget.initialDate.month : null;
 
     // check status id thai or eng
-    if (widget.initialDate.year > 2500) {
+    if (widget.initialDate.year > 2400) {
       selectedYear = widget.initialDate.year;
     } else {
       selectedYear = widget.initialDate.year - 543;
@@ -745,7 +747,7 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
     if (selectedDay == null || selectedMonth == null) {
       widget.onDateChanged(null);
     } else {
-      if (selectedYear > 2500) {
+      if (selectedYear > 2400) {
         widget.onDateChanged(
             DateTime(selectedYear - 543, selectedMonth!, selectedDay!));
       } else {
