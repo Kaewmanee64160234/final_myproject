@@ -233,203 +233,6 @@ class FlowDetactView extends GetView<FlowDetactController> {
     );
   }
 
-  Widget _buildEditableRow(String label, RxString value,
-      {RxString? error,
-      bool isDisabled = false,
-      bool isNumeric = false,
-      bool? isDate,
-      required BuildContext contextf,
-      bool? isEnglish}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Label
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Obx(() {
-            return TextFormField(
-              controller: TextEditingController(text: value.value)
-                ..selection =
-                    TextSelection.collapsed(offset: value.value.length),
-              onChanged: (text) {
-                value.value = text;
-              },
-              readOnly:
-                  isDisabled || isDate == true, // If isDate, make it read-only
-              keyboardType:
-                  isNumeric ? TextInputType.number : TextInputType.text,
-              decoration: InputDecoration(
-                hintText: 'Enter $label',
-                errorText: error?.value.isEmpty ?? true ? null : error?.value,
-                filled: true,
-                fillColor: Colors.grey.shade100,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.grey),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.blue),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.grey),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              ),
-              style: const TextStyle(fontSize: 16, color: Colors.black),
-              onTap: isDate == true && !isDisabled
-                  ? () async {
-                      // Initial selected date (to avoid null reference)
-                      // แปลงค่าใน TextField เป็น DateTime ถ้าเป็นไปได้
-                      DateTime selectedDate =
-                          DateTime.now(); // ค่าเริ่มต้นคือวันนี้
-                      
-
-                      final BuildContext context =
-                          contextf; // Get context from the widget
-                      showCupertinoModalPopup(
-                        context: context,
-                        builder: (_) => Container(
-                          height: 300,
-                          color: Colors.white,
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    // Picker for Day
-                                    Expanded(
-                                      child: CupertinoPicker(
-                                        itemExtent: 32,
-                                        // กำหนดตำแหน่งเริ่มต้นเป็นวันที่ปัจจุบัน
-                                        scrollController:
-                                            FixedExtentScrollController(
-                                                initialItem:
-                                                    selectedDate.day - 1),
-                                        onSelectedItemChanged: (int value) {
-                                          selectedDate = DateTime(
-                                            selectedDate.year,
-                                            selectedDate.month,
-                                            value + 1,
-                                          );
-                                        },
-                                        children: List<Widget>.generate(
-                                          31,
-                                          (int index) => Center(
-                                            child: Text('${index + 1}'),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    // Picker for Month
-                                    Expanded(
-                                      child: CupertinoPicker(
-                                        itemExtent: 32,
-                                        // กำหนดตำแหน่งเริ่มต้นด้วย FixedExtentScrollController
-                                        scrollController:
-                                            FixedExtentScrollController(
-                                                initialItem:
-                                                    selectedDate.month - 1),
-                                        onSelectedItemChanged: (int value) {
-                                          selectedDate = DateTime(
-                                            selectedDate.year,
-                                            value + 1,
-                                            selectedDate.day,
-                                          );
-                                        },
-                                        children: List<Widget>.generate(
-                                          12,
-                                          (int index) => Center(
-                                            child: Text(
-                                              DateFormat.MMM('th_TH').format(
-                                                DateTime(
-                                                    0, index + 1), // ใช้ตัวย่อ
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    // Picker for Year
-                                    Expanded(
-                                      child: CupertinoPicker(
-                                        itemExtent: 32,
-                                        scrollController:
-                                            FixedExtentScrollController(
-                                          initialItem: DateTime.now().year -
-                                              2000, // คำนวณตำแหน่งปีปัจจุบัน
-                                        ),
-                                        onSelectedItemChanged: (int value) {
-                                          selectedDate = DateTime(
-                                            2000 +
-                                                value, // แปลงจากตำแหน่งเป็นปี ค.ศ.
-                                            selectedDate.month,
-                                            selectedDate.day,
-                                          );
-                                        },
-                                        children: List<Widget>.generate(
-                                          101,
-                                          (int index) => Center(
-                                            child: Text(
-                                                '${2000 + index + 543}'), // แสดงผลเป็น พ.ศ.
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              CupertinoButton(
-                                child: Text('ตกลง'),
-                                onPressed: () {
-                                  // แปลงวันที่เป็นรูปแบบวันที่ที่คุณต้องการเป็นภาษาไทย
-                                  // Thai
-
-                                  if (isEnglish != null && isEnglish) {
-                                    String formattedDate =
-                                        "${selectedDate.day} ${DateFormat.MMM('en_EN').format(selectedDate)} ${selectedDate.year}";
-
-                                    // Update the value with the selected date in Thai
-                                    value.value = formattedDate;
-                                  } else {
-                                    String formattedDate =
-                                        "${selectedDate.day} ${DateFormat.MMM('th_TH').format(selectedDate)} ${selectedDate.year + 543}";
-
-                                    // Update the value with the selected date in Thai
-                                    value.value = formattedDate;
-                                  }
-
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-                  : null, // Only show the custom date picker if isDate is true
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
   Widget beautifulTextField({
     required String labelText,
     required String hintText,
@@ -669,6 +472,288 @@ class FlowDetactView extends GetView<FlowDetactController> {
       ),
     );
   }
+
+  Widget _buildEditableRow(String label, RxString value,
+      {RxString? error,
+      bool isDisabled = false,
+      bool isNumeric = false,
+      bool? isDate,
+      required BuildContext contextf,
+      bool? isEnglish}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Label
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Obx(() {
+            return TextFormField(
+              controller: TextEditingController(text: value.value)
+                ..selection =
+                    TextSelection.collapsed(offset: value.value.length),
+              onChanged: (text) {
+                value.value = text;
+              },
+              readOnly: isDisabled || isDate == true,
+              keyboardType:
+                  isNumeric ? TextInputType.number : TextInputType.text,
+              decoration: InputDecoration(
+                hintText: 'Enter $label',
+                errorText: error?.value.isEmpty ?? true ? null : error?.value,
+                filled: true,
+                fillColor: Colors.grey.shade100,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.blue),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.grey),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              ),
+              style: const TextStyle(fontSize: 16, color: Colors.black),
+              onTap: isDate == true && !isDisabled
+                  ? () async {
+                      // Safely parse the date or use the current date as fallback
+                      DateTime initialDate = DateTime.now();
+                      if (value.value.isNotEmpty) {
+                        initialDate = _parseThaiDate(value.value) ??
+                            DateTime.now(); // Fallback to now if parsing fails
+                      }
+                      showModalBottomSheet(
+                        context: contextf,
+                        isScrollControlled: true,
+                        builder: (BuildContext context) {
+                          return ThaiDatePicker(
+                            initialDate: initialDate,
+                            onDateChanged: (DateTime? selectedDate) {
+                              if (selectedDate == null) {
+                                final formattedValue = isEnglish == true
+                                    ? "0 Unspecified ${initialDate.year}"
+                                    : "0 ไม่ระบุ ${initialDate.year + 543}";
+                                value.value = formattedValue;
+                              } else {
+                                final formattedValue = isEnglish == true
+                                    ? "${selectedDate.day} ${DateFormat.MMM('en_EN').format(selectedDate)} ${selectedDate.year}"
+                                    : "${selectedDate.day} ${DateFormat.MMM('th_TH').format(selectedDate)} ${selectedDate.year + 543}";
+                                value.value = formattedValue;
+                              }
+                            },
+                          );
+                        },
+                      );
+                    }
+                  : null,
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+class ThaiDatePicker extends StatefulWidget {
+  final DateTime initialDate;
+  final ValueChanged<DateTime?> onDateChanged;
+
+  const ThaiDatePicker({
+    Key? key,
+    required this.initialDate,
+    required this.onDateChanged,
+  }) : super(key: key);
+
+  @override
+  _ThaiDatePickerState createState() => _ThaiDatePickerState();
+}
+
+class _ThaiDatePickerState extends State<ThaiDatePicker> {
+  int? selectedDay;
+  int? selectedMonth;
+  late int selectedYear;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedDay = widget.initialDate.day > 0 ? widget.initialDate.day : null;
+    selectedMonth =
+        widget.initialDate.month > 0 ? widget.initialDate.month : null;
+    selectedYear = widget.initialDate.year + 543; // Convert to พ.ศ.
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final int currentYear = DateTime.now().year + 543; // Current year in พ.ศ.
+
+    return SizedBox(
+      height: 300,
+      child: Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                // Day Picker
+                Expanded(
+                  child: CupertinoPicker(
+                    scrollController: FixedExtentScrollController(
+                      initialItem: selectedDay == null ? 0 : selectedDay! - 1,
+                    ),
+                    itemExtent: 40,
+                    onSelectedItemChanged: (index) {
+                      setState(() {
+                        selectedDay = index == 0 ? null : index + 1;
+                      });
+                      _onDateChanged();
+                    },
+                    children: [
+                      const Center(
+                          child:
+                              Text("ไม่ระบุ", style: TextStyle(fontSize: 18))),
+                      ...List.generate(
+                        31,
+                        (index) => Center(
+                          child: Text('${index + 1}',
+                              style: const TextStyle(fontSize: 18)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Month Picker
+                Expanded(
+                  child: CupertinoPicker(
+                    scrollController: FixedExtentScrollController(
+                      initialItem: selectedMonth == null ? 0 : selectedMonth!,
+                    ),
+                    itemExtent: 40,
+                    onSelectedItemChanged: (index) {
+                      setState(() {
+                        selectedMonth = index == 0 ? null : index;
+                      });
+                      _onDateChanged();
+                    },
+                    children: [
+                      const Center(
+                          child:
+                              Text("ไม่ระบุ", style: TextStyle(fontSize: 18))),
+                      ...List.generate(
+                        12,
+                        (index) => Center(
+                          child: Text(_monthName(index + 1),
+                              style: const TextStyle(fontSize: 18)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Year Picker
+                Expanded(
+                  child: CupertinoPicker(
+                    scrollController: FixedExtentScrollController(
+                      initialItem: selectedYear - (currentYear - 543),
+                    ),
+                    itemExtent: 40,
+                    onSelectedItemChanged: (index) {
+                      setState(() {
+                        selectedYear = (currentYear - 543) + index;
+                      });
+                      _onDateChanged();
+                    },
+                    children: List.generate(
+                      101, // 100 years from the current year
+                      (index) => Center(
+                        child: Text('${(currentYear - 543) + index}',
+                            style: const TextStyle(fontSize: 18)),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          CupertinoButton(
+            child: const Text('ตกลง', style: TextStyle(fontSize: 18)),
+            onPressed: () => Navigator.pop(context),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _onDateChanged() {
+    if (selectedDay == null || selectedMonth == null) {
+      widget.onDateChanged(null);
+    } else {
+      final gregorianYear = selectedYear - 543; // Convert พ.ศ. to ค.ศ.
+      widget
+          .onDateChanged(DateTime(gregorianYear, selectedMonth!, selectedDay!));
+    }
+  }
+
+  String _monthName(int month) {
+    const monthNames = [
+      'มกราคม',
+      'กุมภาพันธ์',
+      'มีนาคม',
+      'เมษายน',
+      'พฤษภาคม',
+      'มิถุนายน',
+      'กรกฎาคม',
+      'สิงหาคม',
+      'กันยายน',
+      'ตุลาคม',
+      'พฤศจิกายน',
+      'ธันวาคม',
+    ];
+    return monthNames[month - 1];
+  }
+}
+
+DateTime? _parseThaiDate(String thaiDate) {
+  try {
+    final months = {
+      'มกราคม': 1,
+      'กุมภาพันธ์': 2,
+      'มีนาคม': 3,
+      'เมษายน': 4,
+      'พฤษภาคม': 5,
+      'มิถุนายน': 6,
+      'กรกฎาคม': 7,
+      'สิงหาคม': 8,
+      'กันยายน': 9,
+      'ตุลาคม': 10,
+      'พฤศจิกายน': 11,
+      'ธันวาคม': 12,
+    };
+
+    final parts = thaiDate.split(' ');
+    if (parts.length != 3) return null;
+
+    final day = int.tryParse(parts[0]);
+    final month = months[parts[1]];
+    final year = int.tryParse(parts[2])! - 543; // Convert to Gregorian year
+
+    if (day == null || month == null || year == null) return null;
+
+    return DateTime(year, month, day);
+  } catch (e) {
+    print("Error parsing Thai date: $e");
+    return null;
+  }
 }
 
 class StepWidget extends StatelessWidget {
@@ -714,148 +799,5 @@ class StepWidget extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class ThaiDatePicker extends StatefulWidget {
-  final DateTime initialDate;
-  final ValueChanged<DateTime?> onDateChanged;
-
-  const ThaiDatePicker({
-    Key? key,
-    required this.initialDate,
-    required this.onDateChanged,
-  }) : super(key: key);
-
-  @override
-  _ThaiDatePickerState createState() => _ThaiDatePickerState();
-}
-
-class _ThaiDatePickerState extends State<ThaiDatePicker> {
-  late int? selectedDay;
-  late int? selectedMonth;
-  late int selectedYear;
-
-  @override
-  void initState() {
-    super.initState();
-    selectedDay = widget.initialDate.day != 0 ? widget.initialDate.day : null;
-    selectedMonth =
-        widget.initialDate.month != 0 ? widget.initialDate.month : null;
-    selectedYear = widget.initialDate.year + 543; // Convert to พ.ศ.
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final int currentYear = DateTime.now().year + 543; // Current year in พ.ศ.
-
-    return SizedBox(
-      height: 250,
-      child: Row(
-        children: [
-          // Day Picker
-          Expanded(
-            child: CupertinoPicker(
-              scrollController: FixedExtentScrollController(
-                initialItem: selectedDay == null ? 0 : selectedDay!,
-              ),
-              itemExtent: 40,
-              onSelectedItemChanged: (int index) {
-                setState(() {
-                  selectedDay = index == 0 ? null : index;
-                  _onDateChanged();
-                });
-              },
-              children: [
-                const Center(
-                    child: Text("ไม่ระบุ", style: TextStyle(fontSize: 18))),
-                ...List.generate(
-                  31,
-                  (index) => Center(
-                      child: Text('${index + 1}',
-                          style: const TextStyle(fontSize: 18))),
-                ),
-              ],
-            ),
-          ),
-          // Month Picker
-          Expanded(
-            child: CupertinoPicker(
-              scrollController: FixedExtentScrollController(
-                initialItem: selectedMonth == null ? 0 : selectedMonth!,
-              ),
-              itemExtent: 40,
-              onSelectedItemChanged: (int index) {
-                setState(() {
-                  selectedMonth = index == 0 ? null : index;
-                  _onDateChanged();
-                });
-              },
-              children: [
-                const Center(
-                    child: Text("ไม่ระบุ", style: TextStyle(fontSize: 18))),
-                ...List.generate(
-                  12,
-                  (index) => Center(
-                      child: Text(_monthName(index + 1),
-                          style: const TextStyle(fontSize: 18))),
-                ),
-              ],
-            ),
-          ),
-          // Year Picker
-          Expanded(
-            child: CupertinoPicker(
-              scrollController: FixedExtentScrollController(
-                initialItem: selectedYear -
-                    (currentYear - 200), // Adjust scroll position
-              ),
-              itemExtent: 40,
-              onSelectedItemChanged: (int index) {
-                setState(() {
-                  selectedYear = (currentYear - 200) + index;
-                  _onDateChanged();
-                });
-              },
-              children: List.generate(
-                201,
-                (index) => Center(
-                    child: Text('${(currentYear - 200) + index}',
-                        style: const TextStyle(fontSize: 18))),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _onDateChanged() {
-    // Return null for incomplete dates
-    if (selectedDay == null || selectedMonth == null) {
-      widget.onDateChanged(null);
-    } else {
-      final gregorianYear = selectedYear - 543; // Convert พ.ศ. to ค.ศ.
-      widget
-          .onDateChanged(DateTime(gregorianYear, selectedMonth!, selectedDay!));
-    }
-  }
-
-  String _monthName(int month) {
-    const monthNames = [
-      'มกราคม',
-      'กุมภาพันธ์',
-      'มีนาคม',
-      'เมษายน',
-      'พฤษภาคม',
-      'มิถุนายน',
-      'กรกฎาคม',
-      'สิงหาคม',
-      'กันยายน',
-      'ตุลาคม',
-      'พฤศจิกายน',
-      'ธันวาคม',
-    ];
-    return monthNames[month - 1];
   }
 }

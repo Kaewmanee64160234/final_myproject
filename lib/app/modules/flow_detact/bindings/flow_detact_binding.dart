@@ -7,9 +7,8 @@ import '../controllers/flow_detact_controller.dart';
 class FlowDetactBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<FlowDetactController>(
-      () => FlowDetactController(),
-    );
+    Get.lazyPut<FlowDetactController>(() => FlowDetactController(),
+        fenix: true);
     Get.lazyPut<ApiOcrCreditCardService>(
       () => ApiOcrCreditCardService(),
     );

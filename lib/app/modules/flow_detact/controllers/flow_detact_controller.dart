@@ -101,6 +101,12 @@ class FlowDetactController extends GetxController {
   // isValid
   var isValid = false.obs;
 
+  RxInt? selectedDay = RxInt(0);
+  RxInt? selectedMonth = RxInt(0);
+  RxInt selectedYear = DateTime.now().year.obs;
+
+  void updateYear(int year) => selectedYear.value = year;
+
   @override
   void onInit() {
     super.onInit();
