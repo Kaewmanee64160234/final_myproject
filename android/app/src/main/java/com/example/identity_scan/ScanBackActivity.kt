@@ -326,18 +326,31 @@ class ScanBackActivity: AppCompatActivity() {
                 )
             }
 
-            // Guide text below the rectangle
+            // Guide Text
             Text(
                 fontFamily = fontKanit,
                 text = cameraViewModel.guideText,
                 color = Color.White,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(top = 300.dp) // Adjust text position
+                    .align(Alignment.TopCenter)
+                    .padding(top = 80.dp)
             )
+
+            // Instruction Text
+            Text(
+                fontFamily = fontKanit,
+                text = "ไม่วางนิ้วมือบดบังรูป ตัวอักษร หรือสัญลักษณ์บนหน้าบัตร",
+                color = Color.White,
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center, // จัดข้อความให้อยู่กึ่งกลาง
+                modifier = Modifier
+                    .fillMaxWidth() // ให้ข้อความยืดเต็มความกว้าง
+                    .align(Alignment.BottomCenter) // จัดตำแหน่งให้อยู่ด้านล่างตรงกลาง
+                    .padding(bottom = 16.dp) // เพิ่ม padding ด้านล่าง
+            )
+
         }
     }
 
@@ -350,7 +363,7 @@ class ScanBackActivity: AppCompatActivity() {
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
 
-         val timer = object : CountDownTimer(1000, 800) {
+         val timer = object : CountDownTimer(1500, 800) {
             override fun onTick(millisUntilFinished: Long) {
                 println("Time remaining: ${millisUntilFinished / 800} seconds")
             }
@@ -779,7 +792,7 @@ class ScanBackActivity: AppCompatActivity() {
 
                     // 0 ต้องเท่ากับ บัตรปกติ
                     if (maxIndex == 0 ) {
-                        isFound = if (glare >= 10000){
+                        isFound = if (glare >= 1){
                             cameraViewModel.updateGuideText("หลีกเลี่ยงแสงสะท้อน")
                             false
                         }else{

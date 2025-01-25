@@ -32,6 +32,7 @@ android/app/build/
 local.properties
 android/build/
 android/app/release/
+android/opencv
 
 # Generated files
 *.class

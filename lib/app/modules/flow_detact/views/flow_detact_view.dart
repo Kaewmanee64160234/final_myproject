@@ -111,19 +111,19 @@ class FlowDetactView extends GetView<FlowDetactController> {
             isDisabled: false,
             contextf: context),
         // // ชื่อ
-        // _buildEditableRow(
-        //   'ชื่อ', // First Name
-        //   controller.firstName,
-        //   error: controller.firstNameError,
-        //   isDisabled: false,
-        // ),
+        _buildEditableRow(
+            'ชื่อ', // First Name
+            controller.firstName,
+            error: controller.firstNameError,
+            isDisabled: false,
+            contextf: context),
         // // นามสกุล
-        // _buildEditableRow(
-        //   'นามสกุล', // Last Name
-        //   controller.lastName,
-        //   error: controller.lastNameError,
-        //   isDisabled: false,
-        // ),
+        _buildEditableRow(
+            'นามสกุล', // Last Name
+            controller.lastName,
+            error: controller.lastNameError,
+            isDisabled: false,
+            contextf: context),
         // // วันเกิด
         _buildEditableRow(
             'วันเดือนปีเกิด', // Date of Birth
@@ -209,7 +209,8 @@ class FlowDetactView extends GetView<FlowDetactController> {
             error: controller.dateOfBirthEnError,
             isDisabled: false,
             contextf: context,
-            isDate: true),
+            isDate: true,
+            isEnglish: true),
         // // วันที่ออกบัตร (ภาษาอังกฤษ)
         _buildEditableRow(
             'วันที่ออกบัตร (ภาษาอังกฤษ)', // Date of Issue (English)
@@ -217,7 +218,8 @@ class FlowDetactView extends GetView<FlowDetactController> {
             error: controller.dateOfIssueEnError,
             isDisabled: false,
             contextf: context,
-            isDate: true),
+            isDate: true,
+            isEnglish: true),
         // // วันหมดอายุ (ภาษาอังกฤษ)
         _buildEditableRow(
             'วันหมดอายุ (ภาษาอังกฤษ)', // Date of Expiry (English)
@@ -225,7 +227,8 @@ class FlowDetactView extends GetView<FlowDetactController> {
             error: controller.dateOfExpiryEnError,
             isDisabled: false,
             contextf: context,
-            isDate: true),
+            isDate: true,
+            isEnglish: true),
       ],
     );
   }
@@ -235,7 +238,8 @@ class FlowDetactView extends GetView<FlowDetactController> {
       bool isDisabled = false,
       bool isNumeric = false,
       bool? isDate,
-      required BuildContext contextf}) {
+      required BuildContext contextf,
+      bool? isEnglish}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Column(
@@ -287,7 +291,10 @@ class FlowDetactView extends GetView<FlowDetactController> {
               onTap: isDate == true && !isDisabled
                   ? () async {
                       // Initial selected date (to avoid null reference)
-                      DateTime selectedDate = DateTime.now();
+                      // แปลงค่าใน TextField เป็น DateTime ถ้าเป็นไปได้
+                      DateTime selectedDate =
+                          DateTime.now(); // ค่าเริ่มต้นคือวันนี้
+                      
 
                       final BuildContext context =
                           contextf; // Get context from the widget
@@ -307,6 +314,11 @@ class FlowDetactView extends GetView<FlowDetactController> {
                                     Expanded(
                                       child: CupertinoPicker(
                                         itemExtent: 32,
+                                        // กำหนดตำแหน่งเริ่มต้นเป็นวันที่ปัจจุบัน
+                                        scrollController:
+                                            FixedExtentScrollController(
+                                                initialItem:
+                                                    selectedDate.day - 1),
                                         onSelectedItemChanged: (int value) {
                                           selectedDate = DateTime(
                                             selectedDate.year,
@@ -317,14 +329,21 @@ class FlowDetactView extends GetView<FlowDetactController> {
                                         children: List<Widget>.generate(
                                           31,
                                           (int index) => Center(
-                                              child: Text('${index + 1}')),
+                                            child: Text('${index + 1}'),
+                                          ),
                                         ),
                                       ),
                                     ),
+
                                     // Picker for Month
                                     Expanded(
                                       child: CupertinoPicker(
                                         itemExtent: 32,
+                                        // กำหนดตำแหน่งเริ่มต้นด้วย FixedExtentScrollController
+                                        scrollController:
+                                            FixedExtentScrollController(
+                                                initialItem:
+                                                    selectedDate.month - 1),
                                         onSelectedItemChanged: (int value) {
                                           selectedDate = DateTime(
                                             selectedDate.year,
@@ -336,20 +355,29 @@ class FlowDetactView extends GetView<FlowDetactController> {
                                           12,
                                           (int index) => Center(
                                             child: Text(
-                                              DateFormat.MMMM('th_TH').format(
-                                                  DateTime(0, index + 1)),
+                                              DateFormat.MMM('th_TH').format(
+                                                DateTime(
+                                                    0, index + 1), // ใช้ตัวย่อ
+                                              ),
                                             ),
                                           ),
                                         ),
                                       ),
                                     ),
+
                                     // Picker for Year
                                     Expanded(
                                       child: CupertinoPicker(
                                         itemExtent: 32,
+                                        scrollController:
+                                            FixedExtentScrollController(
+                                          initialItem: DateTime.now().year -
+                                              2000, // คำนวณตำแหน่งปีปัจจุบัน
+                                        ),
                                         onSelectedItemChanged: (int value) {
                                           selectedDate = DateTime(
-                                            2000 + value,
+                                            2000 +
+                                                value, // แปลงจากตำแหน่งเป็นปี ค.ศ.
                                             selectedDate.month,
                                             selectedDate.day,
                                           );
@@ -357,7 +385,8 @@ class FlowDetactView extends GetView<FlowDetactController> {
                                         children: List<Widget>.generate(
                                           101,
                                           (int index) => Center(
-                                            child: Text('${2000 + index}'),
+                                            child: Text(
+                                                '${2000 + index + 543}'), // แสดงผลเป็น พ.ศ.
                                           ),
                                         ),
                                       ),
@@ -369,11 +398,21 @@ class FlowDetactView extends GetView<FlowDetactController> {
                                 child: Text('ตกลง'),
                                 onPressed: () {
                                   // แปลงวันที่เป็นรูปแบบวันที่ที่คุณต้องการเป็นภาษาไทย
-                                  String formattedDate =
-                                      "${selectedDate.day} ${DateFormat.MMMM('th_TH').format(selectedDate)} ${selectedDate.year + 543}";
+                                  // Thai
 
-                                  // Update the value with the selected date in Thai
-                                  value.value = formattedDate;
+                                  if (isEnglish != null && isEnglish) {
+                                    String formattedDate =
+                                        "${selectedDate.day} ${DateFormat.MMM('en_EN').format(selectedDate)} ${selectedDate.year}";
+
+                                    // Update the value with the selected date in Thai
+                                    value.value = formattedDate;
+                                  } else {
+                                    String formattedDate =
+                                        "${selectedDate.day} ${DateFormat.MMM('th_TH').format(selectedDate)} ${selectedDate.year + 543}";
+
+                                    // Update the value with the selected date in Thai
+                                    value.value = formattedDate;
+                                  }
 
                                   Navigator.of(context).pop();
                                 },
