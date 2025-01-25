@@ -333,72 +333,73 @@ class ScanFrontActivity : AppCompatActivity() {
 
                     imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
 
-
-                        // ถ้ามีคำสั่งให้ถ่ายรูป ค่าเริ่มต้นปกติคือ false ดังนั้นโปรแกรมจะวิ่งไปที่ Else ก่อนเสมอ
-                        if (isShutter) {
+                        if(isShutter){
                             bitmapToShow = imageProxy.toBitmap()
-                            val matrix = Matrix()
-                            matrix.postRotate(90f)
-                            bitmapToShow = Bitmap.createBitmap(
-                                bitmapToShow!!, // Original Bitmap
-                                0, 0, // Starting coordinates
-                                bitmapToShow!!.width, // Bitmap width
-                                bitmapToShow!!.height, // Bitmap height
-                                matrix, // The rotation matrix
-                                true // Apply smooth transformation
-                            )
+                                 val matrix = Matrix()
+                                 matrix.postRotate(90f)
+                                 bitmapToShow = Bitmap.createBitmap(
+                                     bitmapToShow!!, // Original Bitmap
+                                     0, 0, // Starting coordinates
+                                     bitmapToShow!!.width, // Bitmap width
+                                     bitmapToShow!!.height, // Bitmap height
+                                     matrix, // The rotation matrix
+                                     true // Apply smooth transformation
+                                 )
 
-                            // ถ้าภาพยังไม่ครบ 3 ภาพ และ Dialog ไม่ได้แสดงอยู่
-                            if (bitmapList.size < 3){
-                                // เพิ่มรูป Bitmap เข้า List จนกว่าจะครบ 3 รูป
-                                bitmapList.add(bitmapList.size,bitmapToShow!!)
-                                bitmapToJpg(bitmapToShow!!,context,"image${bitmapList.size.toString()}.jpg")
-                                if(bitmapList.size == 3){
-                                    // ถ้าครบ 3 รูปแล้วให้หารูปที่คมชัดที่สุด จาก Bitmap List
-                                    var sharPestImage = findSharpestImage()
-                                    println("Sharpest Image Index is: ${sharPestImage.first}, Variance: ${sharPestImage.second}")
+                                 // ถ้าภาพยังไม่ครบ 3 ภาพ และ Dialog ไม่ได้แสดงอยู่
+                                 if (bitmapList.size < 3){
+                                     // เพิ่มรูป Bitmap เข้า List จนกว่าจะครบ 3 รูป
+                                     bitmapList.add(bitmapList.size,bitmapToShow!!)
+                                     bitmapToJpg(bitmapToShow!!,context,"image${bitmapList.size.toString()}.jpg")
+                                     if(bitmapList.size == 3){
+                                         // ถ้าครบ 3 รูปแล้วให้หารูปที่คมชัดที่สุด จาก Bitmap List
+                                         var sharPestImage = findSharpestImage()
+                                         println("Sharpest Image Index is: ${sharPestImage.first}, Variance: ${sharPestImage.second}")
 
-                                    // บันทึก Index ของภาพที่ชัดที่สุด ไว้ในตัวแปร
-                                    sharPestImageIndex = sharPestImage.first!!
+                                         // บันทึก Index ของภาพที่ชัดที่สุด ไว้ในตัวแปร
+                                         sharPestImageIndex = sharPestImage.first!!
 
-                                    // เสร็จแล้วแสดงภาพที่ชัดที่สุดออกมา
-                                    showDialog = true
-                                    isShutter = false
-                                    // พักการ Predict
-                                    isPredicting = false
-                                    // รับ bitmap ภาพที่คมที่สุดเพื่อมา Process
-                                    val sharpestBitmapMat = bitmapToMat(bitmapList[sharPestImageIndex])
+                                         // เสร็จแล้วแสดงภาพที่ชัดที่สุดออกมา
+                                         showDialog = true
+                                         isShutter = false
+                                         // พักการ Predict
+                                         isPredicting = false
+                                         // รับ bitmap ภาพที่คมที่สุดเพื่อมา Process
+                                         val sharpestBitmapMat = bitmapToMat(bitmapList[sharPestImageIndex])
 
-                                    val contrastValue = calculateContrast(sharpestBitmapMat)
-                                    val resolutionValue = calculateResolution(sharpestBitmapMat)
-                                    val snrValue = calculateSNR(sharpestBitmapMat)
+                                         val contrastValue = calculateContrast(sharpestBitmapMat)
+                                         val resolutionValue = calculateResolution(sharpestBitmapMat)
+                                         val snrValue = calculateSNR(sharpestBitmapMat)
 
-                                    val processedMat = preprocessing(snrValue, contrastValue, resolutionValue, sharpestBitmapMat)
+                                         val processedMat = preprocessing(snrValue, contrastValue, resolutionValue, sharpestBitmapMat)
 
-                                    // บันทึกรูป Original ลง Storage
-                                    saveMatToStorage(context,sharpestBitmapMat,"frontCardOriginal")
+                                         // บันทึกรูป Original ลง Storage
+                                         saveMatToStorage(context,sharpestBitmapMat,"frontCardOriginal")
 
-                                    // บันทึกลง Storage
-                                    saveMatToStorage(context,processedMat,"frontCardProcessed")
-
-                                }
-                            }
-                        }else{
-                            if (isFound){
-                                if (!isTiming){
-                                    isTiming = true
-                                    timer.start()
-                                    println("Start Timer")
-                                }
-                            }else{
-                                timer.cancel()
-                                isTiming = false
-                            }
+                                         // บันทึกลง Storage
+                                         saveMatToStorage(context,processedMat,"frontCardProcessed")
+                                     }
+                                 }
+                        }
+                        else if(!isShutter){
+                            // ถ้ามีการสั่งให้จำแนก Class
                             if(isPredicting){
+                                // ประมวลภาพถ้ามีการสั่งให้ Predict
                                 processImageProxy(imageProxy)
+                                // ถ้าเจอ เริ่มจับเวลา
+                                if(isFound){
+                                    if (!isTiming){
+                                        isTiming = true
+                                        timer.start()
+                                        println("Start Timer")
+                                    }
+                                }else{
+                                    // ถ้าไม่เจอ ยกเลิกการจับเวลา
+                                    timer.cancel()
+                                    isTiming = false
+                                }
                             }
                         }
-                        // ปิด Image Proxy หลัง Process เสร็จ
                         imageProxy.close()
                     }
 
@@ -741,6 +742,8 @@ class ScanFrontActivity : AppCompatActivity() {
                     // จัดการวัดค่า brightness และ Glare
                     mat =  bitmapToMat(croppedBitmap)
                     val brightness = calculateBrightness(mat)
+                    println("Brightness")
+                    println(brightness)
                     val glare = calculateGlare(mat)
                     val snrValue = calculateSNR(mat)
                     // อัพเดทค่าบน UI
@@ -750,15 +753,19 @@ class ScanFrontActivity : AppCompatActivity() {
 
                     // 0 ต้องเท่ากับ บัตรปกติ
                     if (maxIndex == 1 ) {
-                        isFound = if (glare >= 1){
+                        // คำนวณแสงสว่าง
+                        isFound = if (brightness < 120) {
+                            cameraViewModel.updateGuideText("แสงน้อยเกินไป")
+                            false // คืนค่า false หาก brightness < 120
+                        } else if (glare > 1) {
                             cameraViewModel.updateGuideText("หลีกเลี่ยงแสงสะท้อน")
-                            false
-                        }else{
+                            false // คืนค่า false หาก glare > 1
+                        } else {
                             cameraViewModel.updateGuideText("ถือค้างไว้")
-                            true
+                            true // คืนค่า true หากไม่มีเงื่อนไขข้างต้น
                         }
 
-                    // 1 = บัตรสว่างเกินไป
+                        // 1 = บัตรสว่างเกินไป
                     } else if(maxIndex == 4) {
                         cameraViewModel.updateGuideText("กรุณาใช้บัตรจริง")
                         isFound = false

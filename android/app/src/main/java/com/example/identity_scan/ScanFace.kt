@@ -319,22 +319,25 @@ class ScanFace : AppCompatActivity() {
                                         saveMatToStorage(context,sharpestBitmapMat,"faceImage")
                                     }
                                 }
-                            }else{
-                                if (isFound){
-                                    if (!isTiming){
-                                        isTiming = true
-                                        timer.start()
-                                        println("Start Timer")
-                                    }
-                                }else{
-                                    timer.cancel()
-                                    isTiming = false
-                                }
+                            }else if(!isShutter){
+                                // ถ้ามีการสั่งให้จำแนก Class
                                 if(isPredicting){
+                                    // ประมวลภาพถ้ามีการสั่งให้ Predict
                                     processImageProxy(imageProxy)
+                                    // ถ้าเจอ เริ่มจับเวลา
+                                    if(isFound){
+                                        if (!isTiming){
+                                            isTiming = true
+                                            timer.start()
+                                            println("Start Timer")
+                                        }
+                                    }else{
+                                        // ถ้าไม่เจอ ยกเลิกการจับเวลา
+                                        timer.cancel()
+                                        isTiming = false
+                                    }
                                 }
                             }
-                            // ปิด Image Proxy หลัง Process เสร็จ
                             imageProxy.close()
                         }
 
