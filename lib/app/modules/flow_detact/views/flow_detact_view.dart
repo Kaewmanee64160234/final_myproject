@@ -562,6 +562,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
                         value.value,
                         isThaiYear: !isEnglish,
                       );
+
                       showModalBottomSheet(
                         context: contextf,
                         isScrollControlled: true,
@@ -572,12 +573,31 @@ class FlowDetactView extends GetView<FlowDetactController> {
                             isIssueDate: isIssueDate ?? false,
                             isDateExpiry: isDateExpiry ?? false,
                             onDateChanged: (selectedDate) {
-                              if (selectedDate != null) {
-                                // Format and set the selected date to the text field
-                                final formattedValue = isEnglish == true
-                                    ? "${selectedDate.day} ${DateFormat.MMM('en_EN').format(selectedDate)} ${selectedDate.year}"
-                                    : "${selectedDate.day} ${DateFormat.MMM('th_TH').format(selectedDate)} ${selectedDate.year + 543}";
-                                value.value = formattedValue;
+                              print("Selected date: $selectedDate");
+                              if (selectedDate == null) {
+                                // Handle "Unknown" case
+                                value.value = isEnglish
+                                    ? "Unknown date"
+                                    : "ไม่ระบุวันที่";
+                              } else {
+                                // Format the selected date
+                                final dayText = selectedDate.day == 1
+                                    ? (isEnglish ? "Unknown day" : "ไม่ระบุวัน")
+                                    : "${selectedDate.day}";
+                                final monthText = selectedDate.month == 1
+                                    ? (isEnglish
+                                        ? "Unknown month"
+                                        : "ไม่ระบุเดือน")
+                                    : (isEnglish
+                                        ? DateFormat.MMM('en_EN')
+                                            .format(selectedDate)
+                                        : DateFormat.MMM('th_TH')
+                                            .format(selectedDate));
+                                final yearText = isEnglish
+                                    ? "${selectedDate.year}"
+                                    : "${selectedDate.year + 543}";
+
+                                value.value = "$dayText $monthText $yearText";
                               }
                             },
                           );
@@ -620,19 +640,12 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
 
   @override
   void initState() {
-    print(widget.initialDate);
-
     super.initState();
-    selectedDay = widget.initialDate.day > 0 ? widget.initialDate.day : null;
-    selectedMonth =
-        widget.initialDate.month > 0 ? widget.initialDate.month : null;
-
-    // check status id thai or eng
-    if (widget.initialDate.year > 2400) {
-      selectedYear = widget.initialDate.year;
-    } else {
-      selectedYear = widget.initialDate.year - 543;
-    }
+    selectedDay = widget.initialDate.day > 0 ? widget.initialDate.day : 0;
+    selectedMonth = widget.initialDate.month > 0 ? widget.initialDate.month : 0;
+    selectedYear = widget.initialDate.year > 2400
+        ? widget.initialDate.year
+        : widget.initialDate.year + 543; // Convert Gregorian year to Thai year
   }
 
   @override
@@ -659,12 +672,12 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
                 Expanded(
                   child: CupertinoPicker(
                     scrollController: FixedExtentScrollController(
-                      initialItem: selectedDay == null ? 0 : selectedDay!,
+                      initialItem: selectedDay!,
                     ),
                     itemExtent: 40,
                     onSelectedItemChanged: (index) {
                       setState(() {
-                        selectedDay = index == 0 ? null : index;
+                        selectedDay = index; // 0 represents "Unknown"
                       });
                       _onDateChanged();
                     },
@@ -686,12 +699,12 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
                 Expanded(
                   child: CupertinoPicker(
                     scrollController: FixedExtentScrollController(
-                      initialItem: selectedMonth == null ? 0 : selectedMonth!,
+                      initialItem: selectedMonth!,
                     ),
                     itemExtent: 40,
                     onSelectedItemChanged: (index) {
                       setState(() {
-                        selectedMonth = index == 0 ? null : index + 1;
+                        selectedMonth = index; // 0 represents "Unknown"
                       });
                       _onDateChanged();
                     },
@@ -744,16 +757,18 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
   }
 
   void _onDateChanged() {
-    if (selectedDay == null || selectedMonth == null) {
-      widget.onDateChanged(null);
+    // Handle Thai Buddhist year conversion
+    final gregorianYear =
+        selectedYear > 2400 ? selectedYear - 543 : selectedYear;
+
+    // Handle "Unknown" selections
+    final day = selectedDay == 0 ? null : selectedDay;
+    final month = selectedMonth == 0 ? null : selectedMonth;
+    print("day: $day, month: $month");
+    if (day == null || month == null) {
+      widget.onDateChanged(null); // Notify "Unknown"
     } else {
-      if (selectedYear > 2400) {
-        widget.onDateChanged(
-            DateTime(selectedYear - 543, selectedMonth!, selectedDay!));
-      } else {
-        widget.onDateChanged(
-            DateTime(selectedYear - 543, selectedMonth!, selectedDay!));
-      }
+      widget.onDateChanged(DateTime(gregorianYear, month, day));
     }
   }
 
@@ -796,8 +811,7 @@ DateTime _getDateFromField(String? dateText, {bool isThaiYear = true}) {
       'ต.ค.': 10,
       'พ.ย.': 11,
       'ธ.ค.': 12,
-
-      // English abbreviated month names
+      // English full month names
       'Jan': 1,
       'Feb': 2,
       'Mar': 3,
