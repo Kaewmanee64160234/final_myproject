@@ -570,11 +570,15 @@ class FlowDetactView extends GetView<FlowDetactController> {
 class ThaiDatePicker extends StatefulWidget {
   final DateTime initialDate;
   final ValueChanged<DateTime?> onDateChanged;
+  final bool isBirthDate;
+  final bool isIssueDate;
 
   const ThaiDatePicker({
     Key? key,
     required this.initialDate,
     required this.onDateChanged,
+    this.isBirthDate = false,
+    this.isIssueDate = false,
   }) : super(key: key);
 
   @override
@@ -597,7 +601,18 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
 
   @override
   Widget build(BuildContext context) {
-    final int currentYear = DateTime.now().year + 543; // Current year in พ.ศ.
+    final currentGregorianYear = DateTime.now().year;
+    final currentThaiYear = currentGregorianYear + 543;
+
+    // Determine dynamic year ranges based on the type of date
+    final minYear = widget.isBirthDate || widget.isIssueDate
+        ? currentThaiYear - 150
+        : currentThaiYear - 150; // Expiry has the same minYear
+    final maxYear = widget.isBirthDate
+        ? currentThaiYear
+        : (widget.isIssueDate
+            ? currentThaiYear
+            : currentThaiYear + 150); // Expiry can extend 150 years ahead
 
     return SizedBox(
       height: 300,
@@ -615,18 +630,15 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
                     itemExtent: 40,
                     onSelectedItemChanged: (index) {
                       setState(() {
-                        selectedDay = index == 0 ? null : index + 1;
+                        selectedDay = index == 0 ? null : index;
                       });
                       _onDateChanged();
                     },
                     children: [
-                      const Center(
-                          child:
-                              Text("ไม่ระบุ", style: TextStyle(fontSize: 18))),
                       ...List.generate(
-                        31,
+                        32,
                         (index) => Center(
-                          child: Text('${index + 1}',
+                          child: Text('$index',
                               style: const TextStyle(fontSize: 18)),
                         ),
                       ),
@@ -637,7 +649,8 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
                 Expanded(
                   child: CupertinoPicker(
                     scrollController: FixedExtentScrollController(
-                      initialItem: selectedMonth == null ? 0 : selectedMonth!,
+                      initialItem:
+                          selectedMonth == null ? 0 : selectedMonth! - 1,
                     ),
                     itemExtent: 40,
                     onSelectedItemChanged: (index) {
@@ -664,19 +677,19 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
                 Expanded(
                   child: CupertinoPicker(
                     scrollController: FixedExtentScrollController(
-                      initialItem: selectedYear - (currentYear - 543),
+                      initialItem: selectedYear - minYear,
                     ),
                     itemExtent: 40,
                     onSelectedItemChanged: (index) {
                       setState(() {
-                        selectedYear = (currentYear - 543) + index;
+                        selectedYear = minYear + index;
                       });
                       _onDateChanged();
                     },
                     children: List.generate(
-                      101, // 100 years from the current year
+                      maxYear - minYear + 1,
                       (index) => Center(
-                        child: Text('${(currentYear - 543) + index}',
+                        child: Text('${minYear + index}',
                             style: const TextStyle(fontSize: 18)),
                       ),
                     ),
