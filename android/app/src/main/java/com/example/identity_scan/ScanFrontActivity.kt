@@ -750,7 +750,7 @@ class ScanFrontActivity : AppCompatActivity() {
 
                     // 0 ต้องเท่ากับ บัตรปกติ
                     if (maxIndex == 1 ) {
-                        isFound = if (glare >= 2){
+                        isFound = if (glare >= 1){
                             cameraViewModel.updateGuideText("หลีกเลี่ยงแสงสะท้อน")
                             false
                         }else{
