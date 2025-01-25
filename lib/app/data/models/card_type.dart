@@ -16,6 +16,7 @@ class ID_CARD {
     required this.laserCode,
   });
 
+  // Factory method to create an instance from JSON
   factory ID_CARD.fromJson(Map<String, dynamic> json) {
     return ID_CARD(
       idNumber: json['idNumber'] ?? '',
@@ -24,6 +25,17 @@ class ID_CARD {
       portrait: json['portrait'] ?? '',
       laserCode: json['LaserCode'] ?? '',
     );
+  }
+
+  // Convert object to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'idNumber': idNumber,
+      'th': th.toJson(),
+      'en': en.toJson(),
+      'portrait': portrait,
+      'LaserCode': laserCode,
+    };
   }
 
   // Decode Base64 portrait string to Uint8List
@@ -55,6 +67,7 @@ class ID_CARD_DETAIL {
     required this.address,
   });
 
+  // Factory method to create an instance from JSON
   factory ID_CARD_DETAIL.fromJson(Map<String, dynamic> json) {
     String validateDate(String date) {
       if (date == 'th_data' || date == 'en_data') {
@@ -77,6 +90,21 @@ class ID_CARD_DETAIL {
           : Address.empty(),
     );
   }
+
+  // Convert object to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'fullName': fullName,
+      'prefix': prefix,
+      'name': name,
+      'lastName': lastName,
+      'dateOfBirth': dateOfBirth,
+      'dateOfIssue': dateOfIssue,
+      'dateOfExpiry': dateOfExpiry,
+      'religion': religion,
+      'address': address.toJson(),
+    };
+  }
 }
 
 class Address {
@@ -94,6 +122,7 @@ class Address {
     required this.province,
   });
 
+  // Factory method to create an instance from JSON
   factory Address.fromJson(Map<String, dynamic> json) {
     return Address(
       full: json['full'] ?? '',
@@ -103,7 +132,8 @@ class Address {
       province: json['province'] ?? '',
     );
   }
-  // toJson
+
+  // Convert object to JSON
   Map<String, dynamic> toJson() {
     return {
       'full': full,
@@ -114,7 +144,8 @@ class Address {
     };
   }
 
-  static empty() {
+  // Create an empty address instance
+  static Address empty() {
     return Address(
       full: '',
       firstPart: '',
