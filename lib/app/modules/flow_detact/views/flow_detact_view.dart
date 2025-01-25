@@ -102,6 +102,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
             controller.idNumber,
             error: controller.idNumberError,
             isDisabled: true,
+            isEnglish: false,
             contextf: context),
         // คำนำหน้า
         _buildEditableRow(
@@ -109,6 +110,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
             controller.prefix,
             error: controller.prefixError,
             isDisabled: false,
+            isEnglish: false,
             contextf: context),
         // // ชื่อ
         _buildEditableRow(
@@ -116,6 +118,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
             controller.firstName,
             error: controller.firstNameError,
             isDisabled: false,
+            isEnglish: false,
             contextf: context),
         // // นามสกุล
         _buildEditableRow(
@@ -123,6 +126,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
             controller.lastName,
             error: controller.lastNameError,
             isDisabled: false,
+            isEnglish: false,
             contextf: context),
         // // วันเกิด
         _buildEditableRow(
@@ -130,7 +134,9 @@ class FlowDetactView extends GetView<FlowDetactController> {
             controller.dateOfBirth,
             error: controller.dateOfBirthError,
             isDisabled: false,
+            isEnglish: false,
             contextf: context,
+            isBirthDate: true,
             isDate: true),
         // // วันที่ออกบัตร
         _buildEditableRow(
@@ -139,6 +145,8 @@ class FlowDetactView extends GetView<FlowDetactController> {
             error: controller.dateOfIssueError,
             isDisabled: false,
             contextf: context,
+            isEnglish: false,
+            isIssueDate: true,
             isDate: true),
 
         // // วันหมดอายุ
@@ -147,6 +155,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
             controller.dateOfExpiry,
             error: controller.dateOfExpiryError,
             isDisabled: false,
+            isEnglish: false,
             contextf: context,
             isDate: true),
 
@@ -156,6 +165,8 @@ class FlowDetactView extends GetView<FlowDetactController> {
           controller.religion,
           error: controller.religionError,
           isDisabled: false,
+          isEnglish: false,
+
           contextf: context,
         ),
         // // ที่อยู่
@@ -164,6 +175,8 @@ class FlowDetactView extends GetView<FlowDetactController> {
           controller.address,
           error: controller.addressError,
           isDisabled: false,
+          isEnglish: false,
+
           contextf: context,
         ),
 
@@ -184,6 +197,8 @@ class FlowDetactView extends GetView<FlowDetactController> {
           controller.prefixEn,
           error: controller.prefixEnError,
           isDisabled: false,
+          isEnglish: true,
+
           contextf: context,
         ),
         // // ชื่อ (ภาษาอังกฤษ)
@@ -192,6 +207,8 @@ class FlowDetactView extends GetView<FlowDetactController> {
           controller.firstNameEn,
           error: controller.firstNameEnError,
           isDisabled: false,
+          isEnglish: true,
+
           contextf: context,
         ),
         // // นามสกุล (ภาษาอังกฤษ)
@@ -200,6 +217,8 @@ class FlowDetactView extends GetView<FlowDetactController> {
           controller.lastNameEn,
           error: controller.lastNameEnError,
           isDisabled: false,
+          isEnglish: true,
+
           contextf: context,
         ),
         // // วันเกิด (ภาษาอังกฤษ)
@@ -209,6 +228,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
             error: controller.dateOfBirthEnError,
             isDisabled: false,
             contextf: context,
+            isBirthDate: true,
             isDate: true,
             isEnglish: true),
         // // วันที่ออกบัตร (ภาษาอังกฤษ)
@@ -218,6 +238,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
             error: controller.dateOfIssueEnError,
             isDisabled: false,
             contextf: context,
+            isIssueDate: true,
             isDate: true,
             isEnglish: true),
         // // วันหมดอายุ (ภาษาอังกฤษ)
@@ -473,19 +494,24 @@ class FlowDetactView extends GetView<FlowDetactController> {
     );
   }
 
-  Widget _buildEditableRow(String label, RxString value,
-      {RxString? error,
-      bool isDisabled = false,
-      bool isNumeric = false,
-      bool? isDate,
-      required BuildContext contextf,
-      bool? isEnglish}) {
+  Widget _buildEditableRow(
+    String label,
+    RxString value, {
+    RxString? error,
+    bool isDisabled = false,
+    bool isNumeric = false,
+    bool? isDate,
+    required BuildContext contextf,
+    required bool isEnglish,
+    bool? isBirthDate,
+    bool? isIssueDate,
+    bool? isDateExpiry,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Label
           Text(
             label,
             style: const TextStyle(
@@ -529,25 +555,23 @@ class FlowDetactView extends GetView<FlowDetactController> {
               style: const TextStyle(fontSize: 16, color: Colors.black),
               onTap: isDate == true && !isDisabled
                   ? () async {
-                      // Safely parse the date or use the current date as fallback
-                      DateTime initialDate = DateTime.now();
-                      if (value.value.isNotEmpty) {
-                        initialDate = _parseThaiDate(value.value) ??
-                            DateTime.now(); // Fallback to now if parsing fails
-                      }
+                      // Parse date from text field
+                      final initialDate = _getDateFromField(
+                        value.value,
+                        isThaiYear: !isEnglish,
+                      );
                       showModalBottomSheet(
                         context: contextf,
                         isScrollControlled: true,
                         builder: (BuildContext context) {
                           return ThaiDatePicker(
                             initialDate: initialDate,
-                            onDateChanged: (DateTime? selectedDate) {
-                              if (selectedDate == null) {
-                                final formattedValue = isEnglish == true
-                                    ? "0 Unspecified ${initialDate.year}"
-                                    : "0 ไม่ระบุ ${initialDate.year + 543}";
-                                value.value = formattedValue;
-                              } else {
+                            isBirthDate: isBirthDate ?? false,
+                            isIssueDate: isIssueDate ?? false,
+                            isDateExpiry: isDateExpiry ?? false,
+                            onDateChanged: (selectedDate) {
+                              if (selectedDate != null) {
+                                // Format and set the selected date to the text field
                                 final formattedValue = isEnglish == true
                                     ? "${selectedDate.day} ${DateFormat.MMM('en_EN').format(selectedDate)} ${selectedDate.year}"
                                     : "${selectedDate.day} ${DateFormat.MMM('th_TH').format(selectedDate)} ${selectedDate.year + 543}";
@@ -572,6 +596,7 @@ class ThaiDatePicker extends StatefulWidget {
   final ValueChanged<DateTime?> onDateChanged;
   final bool isBirthDate;
   final bool isIssueDate;
+  final bool isDateExpiry;
 
   const ThaiDatePicker({
     Key? key,
@@ -579,6 +604,7 @@ class ThaiDatePicker extends StatefulWidget {
     required this.onDateChanged,
     this.isBirthDate = false,
     this.isIssueDate = false,
+    this.isDateExpiry = false,
   }) : super(key: key);
 
   @override
@@ -592,11 +618,19 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
 
   @override
   void initState() {
+    print(widget.initialDate);
+
     super.initState();
     selectedDay = widget.initialDate.day > 0 ? widget.initialDate.day : null;
     selectedMonth =
         widget.initialDate.month > 0 ? widget.initialDate.month : null;
-    selectedYear = widget.initialDate.year + 543; // Convert to พ.ศ.
+
+    // check status id thai or eng
+    if (widget.initialDate.year > 2500) {
+      selectedYear = widget.initialDate.year;
+    } else {
+      selectedYear = widget.initialDate.year - 543;
+    }
   }
 
   @override
@@ -604,15 +638,13 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
     final currentGregorianYear = DateTime.now().year;
     final currentThaiYear = currentGregorianYear + 543;
 
-    // Determine dynamic year ranges based on the type of date
+    // Define year range
     final minYear = widget.isBirthDate || widget.isIssueDate
         ? currentThaiYear - 150
-        : currentThaiYear - 150; // Expiry has the same minYear
-    final maxYear = widget.isBirthDate
+        : currentThaiYear - 150;
+    final maxYear = widget.isBirthDate || widget.isDateExpiry
         ? currentThaiYear
-        : (widget.isIssueDate
-            ? currentThaiYear
-            : currentThaiYear + 150); // Expiry can extend 150 years ahead
+        : (widget.isIssueDate ? currentThaiYear : currentThaiYear + 150);
 
     return SizedBox(
       height: 300,
@@ -625,7 +657,7 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
                 Expanded(
                   child: CupertinoPicker(
                     scrollController: FixedExtentScrollController(
-                      initialItem: selectedDay == null ? 0 : selectedDay! - 1,
+                      initialItem: selectedDay == null ? 0 : selectedDay!,
                     ),
                     itemExtent: 40,
                     onSelectedItemChanged: (index) {
@@ -635,10 +667,13 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
                       _onDateChanged();
                     },
                     children: [
+                      const Center(
+                          child:
+                              Text("ไม่ระบุ", style: TextStyle(fontSize: 18))),
                       ...List.generate(
-                        32,
+                        31,
                         (index) => Center(
-                          child: Text('$index',
+                          child: Text('${index + 1}',
                               style: const TextStyle(fontSize: 18)),
                         ),
                       ),
@@ -649,13 +684,12 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
                 Expanded(
                   child: CupertinoPicker(
                     scrollController: FixedExtentScrollController(
-                      initialItem:
-                          selectedMonth == null ? 0 : selectedMonth! - 1,
+                      initialItem: selectedMonth == null ? 0 : selectedMonth!,
                     ),
                     itemExtent: 40,
                     onSelectedItemChanged: (index) {
                       setState(() {
-                        selectedMonth = index == 0 ? null : index;
+                        selectedMonth = index == 0 ? null : index + 1;
                       });
                       _onDateChanged();
                     },
@@ -711,9 +745,13 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
     if (selectedDay == null || selectedMonth == null) {
       widget.onDateChanged(null);
     } else {
-      final gregorianYear = selectedYear - 543; // Convert พ.ศ. to ค.ศ.
-      widget
-          .onDateChanged(DateTime(gregorianYear, selectedMonth!, selectedDay!));
+      if (selectedYear > 2500) {
+        widget.onDateChanged(
+            DateTime(selectedYear - 543, selectedMonth!, selectedDay!));
+      } else {
+        widget.onDateChanged(
+            DateTime(selectedYear - 543, selectedMonth!, selectedDay!));
+      }
     }
   }
 
@@ -736,36 +774,63 @@ class _ThaiDatePickerState extends State<ThaiDatePicker> {
   }
 }
 
-DateTime? _parseThaiDate(String thaiDate) {
+DateTime _getDateFromField(String? dateText, {bool isThaiYear = true}) {
   try {
+    if (dateText == null || dateText.isEmpty) return DateTime.now();
+
+    // Define a map for both full and abbreviated Thai and English months
     final months = {
-      'มกราคม': 1,
-      'กุมภาพันธ์': 2,
-      'มีนาคม': 3,
-      'เมษายน': 4,
-      'พฤษภาคม': 5,
-      'มิถุนายน': 6,
-      'กรกฎาคม': 7,
-      'สิงหาคม': 8,
-      'กันยายน': 9,
-      'ตุลาคม': 10,
-      'พฤศจิกายน': 11,
-      'ธันวาคม': 12,
+      // Thai full month names
+
+      'ม.ค.': 1,
+      'ก.พ.': 2,
+      'มี.ค.': 3,
+      'เม.ย.': 4,
+      'พ.ค.': 5,
+      'มิ.ย.': 6,
+      'ก.ค.': 7,
+      'ส.ค.': 8,
+      'ก.ย.': 9,
+      'ต.ค.': 10,
+      'พ.ย.': 11,
+      'ธ.ค.': 12,
+
+      // English abbreviated month names
+      'Jan': 1,
+      'Feb': 2,
+      'Mar': 3,
+      'Apr': 4,
+      'May': 5,
+      'Jun': 6,
+      'Jul': 7,
+      'Aug': 8,
+      'Sep': 9,
+      'Oct': 10,
+      'Nov': 11,
+      'Dec': 12,
     };
 
-    final parts = thaiDate.split(' ');
-    if (parts.length != 3) return null;
+    // Split the input into parts
+    final parts = dateText.split(' ');
+    if (parts.length != 3) return DateTime.now();
 
-    final day = int.tryParse(parts[0]);
-    final month = months[parts[1]];
-    final year = int.tryParse(parts[2])! - 543; // Convert to Gregorian year
+    // Parse day, month, and year
+    final day = int.tryParse(parts[0]) ?? 1;
+    final month = months[parts[1]]; // Look up the month from the map
+    var year = int.tryParse(parts[2]) ?? DateTime.now().year;
 
-    if (day == null || month == null || year == null) return null;
+    // Ensure all components are valid
+    if (month == null || year < 1) throw FormatException('Invalid date format');
 
+    // Adjust the year based on the input and `isThaiYear` flag
+    if (!isThaiYear) {
+      year = year + 543;
+    }
+    // Create and return the DateTime object
     return DateTime(year, month, day);
   } catch (e) {
-    print("Error parsing Thai date: $e");
-    return null;
+    print("Error parsing date: $e");
+    return DateTime.now(); // Fallback to current date on error
   }
 }
 
