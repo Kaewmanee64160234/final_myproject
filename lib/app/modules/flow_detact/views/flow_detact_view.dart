@@ -580,21 +580,27 @@ class FlowDetactView extends GetView<FlowDetactController> {
                                       : "ไม่ระบุวันที่";
                                 } else {
                                   // Format and update the selected date
-                                  final dayText = controller.selectedDay == 0
+                                  final dayText = (controller
+                                                  .selectedDay.value ==
+                                              0 ||
+                                          controller.selectedMonth.value == 0 ||
+                                          (controller.selectedDay.value == 1 &&
+                                              controller.selectedMonth.value ==
+                                                  0))
                                       ? (isEnglish
                                           ? "Unknown day"
                                           : "ไม่ระบุวัน")
                                       : "${selectedDate.day}";
-                                  final monthText =
-                                      controller.selectedMonth == 0
-                                          ? (isEnglish
-                                              ? "Unknown month"
-                                              : "ไม่ระบุเดือน")
-                                          : (isEnglish
-                                              ? DateFormat.MMM('en_EN')
-                                                  .format(selectedDate)
-                                              : DateFormat.MMM('th_TH')
-                                                  .format(selectedDate));
+
+                                  final monthText = controller.selectedMonth ==
+                                          0
+                                      ? (isEnglish
+                                          ? "Unknown month"
+                                          : "ไม่ระบุเดือน")
+                                      : (isEnglish
+                                          ? "${DateFormat.MMM('en_EN').format(selectedDate)}."
+                                          : DateFormat.MMM('th_TH')
+                                              .format(selectedDate));
                                   final yearText = isEnglish
                                       ? "${selectedDate.year}"
                                       : "${selectedDate.year + 543}";
@@ -863,19 +869,4 @@ class StepWidget extends StatelessWidget {
       ),
     );
   }
-}
-
-String _formatSelectedDate(DateTime selectedDate, {required bool isEnglish}) {
-  final dayText = selectedDate.day == 0
-      ? (isEnglish ? "Unknown day" : "ไม่ระบุวัน")
-      : "${selectedDate.day}";
-  final monthText = selectedDate.month == 0
-      ? (isEnglish ? "Unknown month" : "ไม่ระบุเดือน")
-      : (isEnglish
-          ? DateFormat.MMM('en_EN').format(selectedDate)
-          : DateFormat.MMM('th_TH').format(selectedDate));
-  final yearText =
-      isEnglish ? "${selectedDate.year}" : "${selectedDate.year + 543}";
-
-  return "$dayText $monthText $yearText";
 }

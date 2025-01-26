@@ -110,8 +110,6 @@ class FlowDetactController extends GetxController {
     print("day: $day");
     if (day == 0) {
       selectedDay.value = 0; // "Unknown day"
-    } else if (day == 1) {
-      selectedDay.value = 1;
     } else {
       selectedDay.value = day ?? 1; // Default to 1 if null
     }
@@ -140,7 +138,7 @@ class FlowDetactController extends GetxController {
 
     if (selectedMonth.value == 0) {
       return DateTime(gregorianYear); // Only year
-    } else if (selectedDay.value == 0) {
+    } else if (selectedDay.value == 0 && selectedMonth.value != 0) {
       return DateTime(gregorianYear, selectedMonth.value); // Year and month
     } else {
       return DateTime(
