@@ -40,7 +40,7 @@ class MappingFaceView extends GetView<FlowDetactController> {
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: similarity.similarity >= 0.98
+              colors: similarity.similarity >= 0.90
                   ? [
                       Colors.green.shade400,
                       Colors.blue.shade400
@@ -110,7 +110,7 @@ class MappingFaceView extends GetView<FlowDetactController> {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: similarity.similarity >= 0.98
+                    child: similarity.similarity >= 0.90
                         ? ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
@@ -151,7 +151,8 @@ class MappingFaceView extends GetView<FlowDetactController> {
                               ),
                             ),
                             onPressed: () {
-                              Get.offAllNamed(Routes.HOME); // Go back to Home
+                              // go back to flow detect
+                              Get.back();
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),

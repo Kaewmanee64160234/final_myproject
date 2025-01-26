@@ -106,12 +106,13 @@ class FlowDetactView extends GetView<FlowDetactController> {
             contextf: context),
         // คำนำหน้า
         _buildEditableRow(
-            'คำนำหน้า', // Prefix
-            controller.prefix,
-            error: controller.prefixError,
-            isDisabled: false,
-            isEnglish: false,
-            contextf: context),
+          'คำนำหน้า', // Label for Prefix
+          controller.prefix, // Observable for storing selected value
+          error: controller.prefixError, // Observable for validation error
+          isDisabled: false, // Enable/Disable dropdown
+          isEnglish: false,
+          contextf: context,
+        ),
         // // ชื่อ
         _buildEditableRow(
             'ชื่อ', // First Name
@@ -523,110 +524,271 @@ class FlowDetactView extends GetView<FlowDetactController> {
             ),
           ),
           const SizedBox(height: 4),
-          Obx(() {
-            return TextFormField(
-              controller: TextEditingController(text: value.value)
-                ..selection =
-                    TextSelection.collapsed(offset: value.value.length),
-              onChanged: (text) {
-                value.value = text;
-              },
-              readOnly: isDisabled || isDate == true,
-              keyboardType:
-                  isNumeric ? TextInputType.number : TextInputType.text,
-              decoration: InputDecoration(
-                hintText: 'Enter $label',
-                errorText: error?.value.isEmpty ?? true ? null : error?.value,
-                filled: true,
-                fillColor: Colors.grey.shade100,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.grey),
+          if (label == 'คำนำหน้า') // Check if the row is for the prefix
+            Obx(() {
+              final List<String> prefixes = [
+                'นาย',
+                'น.ส.',
+                'นาง',
+                'ด.ญ',
+                'ด.ช.'
+              ];
+
+              // Ensure value is valid
+              final selectedValue =
+                  prefixes.contains(value.value) ? value.value : null;
+
+              return DropdownButtonFormField<String>(
+                value: selectedValue,
+                items: prefixes
+                    .map((prefix) => DropdownMenuItem(
+                          value: prefix,
+                          child: Text(prefix),
+                        ))
+                    .toList(),
+                onChanged: isDisabled
+                    ? null
+                    : (selected) {
+                        if (selected != null) {
+                          value.value = selected;
+                        }
+                      },
+                decoration: InputDecoration(
+                  hintText: 'เลือก $label',
+                  errorText: error?.value.isEmpty ?? true ? null : error?.value,
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.blue),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.blue),
+              );
+            })
+          else if (label == 'คำนำหน้า (ภาษาอังกฤษ)')
+            Obx(() {
+              final List<String> prefixes = [
+                'Mr.',
+                'Ms.',
+                'Mrs.',
+                'Miss',
+                'Master'
+              ];
+
+              // Ensure value is valid
+              final selectedValue =
+                  prefixes.contains(value.value) ? value.value : null;
+
+              return DropdownButtonFormField<String>(
+                value: selectedValue,
+                items: prefixes
+                    .map((prefix) => DropdownMenuItem(
+                          value: prefix,
+                          child: Text(prefix),
+                        ))
+                    .toList(),
+                onChanged: isDisabled
+                    ? null
+                    : (selected) {
+                        if (selected != null) {
+                          value.value = selected;
+                        }
+                      },
+                decoration: InputDecoration(
+                  hintText: 'Select $label',
+                  errorText: error?.value.isEmpty ?? true ? null : error?.value,
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.blue),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.grey),
+              );
+            })
+          else if (label == 'ศาสนา')
+            Obx(() {
+              final List<String> religions = [
+                'พุทธ',
+                'คริสต์',
+                'อิสลาม',
+                'ฮินดู',
+                'ยิว',
+                'ไม่นับถือศาสนา',
+              ];
+
+              // Ensure value is valid
+              final selectedValue =
+                  religions.contains(value.value) ? value.value : null;
+
+              return DropdownButtonFormField<String>(
+                value: selectedValue,
+                items: religions
+                    .map((religion) => DropdownMenuItem(
+                          value: religion,
+                          child: Text(religion),
+                        ))
+                    .toList(),
+                onChanged: isDisabled
+                    ? null
+                    : (selected) {
+                        if (selected != null) {
+                          value.value = selected;
+                        }
+                      },
+                decoration: InputDecoration(
+                  hintText: 'เลือก $label',
+                  errorText: error?.value.isEmpty ?? true ? null : error?.value,
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.blue),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 ),
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              ),
-              style: const TextStyle(fontSize: 16, color: Colors.black),
-              onTap: isDate == true && !isDisabled
-                  ? () async {
-                      print("value: ${value.value}");
-                      // Parse the date from the text field
-                      final initialDate = _getDateFromField(
-                        value.value,
-                        isThaiYear: !isEnglish,
-                      );
-                      // set selected date year month day
-                      // chck year is thai or english
-                      print("initialDate: $initialDate");
-                      if (!isEnglish) {
-                        controller.selectedYear.value = initialDate.year + 543;
-                      } else {
-                        controller.selectedYear.value = initialDate.year;
+              );
+            })
+          else
+            Obx(() {
+              return TextFormField(
+                controller: TextEditingController(text: value.value)
+                  ..selection =
+                      TextSelection.collapsed(offset: value.value.length),
+                onChanged: (text) {
+                  value.value = text;
+                },
+                readOnly: isDisabled || isDate == true,
+                keyboardType:
+                    isNumeric ? TextInputType.number : TextInputType.text,
+                decoration: InputDecoration(
+                  hintText: 'Enter $label',
+                  errorText: error?.value.isEmpty ?? true ? null : error?.value,
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.blue),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                ),
+                style: const TextStyle(fontSize: 16, color: Colors.black),
+                onTap: isDate == true && !isDisabled
+                    ? () async {
+                        print("value: ${value.value}");
+                        // Parse the date from the text field
+                        final initialDate = _getDateFromField(
+                          value.value,
+                          isThaiYear: !isEnglish,
+                        );
+                        // set selected date year month day
+                        // chck year is thai or english
+                        print("initialDate: $initialDate");
+                        if (!isEnglish) {
+                          controller.selectedYear.value =
+                              initialDate.year + 543;
+                        } else {
+                          controller.selectedYear.value = initialDate.year;
+                        }
+
+                        controller.selectedMonth.value = initialDate.month;
+                        controller.selectedDay.value = initialDate.day;
+
+                        showModalBottomSheet(
+                          context: contextf,
+                          isScrollControlled: true,
+                          builder: (BuildContext context) {
+                            return ThaiDatePicker(
+                                initialDate: initialDate,
+                                isBirthDate: isBirthDate ?? false,
+                                isIssueDate: isIssueDate ?? false,
+                                isDateExpiry: isDateExpiry ?? false,
+                                isThaiYear: !isEnglish,
+                                onDateChanged: (selectedDate) {
+                                  if (selectedDate == null) {
+                                    // Handle the "Unknown" case
+                                    value.value = isEnglish
+                                        ? "Unknown date"
+                                        : "ไม่ระบุวันที่";
+                                  } else {
+                                    // Format and update the selected date
+                                    final dayText =
+                                        (controller.selectedDay.value == 0 ||
+                                                controller
+                                                        .selectedMonth.value ==
+                                                    0 ||
+                                                (controller.selectedDay.value ==
+                                                        1 &&
+                                                    controller.selectedMonth
+                                                            .value ==
+                                                        0))
+                                            ? (isEnglish
+                                                ? "Unknown day"
+                                                : "ไม่ระบุวัน")
+                                            : "${selectedDate.day}";
+
+                                    final monthText = controller
+                                                .selectedMonth ==
+                                            0
+                                        ? (isEnglish
+                                            ? "Unknown month"
+                                            : "ไม่ระบุเดือน")
+                                        : (isEnglish
+                                            ? "${DateFormat.MMM('en_EN').format(selectedDate)}."
+                                            : DateFormat.MMM('th_TH')
+                                                .format(selectedDate));
+                                    final yearText = isEnglish
+                                        ? "${selectedDate.year}"
+                                        : "${selectedDate.year}";
+
+                                    value.value =
+                                        "$dayText $monthText $yearText";
+                                  }
+                                });
+                          },
+                        );
                       }
-
-                      controller.selectedMonth.value = initialDate.month;
-                      controller.selectedDay.value = initialDate.day;
-
-                      showModalBottomSheet(
-                        context: contextf,
-                        isScrollControlled: true,
-                        builder: (BuildContext context) {
-                          return ThaiDatePicker(
-                              initialDate: initialDate,
-                              isBirthDate: isBirthDate ?? false,
-                              isIssueDate: isIssueDate ?? false,
-                              isDateExpiry: isDateExpiry ?? false,
-                              isThaiYear: !isEnglish,
-                              onDateChanged: (selectedDate) {
-                                if (selectedDate == null) {
-                                  // Handle the "Unknown" case
-                                  value.value = isEnglish
-                                      ? "Unknown date"
-                                      : "ไม่ระบุวันที่";
-                                } else {
-                                  // Format and update the selected date
-                                  final dayText = (controller
-                                                  .selectedDay.value ==
-                                              0 ||
-                                          controller.selectedMonth.value == 0 ||
-                                          (controller.selectedDay.value == 1 &&
-                                              controller.selectedMonth.value ==
-                                                  0))
-                                      ? (isEnglish
-                                          ? "Unknown day"
-                                          : "ไม่ระบุวัน")
-                                      : "${selectedDate.day}";
-
-                                  final monthText = controller.selectedMonth ==
-                                          0
-                                      ? (isEnglish
-                                          ? "Unknown month"
-                                          : "ไม่ระบุเดือน")
-                                      : (isEnglish
-                                          ? "${DateFormat.MMM('en_EN').format(selectedDate)}."
-                                          : DateFormat.MMM('th_TH')
-                                              .format(selectedDate));
-                                  final yearText = isEnglish
-                                      ? "${selectedDate.year}"
-                                      : "${selectedDate.year}";
-
-                                  value.value = "$dayText $monthText $yearText";
-                                }
-                              });
-                        },
-                      );
-                    }
-                  : null,
-            );
-          }),
+                    : null,
+              );
+            }),
         ],
       ),
     );
@@ -917,5 +1079,42 @@ class StepWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class PrefixDropdown extends StatelessWidget {
+  final RxString selectedPrefix = ''.obs;
+
+  PrefixDropdown({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final List<String> prefixes = ['นาย', 'น.ส.', 'นาง', 'ด.ช.', 'ด.ญ.'];
+
+    return Obx(() {
+      return DropdownButtonFormField<String>(
+        value: selectedPrefix.value.isEmpty ? null : selectedPrefix.value,
+        items: prefixes
+            .map((prefix) => DropdownMenuItem(
+                  value: prefix,
+                  child: Text(prefix),
+                ))
+            .toList(),
+        onChanged: (value) {
+          if (value != null) {
+            selectedPrefix.value = value;
+          }
+        },
+        decoration: InputDecoration(
+          labelText: 'คำนำหน้า',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.grey),
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        ),
+      );
+    });
   }
 }

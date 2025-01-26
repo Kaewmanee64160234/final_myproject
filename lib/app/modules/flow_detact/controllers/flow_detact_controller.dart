@@ -450,7 +450,7 @@ class FlowDetactController extends GetxController {
         final similarityJson = box.read('similarityObject');
         final similarityObject = Similarity.fromJson(similarityJson);
 
-        Get.offAll(MappingFaceView(
+        Get.to(MappingFaceView(
           card: cardObject, // ส่งค่าของ cardObject
           similarity: similarityObject, // ส่งค่าของ similarityObject
         ));
