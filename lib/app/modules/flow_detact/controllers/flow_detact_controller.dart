@@ -3,11 +3,10 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:identity_scan/app/data/models/card_type.dart';
 import 'package:identity_scan/app/data/models/services/api_ocr_credit_card_service.dart';
 import 'package:identity_scan/app/data/models/services/similarity.dart';
-import 'package:identity_scan/app/modules/mapping_face/controllers/mapping_face_controller.dart';
-import 'package:identity_scan/app/routes/app_pages.dart';
 
 import '../../mapping_face/views/mapping_face_view.dart';
 
@@ -127,22 +126,25 @@ class FlowDetactController extends GetxController {
     selectedYear.value = year;
   }
 
-  DateTime? getSelectedDate() {
-    final gregorianYear = selectedYear.value > 2400
-        ? selectedYear.value - 543
-        : selectedYear.value;
-    print("selectedYear: $selectedYear");
-    print("gregorianYear: $gregorianYear");
-    print("selectedMonth: $selectedMonth");
-    print("selectedDay: $selectedDay");
+  DateTime? getSelectedDate({required bool isThaiYear}) {
+    // Adjust the selected year for the desired calendar system
+    final adjustedYear =
+        isThaiYear ? selectedYear.value : selectedYear.value - 543;
+
+    print("Selected Year (Input Thai Year): ${selectedYear.value}");
+    print("Adjusted Year (Gregorian): $adjustedYear");
+    print("Selected Month: ${selectedMonth.value}");
+    print("Selected Day: ${selectedDay.value}");
 
     if (selectedMonth.value == 0) {
-      return DateTime(gregorianYear); // Only year
+      // Only year is selected
+      return DateTime(adjustedYear);
     } else if (selectedDay.value == 0 && selectedMonth.value != 0) {
-      return DateTime(gregorianYear, selectedMonth.value); // Year and month
+      // Year and month are selected, but no specific day
+      return DateTime(adjustedYear, selectedMonth.value);
     } else {
-      return DateTime(
-          gregorianYear, selectedMonth.value, selectedDay.value); // Full date
+      // Full date is selected
+      return DateTime(adjustedYear, selectedMonth.value, selectedDay.value);
     }
   }
 
@@ -391,21 +393,32 @@ class FlowDetactController extends GetxController {
     try {
       isLoading.value = true;
 
+      final box = GetStorage();
+
+      final savedCardJson = box.read('savedCard');
+      final cardObject = ID_CARD.fromJson(savedCardJson);
+
       // Validate Base64 string before making API call
       try {
-        base64Decode(card.value.portrait);
+        base64Decode(cardObject.portrait);
         base64Decode(base64Image);
       } catch (e) {
         throw Exception("Invalid Base64 image data");
       }
 
       final res = await apiOcrCreditCardService.mappingFace(
-        card.value.portrait,
+        cardObject.portrait,
         base64Image,
       );
 
-      print("Similarity: $res");
-      similarity.value = res;
+      print(res);
+
+      var similarityObject = Similarity(
+          portraitImage: base64Decode(cardObject.portrait),
+          cameraImage: base64Decode(base64Image),
+          similarity: res);
+      // save Similarity เข้า Storage
+      box.write('similarityObject', similarityObject.toJson());
     } catch (e) {
       print("Error: Failed to compare similarity: $e");
     } finally {
@@ -417,11 +430,31 @@ class FlowDetactController extends GetxController {
           similarity: similarity.value);
       ID_CARD cardObject = createCardObject();
 
-      // Navigate to the next page without back navigation
-      Get.offAll(MappingFaceView(
-        card: cardObject, // ส่งค่าของ cardObject
-        similarity: similarityObject, // ส่งค่าของ similarityObject
-      ));
+      final box = GetStorage();
+
+      if (idNumber.value.isEmpty) {
+        final savedCardJson = box.read('savedCard');
+        final cardObject = ID_CARD.fromJson(savedCardJson);
+        print(savedCardJson);
+        final similarityJson = box.read('similarityObject');
+        final similarityObject = Similarity.fromJson(similarityJson);
+        // print(similarityObject);
+        print(similarityJson.toString());
+        Get.offAll(MappingFaceView(
+          card: cardObject, // ส่งค่าของ cardObject
+          similarity: similarityObject, // ส่งค่าของ similarityObject
+        ));
+      } else {
+        box.write('savedCard', cardObject.toJson());
+
+        final similarityJson = box.read('similarityObject');
+        final similarityObject = Similarity.fromJson(similarityJson);
+
+        Get.offAll(MappingFaceView(
+          card: cardObject, // ส่งค่าของ cardObject
+          similarity: similarityObject, // ส่งค่าของ similarityObject
+        ));
+      }
     }
   }
 

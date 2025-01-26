@@ -40,7 +40,7 @@ class MappingFaceView extends GetView<FlowDetactController> {
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: similarity.similarity >= 0.5
+              colors: similarity.similarity >= 0.98
                   ? [
                       Colors.green.shade400,
                       Colors.blue.shade400
@@ -110,7 +110,7 @@ class MappingFaceView extends GetView<FlowDetactController> {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: similarity.similarity >= 0.5
+                    child: similarity.similarity >= 0.98
                         ? ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,

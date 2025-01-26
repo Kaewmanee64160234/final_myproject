@@ -557,11 +557,23 @@ class FlowDetactView extends GetView<FlowDetactController> {
               style: const TextStyle(fontSize: 16, color: Colors.black),
               onTap: isDate == true && !isDisabled
                   ? () async {
+                      print("value: ${value.value}");
                       // Parse the date from the text field
                       final initialDate = _getDateFromField(
                         value.value,
                         isThaiYear: !isEnglish,
                       );
+                      // set selected date year month day
+                      // chck year is thai or english
+                      print("initialDate: $initialDate");
+                      if (!isEnglish) {
+                        controller.selectedYear.value = initialDate.year + 543;
+                      } else {
+                        controller.selectedYear.value = initialDate.year;
+                      }
+
+                      controller.selectedMonth.value = initialDate.month;
+                      controller.selectedDay.value = initialDate.day;
 
                       showModalBottomSheet(
                         context: contextf,
@@ -572,6 +584,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
                               isBirthDate: isBirthDate ?? false,
                               isIssueDate: isIssueDate ?? false,
                               isDateExpiry: isDateExpiry ?? false,
+                              isThaiYear: !isEnglish,
                               onDateChanged: (selectedDate) {
                                 if (selectedDate == null) {
                                   // Handle the "Unknown" case
@@ -603,7 +616,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
                                               .format(selectedDate));
                                   final yearText = isEnglish
                                       ? "${selectedDate.year}"
-                                      : "${selectedDate.year + 543}";
+                                      : "${selectedDate.year}";
 
                                   value.value = "$dayText $monthText $yearText";
                                 }
@@ -626,6 +639,7 @@ class ThaiDatePicker extends StatelessWidget {
   final bool isBirthDate;
   final bool isIssueDate;
   final bool isDateExpiry;
+  final bool isThaiYear;
 
   ThaiDatePicker({
     Key? key,
@@ -634,6 +648,7 @@ class ThaiDatePicker extends StatelessWidget {
     this.isBirthDate = false,
     this.isIssueDate = false,
     this.isDateExpiry = false,
+    this.isThaiYear = true,
   }) : super(key: key);
 
   final FlowDetactController controller = Get.put(FlowDetactController());
@@ -669,7 +684,8 @@ class ThaiDatePicker extends StatelessWidget {
                       onSelectedItemChanged: (index) {
                         controller
                             .updateDay(index); // Adjust day based on index
-                        onDateChanged(controller.getSelectedDate());
+                        onDateChanged(
+                            controller.getSelectedDate(isThaiYear: isThaiYear));
                       },
                       children: [
                         const Center(
@@ -696,7 +712,8 @@ class ThaiDatePicker extends StatelessWidget {
                       onSelectedItemChanged: (index) {
                         controller
                             .updateMonth(index); // Adjust month based on index
-                        onDateChanged(controller.getSelectedDate());
+                        onDateChanged(
+                            controller.getSelectedDate(isThaiYear: isThaiYear));
                       },
                       children: [
                         const Center(
@@ -721,7 +738,8 @@ class ThaiDatePicker extends StatelessWidget {
                       itemExtent: 40,
                       onSelectedItemChanged: (index) {
                         controller.updateYear(minYear + index);
-                        onDateChanged(controller.getSelectedDate());
+                        onDateChanged(
+                            controller.getSelectedDate(isThaiYear: isThaiYear));
                       },
                       children: List.generate(
                         maxYear - minYear + 1,
@@ -772,8 +790,19 @@ DateTime _getDateFromField(String? dateText, {bool isThaiYear = true}) {
 
     // Define a map for both full and abbreviated Thai and English months
     final months = {
-      // Thai full month names
-
+      // Thai full and abbreviated month names
+      'มกราคม': 1,
+      'กุมภาพันธ์': 2,
+      'มีนาคม': 3,
+      'เมษายน': 4,
+      'พฤษภาคม': 5,
+      'มิถุนายน': 6,
+      'กรกฎาคม': 7,
+      'สิงหาคม': 8,
+      'กันยายน': 9,
+      'ตุลาคม': 10,
+      'พฤศจิกายน': 11,
+      'ธันวาคม': 12,
       'ม.ค.': 1,
       'ก.พ.': 2,
       'มี.ค.': 3,
@@ -786,7 +815,7 @@ DateTime _getDateFromField(String? dateText, {bool isThaiYear = true}) {
       'ต.ค.': 10,
       'พ.ย.': 11,
       'ธ.ค.': 12,
-      // English full month names
+      // English abbreviated month names
       'Jan': 1,
       'Feb': 2,
       'Mar': 3,
@@ -799,25 +828,45 @@ DateTime _getDateFromField(String? dateText, {bool isThaiYear = true}) {
       'Oct': 10,
       'Nov': 11,
       'Dec': 12,
+      'Jan.': 1,
+      'Feb.': 2,
+      'Mar.': 3,
+      'Apr.': 4,
+      'May.': 5,
+      'Jun.': 6,
+      'Jul.': 7,
+      'Aug.': 8,
+      'Sep.': 9,
+      'Oct.': 10,
+      'Nov.': 11,
+      'Dec.': 12,
     };
 
     // Split the input into parts
     final parts = dateText.split(' ');
-    if (parts.length != 3) return DateTime.now();
+    if (parts.length != 3) throw FormatException('Invalid date format');
 
     // Parse day, month, and year
-    final day = int.tryParse(parts[0]) ?? 0;
+    final day = int.tryParse(parts[0]) ?? 0; // Default to 0 if day is invalid
     final month = months[parts[1]]; // Look up the month from the map
-    var year = int.tryParse(parts[2]) ?? DateTime.now().year;
+    var year = int.tryParse(parts[2]) ?? 0; // Default to 0 if year is invalid
 
-    // Ensure all components are valid
-    if (month == null || year < 1) throw FormatException('Invalid date format');
+    print("Parsed day: $day, month: $month, year: $year");
 
-    // Adjust the year based on the input and `isThaiYear` flag
-    if (!isThaiYear) {
-      year = year + 543;
+    // Ensure month and year are valid
+    if (month == null || year <= 0)
+      throw FormatException('Invalid date format');
+
+    // Adjust the year for Thai Buddhist calendar if necessary
+    print("isThaiYear: $isThaiYear");
+    if (!isThaiYear && year > 0) {
+      year += 543; // Convert Buddhist year to Gregorian
+      print("Converted Thai year to Gregorian: $year");
+    } else if (isThaiYear && year > 0) {
+      year -= 543;
     }
-    // Create and return the DateTime object
+
+    // Return the constructed DateTime object
     return DateTime(year, month, day);
   } catch (e) {
     print("Error parsing date: $e");

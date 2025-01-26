@@ -399,19 +399,10 @@ class ScanBackActivity: AppCompatActivity() {
                             .build()
 
                          imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
-                             // ถ้ามีคำสั่งให้ถ่ายรูป ค่าเริ่มต้นปกติคือ false ดังนั้นโปรแกรมจะวิ่งไปที่ Else ก่อนเสมอ
-                             if (isShutter) {
-
-                                 //bitmapToShow = cropToCreditCardAspectRatio()
-
-
+                             if(isShutter){
                                  bitmapToShow = imageProxy.toBitmap()
-
-                                 // Update รูปภาพ ที่นี่
                                  val matrix = Matrix()
-
                                  matrix.postRotate(90f)
-
                                  bitmapToShow = Bitmap.createBitmap(
                                      bitmapToShow!!, // Original Bitmap
                                      0, 0, // Starting coordinates
@@ -421,8 +412,8 @@ class ScanBackActivity: AppCompatActivity() {
                                      true // Apply smooth transformation
                                  )
 
-                                 // ถ้าภาพยังไม่ครบ 3 ภาพ
-                                 if (bitmapList.size < 3 ){
+                                 // ถ้าภาพยังไม่ครบ 3 ภาพ และ Dialog ไม่ได้แสดงอยู่
+                                 if (bitmapList.size < 3){
                                      // เพิ่มรูป Bitmap เข้า List จนกว่าจะครบ 3 รูป
                                      bitmapList.add(bitmapList.size,bitmapToShow!!)
                                      bitmapToJpg(bitmapToShow!!,context,"image${bitmapList.size.toString()}.jpg")
@@ -439,11 +430,8 @@ class ScanBackActivity: AppCompatActivity() {
                                          isShutter = false
                                          // พักการ Predict
                                          isPredicting = false
-
                                          // รับ bitmap ภาพที่คมที่สุดเพื่อมา Process
-                                          val sharpestBitmapMat = bitmapToMat(bitmapList[sharPestImageIndex])
-
-                                         // คำนวณเพื่อเตรียม Processing
+                                         val sharpestBitmapMat = bitmapToMat(bitmapList[sharPestImageIndex])
 
                                          val contrastValue = calculateContrast(sharpestBitmapMat)
                                          val resolutionValue = calculateResolution(sharpestBitmapMat)
@@ -452,30 +440,34 @@ class ScanBackActivity: AppCompatActivity() {
                                          val processedMat = preprocessing(snrValue, contrastValue, resolutionValue, sharpestBitmapMat)
 
                                          // บันทึกรูป Original ลง Storage
-                                         saveMatToStorage(context,sharpestBitmapMat,"backCardOriginal")
+                                         saveMatToStorage(context,sharpestBitmapMat,"frontCardOriginal")
 
                                          // บันทึกลง Storage
-                                         saveMatToStorage(context,processedMat,"backCardProcessed")
-
+                                         saveMatToStorage(context,processedMat,"frontCardProcessed")
                                      }
                                  }
-
-                             }else{
-                                 if (isFound){
-                                     if (!isTiming){
-                                         isTiming = true
-                                         timer.start()
-                                     }
-                                 }else{
-                                     timer.cancel()
-                                     isTiming = false
-                                 }
-                                 if(isPredicting){
-                                    processImageProxy(imageProxy)
-                                }
                              }
-                             // ปิด Image Proxy หลัง Process เสร็จ
+                             else if(!isShutter){
+                                 // ถ้ามีการสั่งให้จำแนก Class
+                                 if(isPredicting){
+                                     // ประมวลภาพถ้ามีการสั่งให้ Predict
+                                     processImageProxy(imageProxy)
+                                     // ถ้าเจอ เริ่มจับเวลา
+                                     if(isFound){
+                                         if (!isTiming){
+                                             isTiming = true
+                                             timer.start()
+                                             println("Start Timer")
+                                         }
+                                     }else{
+                                         // ถ้าไม่เจอ ยกเลิกการจับเวลา
+                                         timer.cancel()
+                                         isTiming = false
+                                     }
+                                 }
+                             }
                              imageProxy.close()
+
                          }
 
                         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -792,12 +784,15 @@ class ScanBackActivity: AppCompatActivity() {
 
                     // 0 ต้องเท่ากับ บัตรปกติ
                     if (maxIndex == 0 ) {
-                        isFound = if (glare >= 1){
+                        isFound = if (brightness < 120) {
+                            cameraViewModel.updateGuideText("แสงน้อยเกินไป")
+                            false // คืนค่า false หาก brightness < 120
+                        } else if (glare > 1) {
                             cameraViewModel.updateGuideText("หลีกเลี่ยงแสงสะท้อน")
-                            false
-                        }else{
+                            false // คืนค่า false หาก glare > 1
+                        } else {
                             cameraViewModel.updateGuideText("ถือค้างไว้")
-                            true
+                            true // คืนค่า true หากไม่มีเงื่อนไขข้างต้น
                         }
 
                     // 1 = บัตรสว่างเกินไป
