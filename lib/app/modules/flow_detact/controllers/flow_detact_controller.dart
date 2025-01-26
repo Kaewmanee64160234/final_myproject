@@ -107,8 +107,11 @@ class FlowDetactController extends GetxController {
       RxInt(DateTime.now().year + 543); // Default to current year (Thai)
 
   void updateDay(int? day) {
+    print("day: $day");
     if (day == 0) {
       selectedDay.value = 0; // "Unknown day"
+    } else if (day == 1) {
+      selectedDay.value = 1;
     } else {
       selectedDay.value = day ?? 1; // Default to 1 if null
     }

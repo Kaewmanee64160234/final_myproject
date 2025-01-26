@@ -580,20 +580,21 @@ class FlowDetactView extends GetView<FlowDetactController> {
                                       : "ไม่ระบุวันที่";
                                 } else {
                                   // Format and update the selected date
-                                  final dayText = selectedDate.day == 1
+                                  final dayText = controller.selectedDay == 0
                                       ? (isEnglish
                                           ? "Unknown day"
                                           : "ไม่ระบุวัน")
                                       : "${selectedDate.day}";
-                                  final monthText = selectedDate.month == 1
-                                      ? (isEnglish
-                                          ? "Unknown month"
-                                          : "ไม่ระบุเดือน")
-                                      : (isEnglish
-                                          ? DateFormat.MMM('en_EN')
-                                              .format(selectedDate)
-                                          : DateFormat.MMM('th_TH')
-                                              .format(selectedDate));
+                                  final monthText =
+                                      controller.selectedMonth == 0
+                                          ? (isEnglish
+                                              ? "Unknown month"
+                                              : "ไม่ระบุเดือน")
+                                          : (isEnglish
+                                              ? DateFormat.MMM('en_EN')
+                                                  .format(selectedDate)
+                                              : DateFormat.MMM('th_TH')
+                                                  .format(selectedDate));
                                   final yearText = isEnglish
                                       ? "${selectedDate.year}"
                                       : "${selectedDate.year + 543}";
