@@ -653,97 +653,77 @@ class ThaiDatePicker extends StatelessWidget {
                 children: [
                   // Day Picker
                   Expanded(
-                    child: Obx(() {
-                      return Row(
-                        children: [
-                          // Day Picker
-                          Expanded(
-                            child: CupertinoPicker(
-                              scrollController: FixedExtentScrollController(
-                                initialItem: controller.selectedDay.value,
-                              ),
-                              itemExtent: 40,
-                              onSelectedItemChanged: (index) {
-                                if (index == 0) {
-                                  controller
-                                      .updateDay(0); // Select "Unknown day"
-                                } else {
-                                  controller.updateDay(index + 1);
-                                }
-                                onDateChanged(controller.getSelectedDate());
-                              },
-                              children: [
-                                const Center(
-                                  child: Text("ไม่ระบุวัน",
-                                      style: TextStyle(fontSize: 18)),
-                                ),
-                                ...List.generate(
-                                  31,
-                                  (index) => Center(
-                                    child: Text('${index + 1}',
-                                        style: const TextStyle(fontSize: 18)),
-                                  ),
-                                ),
-                              ],
-                            ),
+                    child: CupertinoPicker(
+                      scrollController: FixedExtentScrollController(
+                        initialItem: controller
+                            .selectedDay.value, // Handle "Unknown day"
+                      ),
+                      itemExtent: 40,
+                      onSelectedItemChanged: (index) {
+                        controller
+                            .updateDay(index); // Adjust day based on index
+                        onDateChanged(controller.getSelectedDate());
+                      },
+                      children: [
+                        const Center(
+                          child: Text("ไม่ระบุวัน",
+                              style: TextStyle(fontSize: 18)),
+                        ),
+                        ...List.generate(
+                          31,
+                          (index) => Center(
+                            child: Text('${index + 1}',
+                                style: const TextStyle(fontSize: 18)),
                           ),
-
-                          // Month Picker
-                          Expanded(
-                            child: CupertinoPicker(
-                              scrollController: FixedExtentScrollController(
-                                initialItem: controller.selectedMonth.value,
-                              ),
-                              itemExtent: 40,
-                              onSelectedItemChanged: (index) {
-                                if (index == 0) {
-                                  controller
-                                      .updateMonth(0); // Select "Unknown month"
-                                } else {
-                                  controller.updateMonth(index);
-                                }
-                                onDateChanged(controller.getSelectedDate());
-                              },
-                              children: [
-                                const Center(
-                                  child: Text("ไม่ระบุเดือน",
-                                      style: TextStyle(fontSize: 18)),
-                                ),
-                                ...List.generate(
-                                  12,
-                                  (index) => Center(
-                                    child: Text(_monthName(index + 1),
-                                        style: const TextStyle(fontSize: 18)),
-                                  ),
-                                ),
-                              ],
-                            ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: CupertinoPicker(
+                      scrollController: FixedExtentScrollController(
+                        initialItem: controller
+                            .selectedMonth.value, // Handle "Unknown month"
+                      ),
+                      itemExtent: 40,
+                      onSelectedItemChanged: (index) {
+                        controller
+                            .updateMonth(index); // Adjust month based on index
+                        onDateChanged(controller.getSelectedDate());
+                      },
+                      children: [
+                        const Center(
+                          child: Text("ไม่ระบุเดือน",
+                              style: TextStyle(fontSize: 18)),
+                        ),
+                        ...List.generate(
+                          12,
+                          (index) => Center(
+                            child: Text(_monthName(index + 1),
+                                style: const TextStyle(fontSize: 18)),
                           ),
-
-                          // Year Picker
-                          Expanded(
-                            child: CupertinoPicker(
-                              scrollController: FixedExtentScrollController(
-                                initialItem:
-                                    controller.selectedYear.value - minYear,
-                              ),
-                              itemExtent: 40,
-                              onSelectedItemChanged: (index) {
-                                controller.updateYear(minYear + index);
-                                onDateChanged(controller.getSelectedDate());
-                              },
-                              children: List.generate(
-                                maxYear - minYear + 1,
-                                (index) => Center(
-                                  child: Text('${minYear + index}',
-                                      style: const TextStyle(fontSize: 18)),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    }),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: CupertinoPicker(
+                      scrollController: FixedExtentScrollController(
+                        initialItem: controller.selectedYear.value - minYear,
+                      ),
+                      itemExtent: 40,
+                      onSelectedItemChanged: (index) {
+                        controller.updateYear(minYear + index);
+                        onDateChanged(controller.getSelectedDate());
+                      },
+                      children: List.generate(
+                        maxYear - minYear + 1,
+                        (index) => Center(
+                          child: Text('${minYear + index}',
+                              style: const TextStyle(fontSize: 18)),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               );

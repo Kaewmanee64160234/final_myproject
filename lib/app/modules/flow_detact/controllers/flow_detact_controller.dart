@@ -107,18 +107,16 @@ class FlowDetactController extends GetxController {
       RxInt(DateTime.now().year + 543); // Default to current year (Thai)
 
   void updateDay(int? day) {
-    if (day == 1) {
-      print("Selected: Unknown day");
-      selectedDay.value = 0; // Indicate "Unknown day"
+    if (day == 0) {
+      selectedDay.value = 0; // "Unknown day"
     } else {
       selectedDay.value = day ?? 1; // Default to 1 if null
     }
   }
 
   void updateMonth(int? month) {
-    if (month == 1) {
-      print("Selected: Unknown month");
-      selectedMonth.value = 0; // Indicate "Unknown month"
+    if (month == 0) {
+      selectedMonth.value = 0; // "Unknown month"
     } else {
       selectedMonth.value = month ?? 1; // Default to 1 if null
     }
@@ -132,8 +130,12 @@ class FlowDetactController extends GetxController {
     final gregorianYear = selectedYear.value > 2400
         ? selectedYear.value - 543
         : selectedYear.value;
+    print("selectedYear: $selectedYear");
+    print("gregorianYear: $gregorianYear");
+    print("selectedMonth: $selectedMonth");
+    print("selectedDay: $selectedDay");
 
-    if (selectedMonth.value == 0 && selectedDay.value == 0) {
+    if (selectedMonth.value == 0) {
       return DateTime(gregorianYear); // Only year
     } else if (selectedDay.value == 0) {
       return DateTime(gregorianYear, selectedMonth.value); // Year and month
