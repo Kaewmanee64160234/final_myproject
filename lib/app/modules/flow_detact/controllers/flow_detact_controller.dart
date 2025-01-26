@@ -101,11 +101,47 @@ class FlowDetactController extends GetxController {
   // isValid
   var isValid = false.obs;
 
-  RxInt? selectedDay = RxInt(0);
-  RxInt? selectedMonth = RxInt(0);
-  RxInt selectedYear = DateTime.now().year.obs;
+  RxInt selectedDay = 0.obs; // Default to "Unknown day"
+  RxInt selectedMonth = 0.obs; // Default to "Unknown month"
+  RxInt selectedYear =
+      RxInt(DateTime.now().year + 543); // Default to current year (Thai)
 
-  void updateYear(int year) => selectedYear.value = year;
+  void updateDay(int? day) {
+    if (day == 1) {
+      print("Selected: Unknown day");
+      selectedDay.value = 0; // Indicate "Unknown day"
+    } else {
+      selectedDay.value = day ?? 1; // Default to 1 if null
+    }
+  }
+
+  void updateMonth(int? month) {
+    if (month == 1) {
+      print("Selected: Unknown month");
+      selectedMonth.value = 0; // Indicate "Unknown month"
+    } else {
+      selectedMonth.value = month ?? 1; // Default to 1 if null
+    }
+  }
+
+  void updateYear(int year) {
+    selectedYear.value = year;
+  }
+
+  DateTime? getSelectedDate() {
+    final gregorianYear = selectedYear.value > 2400
+        ? selectedYear.value - 543
+        : selectedYear.value;
+
+    if (selectedMonth.value == 0 && selectedDay.value == 0) {
+      return DateTime(gregorianYear); // Only year
+    } else if (selectedDay.value == 0) {
+      return DateTime(gregorianYear, selectedMonth.value); // Year and month
+    } else {
+      return DateTime(
+          gregorianYear, selectedMonth.value, selectedDay.value); // Full date
+    }
+  }
 
   @override
   void onInit() {

@@ -45,6 +45,7 @@ class ResultOcrController extends GetxController {
     portrait: '',
     laserCode: '',
   ).obs;
+
   @override
   void onInit() {
     super.onInit();

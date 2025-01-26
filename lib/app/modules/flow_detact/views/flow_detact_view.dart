@@ -557,7 +557,7 @@ class FlowDetactView extends GetView<FlowDetactController> {
               style: const TextStyle(fontSize: 16, color: Colors.black),
               onTap: isDate == true && !isDisabled
                   ? () async {
-                      // Parse date from text field
+                      // Parse the date from the text field
                       final initialDate = _getDateFromField(
                         value.value,
                         isThaiYear: !isEnglish,
@@ -568,39 +568,39 @@ class FlowDetactView extends GetView<FlowDetactController> {
                         isScrollControlled: true,
                         builder: (BuildContext context) {
                           return ThaiDatePicker(
-                            initialDate: initialDate,
-                            isBirthDate: isBirthDate ?? false,
-                            isIssueDate: isIssueDate ?? false,
-                            isDateExpiry: isDateExpiry ?? false,
-                            onDateChanged: (selectedDate) {
-                              print("Selected date: $selectedDate");
-                              if (selectedDate == null) {
-                                // Handle "Unknown" case
-                                value.value = isEnglish
-                                    ? "Unknown date"
-                                    : "ไม่ระบุวันที่";
-                              } else {
-                                // Format the selected date
-                                final dayText = selectedDate.day == 1
-                                    ? (isEnglish ? "Unknown day" : "ไม่ระบุวัน")
-                                    : "${selectedDate.day}";
-                                final monthText = selectedDate.month == 1
-                                    ? (isEnglish
-                                        ? "Unknown month"
-                                        : "ไม่ระบุเดือน")
-                                    : (isEnglish
-                                        ? DateFormat.MMM('en_EN')
-                                            .format(selectedDate)
-                                        : DateFormat.MMM('th_TH')
-                                            .format(selectedDate));
-                                final yearText = isEnglish
-                                    ? "${selectedDate.year}"
-                                    : "${selectedDate.year + 543}";
+                              initialDate: initialDate,
+                              isBirthDate: isBirthDate ?? false,
+                              isIssueDate: isIssueDate ?? false,
+                              isDateExpiry: isDateExpiry ?? false,
+                              onDateChanged: (selectedDate) {
+                                if (selectedDate == null) {
+                                  // Handle the "Unknown" case
+                                  value.value = isEnglish
+                                      ? "Unknown date"
+                                      : "ไม่ระบุวันที่";
+                                } else {
+                                  // Format and update the selected date
+                                  final dayText = selectedDate.day == 1
+                                      ? (isEnglish
+                                          ? "Unknown day"
+                                          : "ไม่ระบุวัน")
+                                      : "${selectedDate.day}";
+                                  final monthText = selectedDate.month == 1
+                                      ? (isEnglish
+                                          ? "Unknown month"
+                                          : "ไม่ระบุเดือน")
+                                      : (isEnglish
+                                          ? DateFormat.MMM('en_EN')
+                                              .format(selectedDate)
+                                          : DateFormat.MMM('th_TH')
+                                              .format(selectedDate));
+                                  final yearText = isEnglish
+                                      ? "${selectedDate.year}"
+                                      : "${selectedDate.year + 543}";
 
-                                value.value = "$dayText $monthText $yearText";
-                              }
-                            },
-                          );
+                                  value.value = "$dayText $monthText $yearText";
+                                }
+                              });
                         },
                       );
                     }
@@ -613,14 +613,14 @@ class FlowDetactView extends GetView<FlowDetactController> {
   }
 }
 
-class ThaiDatePicker extends StatefulWidget {
+class ThaiDatePicker extends StatelessWidget {
   final DateTime initialDate;
   final ValueChanged<DateTime?> onDateChanged;
   final bool isBirthDate;
   final bool isIssueDate;
   final bool isDateExpiry;
 
-  const ThaiDatePicker({
+  ThaiDatePicker({
     Key? key,
     required this.initialDate,
     required this.onDateChanged,
@@ -629,147 +629,135 @@ class ThaiDatePicker extends StatefulWidget {
     this.isDateExpiry = false,
   }) : super(key: key);
 
-  @override
-  _ThaiDatePickerState createState() => _ThaiDatePickerState();
-}
-
-class _ThaiDatePickerState extends State<ThaiDatePicker> {
-  int? selectedDay;
-  int? selectedMonth;
-  late int selectedYear;
-
-  @override
-  void initState() {
-    super.initState();
-    selectedDay = widget.initialDate.day > 0 ? widget.initialDate.day : 0;
-    selectedMonth = widget.initialDate.month > 0 ? widget.initialDate.month : 0;
-    selectedYear = widget.initialDate.year > 2400
-        ? widget.initialDate.year
-        : widget.initialDate.year + 543; // Convert Gregorian year to Thai year
-  }
+  final FlowDetactController controller = Get.put(FlowDetactController());
 
   @override
   Widget build(BuildContext context) {
-    final currentGregorianYear = DateTime.now().year;
-    final currentThaiYear = currentGregorianYear + 543;
+    final currentYear = DateTime.now().year;
+    final currentThaiYear = currentYear + 543;
 
-    // Define year range
-    final minYear = widget.isBirthDate || widget.isIssueDate
+    final minYear = isBirthDate || isIssueDate
         ? currentThaiYear - 150
         : currentThaiYear - 150;
-    final maxYear = widget.isBirthDate || widget.isDateExpiry
+    final maxYear = isBirthDate || isDateExpiry
         ? currentThaiYear
-        : (widget.isIssueDate ? currentThaiYear : currentThaiYear + 150);
+        : (isIssueDate ? currentThaiYear : currentThaiYear + 150);
 
     return SizedBox(
       height: 300,
       child: Column(
         children: [
           Expanded(
-            child: Row(
-              children: [
-                // Day Picker
-                Expanded(
-                  child: CupertinoPicker(
-                    scrollController: FixedExtentScrollController(
-                      initialItem: selectedDay!,
-                    ),
-                    itemExtent: 40,
-                    onSelectedItemChanged: (index) {
-                      setState(() {
-                        selectedDay = index; // 0 represents "Unknown"
-                      });
-                      _onDateChanged();
-                    },
-                    children: [
-                      const Center(
-                          child:
-                              Text("ไม่ระบุ", style: TextStyle(fontSize: 18))),
-                      ...List.generate(
-                        31,
-                        (index) => Center(
-                          child: Text('${index + 1}',
-                              style: const TextStyle(fontSize: 18)),
-                        ),
-                      ),
-                    ],
+            child: Obx(() {
+              return Row(
+                children: [
+                  // Day Picker
+                  Expanded(
+                    child: Obx(() {
+                      return Row(
+                        children: [
+                          // Day Picker
+                          Expanded(
+                            child: CupertinoPicker(
+                              scrollController: FixedExtentScrollController(
+                                initialItem: controller.selectedDay.value,
+                              ),
+                              itemExtent: 40,
+                              onSelectedItemChanged: (index) {
+                                if (index == 0) {
+                                  controller
+                                      .updateDay(0); // Select "Unknown day"
+                                } else {
+                                  controller.updateDay(index + 1);
+                                }
+                                onDateChanged(controller.getSelectedDate());
+                              },
+                              children: [
+                                const Center(
+                                  child: Text("ไม่ระบุวัน",
+                                      style: TextStyle(fontSize: 18)),
+                                ),
+                                ...List.generate(
+                                  31,
+                                  (index) => Center(
+                                    child: Text('${index + 1}',
+                                        style: const TextStyle(fontSize: 18)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Month Picker
+                          Expanded(
+                            child: CupertinoPicker(
+                              scrollController: FixedExtentScrollController(
+                                initialItem: controller.selectedMonth.value,
+                              ),
+                              itemExtent: 40,
+                              onSelectedItemChanged: (index) {
+                                if (index == 0) {
+                                  controller
+                                      .updateMonth(0); // Select "Unknown month"
+                                } else {
+                                  controller.updateMonth(index);
+                                }
+                                onDateChanged(controller.getSelectedDate());
+                              },
+                              children: [
+                                const Center(
+                                  child: Text("ไม่ระบุเดือน",
+                                      style: TextStyle(fontSize: 18)),
+                                ),
+                                ...List.generate(
+                                  12,
+                                  (index) => Center(
+                                    child: Text(_monthName(index + 1),
+                                        style: const TextStyle(fontSize: 18)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Year Picker
+                          Expanded(
+                            child: CupertinoPicker(
+                              scrollController: FixedExtentScrollController(
+                                initialItem:
+                                    controller.selectedYear.value - minYear,
+                              ),
+                              itemExtent: 40,
+                              onSelectedItemChanged: (index) {
+                                controller.updateYear(minYear + index);
+                                onDateChanged(controller.getSelectedDate());
+                              },
+                              children: List.generate(
+                                maxYear - minYear + 1,
+                                (index) => Center(
+                                  child: Text('${minYear + index}',
+                                      style: const TextStyle(fontSize: 18)),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
                   ),
-                ),
-                // Month Picker
-                Expanded(
-                  child: CupertinoPicker(
-                    scrollController: FixedExtentScrollController(
-                      initialItem: selectedMonth!,
-                    ),
-                    itemExtent: 40,
-                    onSelectedItemChanged: (index) {
-                      setState(() {
-                        selectedMonth = index; // 0 represents "Unknown"
-                      });
-                      _onDateChanged();
-                    },
-                    children: [
-                      const Center(
-                          child:
-                              Text("ไม่ระบุ", style: TextStyle(fontSize: 18))),
-                      ...List.generate(
-                        12,
-                        (index) => Center(
-                          child: Text(_monthName(index + 1),
-                              style: const TextStyle(fontSize: 18)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Year Picker
-                Expanded(
-                  child: CupertinoPicker(
-                    scrollController: FixedExtentScrollController(
-                      initialItem: selectedYear - minYear,
-                    ),
-                    itemExtent: 40,
-                    onSelectedItemChanged: (index) {
-                      setState(() {
-                        selectedYear = minYear + index;
-                      });
-                      _onDateChanged();
-                    },
-                    children: List.generate(
-                      maxYear - minYear + 1,
-                      (index) => Center(
-                        child: Text('${minYear + index}',
-                            style: const TextStyle(fontSize: 18)),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+                ],
+              );
+            }),
           ),
           CupertinoButton(
             child: const Text('ตกลง', style: TextStyle(fontSize: 18)),
-            onPressed: () => Navigator.pop(context),
-          )
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
         ],
       ),
     );
-  }
-
-  void _onDateChanged() {
-    // Handle Thai Buddhist year conversion
-    final gregorianYear =
-        selectedYear > 2400 ? selectedYear - 543 : selectedYear;
-
-    // Handle "Unknown" selections
-    final day = selectedDay == 0 ? null : selectedDay;
-    final month = selectedMonth == 0 ? null : selectedMonth;
-    print("day: $day, month: $month");
-    if (day == null || month == null) {
-      widget.onDateChanged(null); // Notify "Unknown"
-    } else {
-      widget.onDateChanged(DateTime(gregorianYear, month, day));
-    }
   }
 
   String _monthName(int month) {
@@ -831,7 +819,7 @@ DateTime _getDateFromField(String? dateText, {bool isThaiYear = true}) {
     if (parts.length != 3) return DateTime.now();
 
     // Parse day, month, and year
-    final day = int.tryParse(parts[0]) ?? 1;
+    final day = int.tryParse(parts[0]) ?? 0;
     final month = months[parts[1]]; // Look up the month from the map
     var year = int.tryParse(parts[2]) ?? DateTime.now().year;
 
@@ -894,4 +882,19 @@ class StepWidget extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatSelectedDate(DateTime selectedDate, {required bool isEnglish}) {
+  final dayText = selectedDate.day == 0
+      ? (isEnglish ? "Unknown day" : "ไม่ระบุวัน")
+      : "${selectedDate.day}";
+  final monthText = selectedDate.month == 0
+      ? (isEnglish ? "Unknown month" : "ไม่ระบุเดือน")
+      : (isEnglish
+          ? DateFormat.MMM('en_EN').format(selectedDate)
+          : DateFormat.MMM('th_TH').format(selectedDate));
+  final yearText =
+      isEnglish ? "${selectedDate.year}" : "${selectedDate.year + 543}";
+
+  return "$dayText $monthText $yearText";
 }
