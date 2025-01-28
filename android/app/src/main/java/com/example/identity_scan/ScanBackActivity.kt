@@ -698,14 +698,14 @@ class ScanBackActivity: AppCompatActivity() {
             title = {
                 Text(
                     fontFamily = fontKanit,
-                    text = "Confirmation",
+                    text = "ยืนยันการยกเลิกการถ่ายภาพ",
                     style = androidx.compose.material.MaterialTheme.typography.h6
                 )
             },
             text = {
                 Text(
                     fontFamily = fontKanit,
-                    text = "Are you sure you want to cancel and go back?",
+                    text = "คุณแน่ใจหรือไม่ว่าต้องการยกเลิกและกลับไป?",
                     style = androidx.compose.material.MaterialTheme.typography.body2
                 )
             },
@@ -716,7 +716,7 @@ class ScanBackActivity: AppCompatActivity() {
                 ) {
                     Text(
                         fontFamily = fontKanit,
-                        text = "Yes", color = Color.White
+                        text = "ใช่", color = Color.White
                     )
                 }
             },
@@ -727,7 +727,7 @@ class ScanBackActivity: AppCompatActivity() {
                 ) {
                     Text(
                         fontFamily = fontKanit,
-                        text = "No", color = Color.White
+                        text = "ไม่ ", color = Color.White
                     )
                 }
             },
